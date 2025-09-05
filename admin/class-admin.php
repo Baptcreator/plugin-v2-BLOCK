@@ -59,14 +59,14 @@ class RestaurantBooking_Admin
      */
     public function add_admin_menus()
     {
-        // Menu principal
+        // Menu principal selon le cahier des charges
         add_menu_page(
-            __('Block & Co', 'restaurant-booking'),
-            __('Block & Co', 'restaurant-booking'),
+            __('Restaurant Devis', 'restaurant-booking'),
+            __('Restaurant Devis', 'restaurant-booking'),
             'manage_restaurant_quotes',
             'restaurant-booking',
             array($this, 'dashboard_page'),
-            'dashicons-calendar-alt',
+            'dashicons-food',
             30
         );
 
@@ -100,7 +100,37 @@ class RestaurantBooking_Admin
             array($this, 'products_page')
         );
 
-        // Sous-menu Paramètres
+        // Sous-menu Tarification (selon le cahier des charges)
+        add_submenu_page(
+            'restaurant-booking',
+            __('Tarification', 'restaurant-booking'),
+            __('Tarification', 'restaurant-booking'),
+            'manage_restaurant_settings',
+            'restaurant-booking-pricing',
+            array($this, 'pricing_page')
+        );
+
+        // Sous-menu Textes interface (selon le cahier des charges)
+        add_submenu_page(
+            'restaurant-booking',
+            __('Textes interface', 'restaurant-booking'),
+            __('Textes interface', 'restaurant-booking'),
+            'manage_restaurant_settings',
+            'restaurant-booking-texts',
+            array($this, 'texts_page')
+        );
+
+        // Sous-menu Emails (selon le cahier des charges)
+        add_submenu_page(
+            'restaurant-booking',
+            __('Emails', 'restaurant-booking'),
+            __('Emails', 'restaurant-booking'),
+            'manage_restaurant_settings',
+            'restaurant-booking-emails',
+            array($this, 'emails_page')
+        );
+
+        // Sous-menu Paramètres généraux (renommé)
         add_submenu_page(
             'restaurant-booking',
             __('Paramètres', 'restaurant-booking'),
@@ -346,13 +376,46 @@ class RestaurantBooking_Admin
     }
 
     /**
-     * Page des paramètres
+     * Page de tarification (selon le cahier des charges)
+     */
+    public function pricing_page()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-settings-admin.php';
+        
+        $settings_admin = new RestaurantBooking_Settings_Admin();
+        $settings_admin->display_pricing();
+    }
+
+    /**
+     * Page des textes interface (selon le cahier des charges)
+     */
+    public function texts_page()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-settings-admin.php';
+        
+        $settings_admin = new RestaurantBooking_Settings_Admin();
+        $settings_admin->display_texts();
+    }
+
+    /**
+     * Page des emails (selon le cahier des charges)
+     */
+    public function emails_page()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-settings-admin.php';
+        
+        $settings_admin = new RestaurantBooking_Settings_Admin();
+        $settings_admin->display_emails();
+    }
+
+    /**
+     * Page des paramètres généraux
      */
     public function settings_page()
     {
         require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-settings-admin.php';
         
-        $tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'pricing';
+        $tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
         
         $settings_admin = new RestaurantBooking_Settings_Admin();
         $settings_admin->display($tab);

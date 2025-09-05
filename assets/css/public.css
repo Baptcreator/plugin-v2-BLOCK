@@ -1,0 +1,537 @@
+/**
+ * Styles CSS publics - Plugin Restaurant Block & Co
+ * Charte graphique officielle Block
+ */
+
+/* Variables CSS - Charte graphique Block */
+:root {
+    --restaurant-primary: #243127;    /* Vert foncé */
+    --restaurant-secondary: #FFB404;  /* Orange/jaune */
+    --restaurant-accent: #EF3D1D;     /* Rouge */
+    --restaurant-white: #FFFFFF;      /* Blanc */
+    --restaurant-light: #F6F2E7;      /* Beige clair */
+    --restaurant-black: #000000;      /* Noir */
+}
+
+/* Reset CSS pour éviter les conflits avec le thème */
+.restaurant-plugin-form-container,
+.restaurant-plugin-form-container * {
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Conteneur principal isolé */
+.restaurant-plugin-form-container {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--restaurant-light);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    position: relative;
+    isolation: isolate; /* Isolation CSS */
+}
+
+/* Typographie - Fatkat pour les titres */
+.restaurant-plugin-form-container h1,
+.restaurant-plugin-form-container h2,
+.restaurant-plugin-form-container h3,
+.restaurant-plugin-form-container h4,
+.restaurant-plugin-step-title,
+.restaurant-plugin-btn-primary,
+.restaurant-plugin-btn-secondary,
+.restaurant-plugin-price-total {
+    font-family: 'Fatkat', 'Arial Black', Arial, sans-serif !important;
+}
+
+/* Indicateur de progression */
+.restaurant-plugin-steps-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 40px;
+    gap: 15px;
+}
+
+.restaurant-plugin-step-indicator {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #ddd;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-family: 'Fatkat', sans-serif;
+    font-size: 18px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.restaurant-plugin-step-indicator.active {
+    background: var(--restaurant-primary);
+    color: var(--restaurant-white);
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(36, 49, 39, 0.3);
+}
+
+.restaurant-plugin-step-indicator.completed {
+    background: var(--restaurant-secondary);
+    color: var(--restaurant-black);
+}
+
+/* Étapes du formulaire */
+.restaurant-plugin-form-step {
+    display: none;
+    background: var(--restaurant-white);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.restaurant-plugin-form-step.active {
+    display: block;
+    animation: restaurant-plugin-fadeInUp 0.5s ease;
+}
+
+@keyframes restaurant-plugin-fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.restaurant-plugin-step-title {
+    font-size: 24px;
+    color: var(--restaurant-primary);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Formulaires */
+.restaurant-plugin-form-group {
+    margin-bottom: 20px;
+}
+
+.restaurant-plugin-form-label {
+    display: block;
+    font-weight: 600;
+    color: var(--restaurant-primary);
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.restaurant-plugin-required {
+    color: var(--restaurant-accent);
+    font-weight: bold;
+}
+
+.restaurant-plugin-form-input,
+.restaurant-plugin-form-select,
+.restaurant-plugin-form-textarea {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 20px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: var(--restaurant-white);
+    font-family: 'Roboto', sans-serif;
+}
+
+.restaurant-plugin-form-input:focus,
+.restaurant-plugin-form-select:focus,
+.restaurant-plugin-form-textarea:focus {
+    outline: none;
+    border-color: var(--restaurant-primary);
+    box-shadow: 0 0 0 3px rgba(36, 49, 39, 0.1);
+}
+
+.restaurant-plugin-form-input::placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+/* Boutons avec style Block */
+.restaurant-plugin-btn-primary {
+    background: var(--restaurant-primary);
+    color: var(--restaurant-white);
+    border: none;
+    border-radius: 20px;
+    font-size: 18px;
+    padding: 15px 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.restaurant-plugin-btn-primary:hover {
+    background: transparent;
+    color: var(--restaurant-primary);
+    border: 2px solid var(--restaurant-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(36, 49, 39, 0.2);
+}
+
+.restaurant-plugin-btn-secondary {
+    background: transparent;
+    color: var(--restaurant-primary);
+    border: 2px solid var(--restaurant-primary);
+    border-radius: 20px;
+    font-size: 18px;
+    padding: 15px 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.restaurant-plugin-btn-secondary:hover {
+    background: var(--restaurant-primary);
+    color: var(--restaurant-white);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(36, 49, 39, 0.2);
+}
+
+/* Navigation entre étapes */
+.restaurant-plugin-step-navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    gap: 20px;
+}
+
+/* Calculateur de prix */
+.restaurant-plugin-price-calculator {
+    background: var(--restaurant-primary);
+    color: var(--restaurant-white);
+    padding: 20px;
+    border-radius: 20px;
+    text-align: center;
+    position: sticky;
+    bottom: 20px;
+    margin-top: 30px;
+    box-shadow: 0 5px 20px rgba(36, 49, 39, 0.3);
+    z-index: 100;
+}
+
+.restaurant-plugin-price-total {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
+}
+
+.restaurant-plugin-price-subtitle {
+    font-size: 14px;
+    opacity: 0.8;
+    font-style: italic;
+}
+
+.restaurant-plugin-price-detail {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 10px;
+    cursor: pointer;
+    text-decoration: underline;
+    transition: opacity 0.3s ease;
+}
+
+.restaurant-plugin-price-detail:hover {
+    opacity: 1;
+}
+
+/* Informations distance (remorque) */
+.restaurant-plugin-distance-info {
+    background: var(--restaurant-light);
+    padding: 15px;
+    border-radius: 20px;
+    margin-top: 10px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.restaurant-plugin-distance-info.loading {
+    border-color: var(--restaurant-secondary);
+    background: #fff9e6;
+    color: #856404;
+}
+
+.restaurant-plugin-distance-info.success {
+    border-color: #28a745;
+    background: #d4edda;
+    color: #155724;
+}
+
+.restaurant-plugin-distance-info.error {
+    border-color: var(--restaurant-accent);
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Options remorque */
+.restaurant-plugin-options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.restaurant-plugin-option-card {
+    border: 2px solid #ddd;
+    border-radius: 20px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--restaurant-white);
+}
+
+.restaurant-plugin-option-card:hover {
+    border-color: var(--restaurant-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(36, 49, 39, 0.1);
+}
+
+.restaurant-plugin-option-card.selected {
+    border-color: var(--restaurant-primary);
+    background: var(--restaurant-light);
+    box-shadow: 0 5px 15px rgba(36, 49, 39, 0.2);
+}
+
+.restaurant-plugin-option-icon {
+    font-size: 40px;
+    margin-bottom: 15px;
+}
+
+.restaurant-plugin-option-title {
+    font-family: 'Fatkat', sans-serif;
+    font-size: 18px;
+    color: var(--restaurant-primary);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.restaurant-plugin-option-price {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--restaurant-secondary);
+    margin-bottom: 10px;
+}
+
+/* Messages d'erreur et succès */
+.restaurant-plugin-message {
+    padding: 15px 20px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.restaurant-plugin-message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.restaurant-plugin-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.restaurant-plugin-message.warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.restaurant-plugin-message.info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .restaurant-plugin-form-container {
+        padding: 20px;
+        margin: 10px;
+        border-radius: 15px;
+    }
+    
+    .restaurant-plugin-steps-indicator {
+        gap: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .restaurant-plugin-step-indicator {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .restaurant-plugin-form-step {
+        padding: 20px;
+        border-radius: 15px;
+    }
+    
+    .restaurant-plugin-step-title {
+        font-size: 20px;
+    }
+    
+    .restaurant-plugin-step-navigation {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .restaurant-plugin-btn-primary,
+    .restaurant-plugin-btn-secondary {
+        width: 100%;
+        text-align: center;
+        padding: 12px 20px;
+        font-size: 16px;
+    }
+    
+    .restaurant-plugin-options-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .restaurant-plugin-price-calculator {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: 0;
+        border-radius: 0;
+        padding: 15px;
+    }
+    
+    .restaurant-plugin-price-total {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .restaurant-plugin-form-container {
+        padding: 15px;
+        margin: 5px;
+    }
+    
+    .restaurant-plugin-steps-indicator {
+        gap: 8px;
+    }
+    
+    .restaurant-plugin-step-indicator {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+    }
+    
+    .restaurant-plugin-form-input,
+    .restaurant-plugin-form-select,
+    .restaurant-plugin-form-textarea {
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    .restaurant-plugin-step-title {
+        font-size: 18px;
+    }
+}
+
+/* Styles pour les produits et catégories (à développer) */
+.restaurant-plugin-products-selection,
+.restaurant-plugin-beverages-selection {
+    /* Styles à implémenter selon le cahier des charges */
+}
+
+/* Animations et transitions */
+.restaurant-plugin-form-container * {
+    transition: all 0.3s ease;
+}
+
+/* Isolation complète des styles */
+.restaurant-plugin-form-container {
+    /* Reset des styles potentiellement conflictuels */
+    line-height: 1.6;
+    color: #333;
+    font-size: 16px;
+}
+
+.restaurant-plugin-form-container a {
+    text-decoration: none;
+}
+
+.restaurant-plugin-form-container ul,
+.restaurant-plugin-form-container ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* États de chargement */
+.restaurant-plugin-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.restaurant-plugin-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border: 3px solid var(--restaurant-light);
+    border-top-color: var(--restaurant-primary);
+    border-radius: 50%;
+    animation: restaurant-plugin-spin 1s linear infinite;
+}
+
+@keyframes restaurant-plugin-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Accessibilité */
+.restaurant-plugin-form-container :focus {
+    outline: 2px solid var(--restaurant-secondary);
+    outline-offset: 2px;
+}
+
+.restaurant-plugin-form-container :focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Print styles */
+@media print {
+    .restaurant-plugin-form-container {
+        box-shadow: none;
+        background: white;
+    }
+    
+    .restaurant-plugin-price-calculator {
+        position: static;
+        background: #f5f5f5;
+        color: #333;
+    }
+}

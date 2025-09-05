@@ -41,6 +41,18 @@ class RestaurantBooking_Public
      */
     public function init()
     {
-        // Interface publique en cours de développement
+        // Initialiser les formulaires spécialisés selon le cahier des charges
+        if (class_exists('RestaurantBooking_Quote_Form_Restaurant')) {
+            RestaurantBooking_Quote_Form_Restaurant::get_instance();
+        }
+        
+        if (class_exists('RestaurantBooking_Quote_Form_Remorque')) {
+            RestaurantBooking_Quote_Form_Remorque::get_instance();
+        }
+        
+        // Conserver l'ancien formulaire pour compatibilité
+        if (class_exists('RestaurantBooking_Quote_Form')) {
+            RestaurantBooking_Quote_Form::get_instance();
+        }
     }
 }

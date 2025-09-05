@@ -86,7 +86,6 @@ class RestaurantBookingPlugin
 
         // Hooks d'initialisation
         add_action('init', array($this, 'load_components'));
-        add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_public_scripts'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
 
@@ -176,6 +175,13 @@ class RestaurantBookingPlugin
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-quote-form.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-quote-form.php';
         }
+        // Nouveaux formulaires spécialisés selon le cahier des charges
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-quote-form-restaurant.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-quote-form-restaurant.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-quote-form-remorque.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-quote-form-remorque.php';
+        }
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler.php';
         }
@@ -217,30 +223,6 @@ class RestaurantBookingPlugin
         }
     }
 
-    /**
-     * Ajouter le menu d'administration
-     */
-    public function add_admin_menu()
-    {
-        add_menu_page(
-            __('Restaurant Devis', 'restaurant-booking'),
-            __('Restaurant Devis', 'restaurant-booking'),
-            'manage_options',
-            'restaurant-booking',
-            array($this, 'admin_dashboard_page'),
-            'dashicons-calendar-alt',
-            30
-        );
-    }
-
-    /**
-     * Page du tableau de bord admin
-     */
-    public function admin_dashboard_page()
-    {
-        $dashboard = new RestaurantBooking_Dashboard();
-        $dashboard->display();
-    }
 
     /**
      * Enregistrer les widgets Elementor
@@ -261,7 +243,7 @@ class RestaurantBookingPlugin
         $elements_manager->add_category(
             'restaurant-booking',
             array(
-                'title' => __('Restaurant Booking', 'restaurant-booking'),
+                'title' => __('Block & Co', 'restaurant-booking'),
                 'icon' => 'fa fa-utensils',
             )
         );
