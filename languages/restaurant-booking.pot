@@ -1,0 +1,160 @@
+# Restaurant Booking & Quote System
+# Copyright (C) 2025 Restaurant Block
+# This file is distributed under the same license as the Restaurant Booking & Quote System package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Restaurant Booking & Quote System 1.0.0\n"
+"Report-Msgid-Bugs-To: support@restaurant-block.fr\n"
+"POT-Creation-Date: 2025-01-15 10:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: restaurant-booking-plugin.php:50
+msgid "Le plugin Restaurant Booking nécessite PHP 8.0 ou supérieur. Version actuelle: %s"
+msgstr ""
+
+#: restaurant-booking-plugin.php:60
+msgid "Le plugin Restaurant Booking nécessite WordPress 5.0 ou supérieur."
+msgstr ""
+
+#: admin/class-admin.php:75
+msgid "Restaurant Devis"
+msgstr ""
+
+#: admin/class-admin.php:85
+msgid "Tableau de bord"
+msgstr ""
+
+#: admin/class-admin.php:95
+msgid "Gestion des devis"
+msgstr ""
+
+#: admin/class-admin.php:105
+msgid "Catégories"
+msgstr ""
+
+#: admin/class-admin.php:115
+msgid "Produits"
+msgstr ""
+
+#: admin/class-admin.php:125
+msgid "Paramètres"
+msgstr ""
+
+#: admin/class-admin.php:135
+msgid "Calendrier"
+msgstr ""
+
+#: admin/class-admin.php:145
+msgid "Diagnostics"
+msgstr ""
+
+#: admin/class-dashboard.php:25
+msgid "Tableau de bord - Restaurant Devis"
+msgstr ""
+
+#: admin/class-dashboard.php:30
+msgid "Devis ce mois"
+msgstr ""
+
+#: admin/class-dashboard.php:35
+msgid "CA prévisionnel"
+msgstr ""
+
+#: admin/class-dashboard.php:40
+msgid "Taux conversion"
+msgstr ""
+
+#: admin/class-dashboard.php:45
+msgid "Événements à venir"
+msgstr ""
+
+#: admin/views/categories-list.php:15
+msgid "Ajouter une catégorie"
+msgstr ""
+
+#: admin/views/categories-list.php:20
+msgid "Catégorie sauvegardée avec succès"
+msgstr ""
+
+#: admin/views/categories-list.php:28
+msgid "Recherche"
+msgstr ""
+
+#: admin/views/categories-list.php:32
+msgid "Nom ou description..."
+msgstr ""
+
+#: admin/views/categories-list.php:36
+msgid "Type de service"
+msgstr ""
+
+#: admin/views/categories-list.php:38
+msgid "Tous les services"
+msgstr ""
+
+#: admin/views/categories-list.php:40
+msgid "Restaurant uniquement"
+msgstr ""
+
+#: admin/views/categories-list.php:43
+msgid "Remorque uniquement"
+msgstr ""
+
+#: admin/views/categories-list.php:46
+msgid "Les deux services"
+msgstr ""
+
+#: admin/views/categories-list.php:52
+msgid "Statut"
+msgstr ""
+
+#: admin/views/categories-list.php:54
+msgid "Tous les statuts"
+msgstr ""
+
+#: admin/views/categories-list.php:56
+msgid "Actif"
+msgstr ""
+
+#: admin/views/categories-list.php:59
+msgid "Inactif"
+msgstr ""
+
+#: admin/views/categories-list.php:65
+msgid "Filtrer"
+msgstr ""
+
+#: admin/views/categories-list.php:67
+msgid "Réinitialiser"
+msgstr ""
+
+#: includes/class-quote.php:50
+msgid "Le champ %s est obligatoire"
+msgstr ""
+
+#: includes/class-quote.php:60
+msgid "Erreur lors de la création du devis"
+msgstr ""
+
+#: includes/class-product.php:45
+msgid "Catégorie invalide"
+msgstr ""
+
+#: includes/class-product.php:80
+msgid "Erreur lors de la création du produit"
+msgstr ""
+
+#: includes/class-category.php:40
+msgid "Type de catégorie invalide"
+msgstr ""
+
+#: includes/class-category.php:75
+msgid "Erreur lors de la création de la catégorie"
+msgstr ""

@@ -1,0 +1,157 @@
+# French (France) language file for Restaurant Booking
+# Copyright (C) 2025 Restaurant Block
+msgid ""
+msgstr ""
+"Project-Id-Version: Restaurant Booking & Quote System 1.0.0\n"
+"Report-Msgid-Bugs-To: support@restaurant-block.fr\n"
+"POT-Creation-Date: 2025-01-15 10:00+0000\n"
+"PO-Revision-Date: 2025-01-15 10:00+0000\n"
+"Last-Translator: Restaurant Block Team\n"
+"Language-Team: Français\n"
+"Language: fr_FR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Poedit 3.0\n"
+
+msgid "Block & Co"
+msgstr "Block & Co"
+
+msgid "Tableau de bord"
+msgstr "Tableau de bord"
+
+msgid "Gestion des devis"
+msgstr "Gestion des devis"
+
+msgid "Catégories"
+msgstr "Catégories"
+
+msgid "Produits"
+msgstr "Produits"
+
+msgid "Paramètres"
+msgstr "Paramètres"
+
+msgid "Calendrier"
+msgstr "Calendrier"
+
+msgid "Diagnostics"
+msgstr "Diagnostics"
+
+msgid "Ajouter une catégorie"
+msgstr "Ajouter une catégorie"
+
+msgid "Modifier une catégorie"
+msgstr "Modifier une catégorie"
+
+msgid "Supprimer"
+msgstr "Supprimer"
+
+msgid "Dupliquer"
+msgstr "Dupliquer"
+
+msgid "Voir"
+msgstr "Voir"
+
+msgid "Modifier"
+msgstr "Modifier"
+
+msgid "Actif"
+msgstr "Actif"
+
+msgid "Inactif"
+msgstr "Inactif"
+
+msgid "Restaurant"
+msgstr "Restaurant"
+
+msgid "Remorque"
+msgstr "Remorque"
+
+msgid "Les deux"
+msgstr "Les deux"
+
+msgid "Obligatoire"
+msgstr "Obligatoire"
+
+msgid "Brouillon"
+msgstr "Brouillon"
+
+msgid "Envoyé"
+msgstr "Envoyé"
+
+msgid "Confirmé"
+msgstr "Confirmé"
+
+msgid "Annulé"
+msgstr "Annulé"
+
+msgid "Devis ce mois"
+msgstr "Devis ce mois"
+
+msgid "CA prévisionnel"
+msgstr "CA prévisionnel"
+
+msgid "Taux conversion"
+msgstr "Taux conversion"
+
+msgid "Événements à venir"
+msgstr "Événements à venir"
+
+msgid "Actions rapides"
+msgstr "Actions rapides"
+
+msgid "État du système"
+msgstr "État du système"
+
+msgid "Base de données"
+msgstr "Base de données"
+
+msgid "Logs système"
+msgstr "Logs système"
+
+msgid "Espace disque"
+msgstr "Espace disque"
+
+msgid "Version PHP"
+msgstr "Version PHP"
+
+msgid "Diagnostics complets"
+msgstr "Diagnostics complets"
+
+msgid "Le champ %s est obligatoire"
+msgstr "Le champ %s est obligatoire"
+
+msgid "Erreur lors de la création du devis"
+msgstr "Erreur lors de la création du devis"
+
+msgid "Erreur lors de la création du produit"
+msgstr "Erreur lors de la création du produit"
+
+msgid "Erreur lors de la création de la catégorie"
+msgstr "Erreur lors de la création de la catégorie"
+
+msgid "Type de catégorie invalide"
+msgstr "Type de catégorie invalide"
+
+msgid "Catégorie invalide"
+msgstr "Catégorie invalide"
+
+msgid "Token de sécurité invalide"
+msgstr "Token de sécurité invalide"
+
+msgid "Êtes-vous sûr de vouloir supprimer cet élément ?"
+msgstr "Êtes-vous sûr de vouloir supprimer cet élément ?"
+
+msgid "Paramètres sauvegardés"
+msgstr "Paramètres sauvegardés"
+
+msgid "Chargement..."
+msgstr "Chargement..."
+
+msgid "Une erreur est survenue."
+msgstr "Une erreur est survenue."
+
+msgid "Succès !"
+msgstr "Succès !"

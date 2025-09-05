@@ -1,0 +1,694 @@
+/**
+ * Styles d'administration pour Restaurant Booking
+ *
+ * @package RestaurantBooking
+ * @since 1.0.0
+ */
+
+/* === VARIABLES CSS === */
+:root {
+    --rb-primary: #0073aa;
+    --rb-primary-dark: #005a87;
+    --rb-secondary: #7b1fa2;
+    --rb-success: #2e7d32;
+    --rb-warning: #f57c00;
+    --rb-error: #c62828;
+    --rb-gray-light: #f5f5f5;
+    --rb-gray-medium: #ddd;
+    --rb-gray-dark: #666;
+    --rb-border-radius: 8px;
+    --rb-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    --rb-shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* === LAYOUT GÉNÉRAL === */
+.restaurant-booking-admin-page {
+    margin: 20px 0;
+}
+
+.restaurant-booking-admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--rb-gray-medium);
+}
+
+.restaurant-booking-admin-header h1 {
+    margin: 0;
+    color: var(--rb-primary);
+}
+
+.restaurant-booking-admin-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* === DASHBOARD === */
+.restaurant-booking-dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.restaurant-booking-stat-box {
+    background: white;
+    padding: 20px;
+    border-radius: var(--rb-border-radius);
+    box-shadow: var(--rb-shadow);
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.restaurant-booking-stat-box:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--rb-shadow-hover);
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--rb-primary);
+    margin-bottom: 5px;
+    line-height: 1;
+}
+
+.stat-label {
+    color: var(--rb-gray-dark);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.restaurant-booking-dashboard-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+@media (max-width: 1024px) {
+    .restaurant-booking-dashboard-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* === WIDGETS === */
+.restaurant-booking-widget {
+    background: white;
+    padding: 20px;
+    border-radius: var(--rb-border-radius);
+    box-shadow: var(--rb-shadow);
+    margin-bottom: 20px;
+}
+
+.restaurant-booking-widget h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rb-gray-light);
+    color: var(--rb-primary);
+    font-size: 18px;
+}
+
+.restaurant-booking-widget h3 {
+    color: var(--rb-primary-dark);
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+/* === ACTIONS RAPIDES === */
+.restaurant-booking-quick-actions .button {
+    display: block;
+    margin-bottom: 10px;
+    text-align: center;
+    width: 100%;
+    padding: 12px;
+    border-radius: var(--rb-border-radius);
+}
+
+.restaurant-booking-quick-actions .button-primary {
+    background: var(--rb-primary);
+    border-color: var(--rb-primary);
+}
+
+.restaurant-booking-quick-actions .button-primary:hover {
+    background: var(--rb-primary-dark);
+    border-color: var(--rb-primary-dark);
+}
+
+/* === BADGES === */
+.service-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.service-restaurant {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.service-remorque {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-draft {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.status-sent {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.status-confirmed {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.status-cancelled {
+    background: #ffebee;
+    color: #c62828;
+}
+
+/* === ÉVÉNEMENTS À VENIR === */
+.upcoming-events-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.upcoming-event {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rb-gray-light);
+    transition: background-color 0.2s ease;
+}
+
+.upcoming-event:hover {
+    background-color: var(--rb-gray-light);
+    margin: 0 -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border-radius: var(--rb-border-radius);
+}
+
+.upcoming-event:last-child {
+    border-bottom: none;
+}
+
+.event-date {
+    background: var(--rb-primary);
+    color: white;
+    padding: 8px 10px;
+    border-radius: var(--rb-border-radius);
+    font-weight: bold;
+    font-size: 12px;
+    text-align: center;
+    min-width: 45px;
+    margin-right: 15px;
+    line-height: 1.2;
+}
+
+.event-details {
+    flex: 1;
+    line-height: 1.4;
+}
+
+.event-details strong {
+    color: var(--rb-primary-dark);
+}
+
+/* === ÉTAT DU SYSTÈME === */
+.system-status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--rb-gray-light);
+}
+
+.system-status-item:last-child {
+    border-bottom: none;
+}
+
+.status-ok {
+    color: var(--rb-success);
+    font-weight: 600;
+}
+
+.status-warning {
+    color: var(--rb-warning);
+    font-weight: 600;
+}
+
+.status-error {
+    color: var(--rb-error);
+    font-weight: 600;
+}
+
+/* === FORMULAIRES === */
+.restaurant-booking-form {
+    background: white;
+    padding: 20px;
+    border-radius: var(--rb-border-radius);
+    box-shadow: var(--rb-shadow);
+}
+
+.restaurant-booking-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.restaurant-booking-form-row.full-width {
+    grid-template-columns: 1fr;
+}
+
+@media (max-width: 768px) {
+    .restaurant-booking-form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.restaurant-booking-form-group {
+    margin-bottom: 20px;
+}
+
+.restaurant-booking-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: var(--rb-primary-dark);
+}
+
+.restaurant-booking-form-group input,
+.restaurant-booking-form-group select,
+.restaurant-booking-form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid var(--rb-gray-medium);
+    border-radius: var(--rb-border-radius);
+    font-size: 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.restaurant-booking-form-group input:focus,
+.restaurant-booking-form-group select:focus,
+.restaurant-booking-form-group textarea:focus {
+    border-color: var(--rb-primary);
+    box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1);
+    outline: none;
+}
+
+.restaurant-booking-form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.restaurant-booking-form-group .description {
+    font-size: 13px;
+    color: var(--rb-gray-dark);
+    margin-top: 5px;
+    font-style: italic;
+}
+
+/* === CHECKBOXES ET RADIOS === */
+.restaurant-booking-checkbox-group,
+.restaurant-booking-radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.restaurant-booking-checkbox-item,
+.restaurant-booking-radio-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.restaurant-booking-checkbox-item input,
+.restaurant-booking-radio-item input {
+    width: auto;
+    margin: 0;
+}
+
+/* === TABLEAUX === */
+.restaurant-booking-table {
+    width: 100%;
+    background: white;
+    border-radius: var(--rb-border-radius);
+    box-shadow: var(--rb-shadow);
+    overflow: hidden;
+}
+
+.restaurant-booking-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.restaurant-booking-table th {
+    background: var(--rb-gray-light);
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--rb-primary-dark);
+    border-bottom: 2px solid var(--rb-gray-medium);
+}
+
+.restaurant-booking-table td {
+    padding: 15px;
+    border-bottom: 1px solid var(--rb-gray-light);
+    vertical-align: top;
+}
+
+.restaurant-booking-table tbody tr:hover {
+    background-color: var(--rb-gray-light);
+}
+
+.restaurant-booking-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* === FILTRES === */
+.restaurant-booking-filters {
+    background: white;
+    padding: 20px;
+    border-radius: var(--rb-border-radius);
+    box-shadow: var(--rb-shadow);
+    margin-bottom: 20px;
+}
+
+.restaurant-booking-filters-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    align-items: end;
+}
+
+.restaurant-booking-filters-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* === PAGINATION === */
+.restaurant-booking-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.restaurant-booking-pagination .page-numbers {
+    padding: 8px 12px;
+    border: 1px solid var(--rb-gray-medium);
+    border-radius: var(--rb-border-radius);
+    text-decoration: none;
+    color: var(--rb-primary);
+    transition: all 0.2s ease;
+}
+
+.restaurant-booking-pagination .page-numbers:hover,
+.restaurant-booking-pagination .page-numbers.current {
+    background: var(--rb-primary);
+    color: white;
+    border-color: var(--rb-primary);
+}
+
+/* === ONGLETS === */
+.restaurant-booking-tabs {
+    border-bottom: 2px solid var(--rb-gray-light);
+    margin-bottom: 20px;
+}
+
+.restaurant-booking-tabs-nav {
+    display: flex;
+    gap: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.restaurant-booking-tabs-nav li {
+    margin: 0;
+}
+
+.restaurant-booking-tabs-nav a {
+    display: block;
+    padding: 15px 20px;
+    text-decoration: none;
+    color: var(--rb-gray-dark);
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.restaurant-booking-tabs-nav a:hover,
+.restaurant-booking-tabs-nav a.active {
+    color: var(--rb-primary);
+    border-bottom-color: var(--rb-primary);
+    background: var(--rb-gray-light);
+}
+
+.restaurant-booking-tab-content {
+    display: none;
+}
+
+.restaurant-booking-tab-content.active {
+    display: block;
+}
+
+/* === MESSAGES === */
+.restaurant-booking-message {
+    padding: 15px 20px;
+    border-radius: var(--rb-border-radius);
+    margin: 20px 0;
+    border-left: 4px solid;
+}
+
+.restaurant-booking-message.success {
+    background: #e8f5e8;
+    border-color: var(--rb-success);
+    color: var(--rb-success);
+}
+
+.restaurant-booking-message.error {
+    background: #ffebee;
+    border-color: var(--rb-error);
+    color: var(--rb-error);
+}
+
+.restaurant-booking-message.warning {
+    background: #fff3e0;
+    border-color: var(--rb-warning);
+    color: var(--rb-warning);
+}
+
+.restaurant-booking-message.info {
+    background: #e3f2fd;
+    border-color: var(--rb-primary);
+    color: var(--rb-primary);
+}
+
+/* === CALENDRIER === */
+.restaurant-booking-calendar {
+    background: white;
+    border-radius: var(--rb-border-radius);
+    box-shadow: var(--rb-shadow);
+    overflow: hidden;
+}
+
+.restaurant-booking-calendar-header {
+    background: var(--rb-primary);
+    color: white;
+    padding: 20px;
+    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.restaurant-booking-calendar-nav {
+    display: flex;
+    gap: 10px;
+}
+
+.restaurant-booking-calendar-nav button {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 12px;
+    border-radius: var(--rb-border-radius);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.restaurant-booking-calendar-nav button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.restaurant-booking-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.restaurant-booking-calendar-day-header {
+    background: var(--rb-gray-light);
+    padding: 15px;
+    text-align: center;
+    font-weight: 600;
+    color: var(--rb-primary-dark);
+    border-bottom: 1px solid var(--rb-gray-medium);
+}
+
+.restaurant-booking-calendar-day {
+    aspect-ratio: 1;
+    border: 1px solid var(--rb-gray-light);
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    position: relative;
+}
+
+.restaurant-booking-calendar-day:hover {
+    background: var(--rb-gray-light);
+}
+
+.restaurant-booking-calendar-day.available {
+    background: #e8f5e8;
+}
+
+.restaurant-booking-calendar-day.unavailable {
+    background: #ffebee;
+}
+
+.restaurant-booking-calendar-day.has-event {
+    background: #e3f2fd;
+}
+
+.restaurant-booking-calendar-day-number {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.restaurant-booking-calendar-day-events {
+    font-size: 11px;
+    color: var(--rb-gray-dark);
+}
+
+/* === LOADING === */
+.restaurant-booking-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+}
+
+.restaurant-booking-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--rb-gray-light);
+    border-top: 4px solid var(--rb-primary);
+    border-radius: 50%;
+    animation: restaurant-booking-spin 1s linear infinite;
+}
+
+@keyframes restaurant-booking-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+    .restaurant-booking-admin-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .restaurant-booking-admin-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .restaurant-booking-dashboard-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .restaurant-booking-filters-row {
+        grid-template-columns: 1fr;
+    }
+
+    .restaurant-booking-tabs-nav {
+        flex-wrap: wrap;
+    }
+
+    .restaurant-booking-calendar-day {
+        aspect-ratio: auto;
+        min-height: 60px;
+    }
+}
+
+/* === UTILITAIRES === */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-left { text-align: left; }
+
+.mb-0 { margin-bottom: 0 !important; }
+.mb-10 { margin-bottom: 10px !important; }
+.mb-20 { margin-bottom: 20px !important; }
+
+.mt-0 { margin-top: 0 !important; }
+.mt-10 { margin-top: 10px !important; }
+.mt-20 { margin-top: 20px !important; }
+
+.hidden { display: none !important; }
+.visible { display: block !important; }
+
+.full-width { width: 100% !important; }
+
+/* === ANIMATIONS === */
+@keyframes restaurant-booking-fade-in {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.restaurant-booking-fade-in {
+    animation: restaurant-booking-fade-in 0.3s ease-out;
+}
+
+/* === PRINT === */
+@media print {
+    .restaurant-booking-admin-actions,
+    .restaurant-booking-quick-actions,
+    .button {
+        display: none !important;
+    }
+    
+    .restaurant-booking-widget {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+}
