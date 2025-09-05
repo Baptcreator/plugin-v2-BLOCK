@@ -3,7 +3,7 @@
  * Plugin Name: Plugin Block & co
  * Plugin URI: https://www.thecomm.agency/
  * Description: Plugin complet de gestion de devis de privatisation pour restaurant avec interface Elementor
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Thecomm
  * Author URI: https://www.thecomm.agency/
  * Text Domain: restaurant-booking
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Définir les constantes du plugin
-define('RESTAURANT_BOOKING_VERSION', '1.0.0');
+define('RESTAURANT_BOOKING_VERSION', '1.0.1');
 define('RESTAURANT_BOOKING_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('RESTAURANT_BOOKING_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('RESTAURANT_BOOKING_PLUGIN_FILE', __FILE__);
@@ -149,6 +149,10 @@ class RestaurantBookingPlugin
         }
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-calendar.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-calendar.php';
+        }
+        // Intégration Google Calendar
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-google-calendar.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-google-calendar.php';
         }
 
         // Interface d'administration

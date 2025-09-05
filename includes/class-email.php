@@ -43,6 +43,13 @@ class RestaurantBooking_Email
     {
         // Configuration des emails
         add_filter('wp_mail_content_type', array($this, 'set_html_content_type'));
+        
+        // Hooks AJAX pour les tests d'email
+        add_action('wp_ajax_restaurant_booking_test_email', array($this, 'ajax_test_email'));
+        add_action('wp_ajax_restaurant_booking_send_quote_email', array($this, 'ajax_send_quote_email'));
+        
+        // Compatibilité WP Mail SMTP
+        add_action('phpmailer_init', array($this, 'configure_phpmailer'));
     }
 
     /**
@@ -163,5 +170,178 @@ class RestaurantBooking_Email
             RestaurantBooking_Logger::error("Erreur envoi email de test", array('email' => $test_email));
             return false;
         }
+    }
+
+    /**
+     * Configuration PHPMailer pour compatibilité WP Mail SMTP
+     */
+    public function configure_phpmailer($phpmailer)
+    {
+        // Vérifier si WP Mail SMTP est actif
+        if (class_exists('WPMailSMTP\Core')) {
+            // WP Mail SMTP gère déjà la configuration
+            return;
+        }
+
+        // Configuration SMTP personnalisée si pas de WP Mail SMTP
+        $smtp_settings = RestaurantBooking_Settings::get_group('smtp');
+        
+        if (!empty($smtp_settings['smtp_host']) && !empty($smtp_settings['smtp_username'])) {
+            $phpmailer->isSMTP();
+            $phpmailer->Host = $smtp_settings['smtp_host'];
+            $phpmailer->SMTPAuth = true;
+            $phpmailer->Username = $smtp_settings['smtp_username'];
+            $phpmailer->Password = $smtp_settings['smtp_password'];
+            $phpmailer->SMTPSecure = $smtp_settings['smtp_encryption'] ?? 'tls';
+            $phpmailer->Port = $smtp_settings['smtp_port'] ?? 587;
+            
+            // Debug si activé
+            if (defined('RESTAURANT_BOOKING_DEBUG') && RESTAURANT_BOOKING_DEBUG) {
+                $phpmailer->SMTPDebug = 2;
+                $phpmailer->Debugoutput = function($str, $level) {
+                    RestaurantBooking_Logger::debug("SMTP Debug: " . $str);
+                };
+            }
+        }
+    }
+
+    /**
+     * AJAX : Test d'envoi d'email
+     */
+    public function ajax_test_email()
+    {
+        // Vérifier les permissions
+        if (!current_user_can('manage_restaurant_settings')) {
+            wp_send_json_error(__('Permissions insuffisantes', 'restaurant-booking'));
+        }
+
+        // Vérifier le nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'restaurant_booking_test_email')) {
+            wp_send_json_error(__('Token de sécurité invalide', 'restaurant-booking'));
+        }
+
+        $test_email = sanitize_email($_POST['test_email'] ?? get_option('admin_email'));
+        
+        if (!is_email($test_email)) {
+            wp_send_json_error(__('Adresse email invalide', 'restaurant-booking'));
+        }
+
+        $result = self::test_email_config($test_email);
+        
+        if ($result) {
+            wp_send_json_success(__('Email de test envoyé avec succès ! Vérifiez votre boîte de réception.', 'restaurant-booking'));
+        } else {
+            wp_send_json_error(__('Erreur lors de l\'envoi de l\'email de test. Vérifiez vos paramètres SMTP.', 'restaurant-booking'));
+        }
+    }
+
+    /**
+     * AJAX : Envoi d'un devis par email
+     */
+    public function ajax_send_quote_email()
+    {
+        // Vérifier les permissions
+        if (!current_user_can('manage_restaurant_quotes')) {
+            wp_send_json_error(__('Permissions insuffisantes', 'restaurant-booking'));
+        }
+
+        // Vérifier le nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'restaurant_booking_send_quote')) {
+            wp_send_json_error(__('Token de sécurité invalide', 'restaurant-booking'));
+        }
+
+        $quote_id = (int) $_POST['quote_id'];
+        
+        if (!$quote_id) {
+            wp_send_json_error(__('ID de devis manquant', 'restaurant-booking'));
+        }
+
+        $result = self::send_quote($quote_id);
+        
+        if (is_wp_error($result)) {
+            wp_send_json_error($result->get_error_message());
+        } else {
+            wp_send_json_success(__('Devis envoyé par email avec succès !', 'restaurant-booking'));
+        }
+    }
+
+    /**
+     * Détecter le plugin SMTP actif
+     */
+    public static function get_smtp_plugin_status()
+    {
+        $status = array(
+            'plugin' => 'none',
+            'active' => false,
+            'configured' => false
+        );
+
+        // Vérifier WP Mail SMTP
+        if (class_exists('WPMailSMTP\Core')) {
+            $status['plugin'] = 'WP Mail SMTP';
+            $status['active'] = true;
+            
+            // Vérifier si configuré
+            $wp_mail_smtp_options = get_option('wp_mail_smtp');
+            $status['configured'] = !empty($wp_mail_smtp_options['mail']['mailer']) && $wp_mail_smtp_options['mail']['mailer'] !== 'mail';
+        }
+        // Vérifier Easy WP SMTP
+        elseif (class_exists('EasyWPSMTP')) {
+            $status['plugin'] = 'Easy WP SMTP';
+            $status['active'] = true;
+            $easy_smtp_options = get_option('swpsmtp_options');
+            $status['configured'] = !empty($easy_smtp_options['smtp_settings']['host']);
+        }
+        // Vérifier Post SMTP
+        elseif (class_exists('PostmanOptions')) {
+            $status['plugin'] = 'Post SMTP';
+            $status['active'] = true;
+            $postman_options = PostmanOptions::getInstance();
+            $status['configured'] = $postman_options->isConfigured();
+        }
+        // Configuration SMTP personnalisée
+        else {
+            $smtp_settings = RestaurantBooking_Settings::get_group('smtp');
+            if (!empty($smtp_settings['smtp_host'])) {
+                $status['plugin'] = 'Configuration personnalisée';
+                $status['active'] = true;
+                $status['configured'] = !empty($smtp_settings['smtp_username']);
+            }
+        }
+
+        return $status;
+    }
+
+    /**
+     * Obtenir les statistiques d'envoi d'emails
+     */
+    public static function get_email_stats()
+    {
+        global $wpdb;
+        
+        $stats = array();
+        
+        // Emails envoyés ce mois
+        $stats['month'] = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*) FROM {$wpdb->prefix}restaurant_logs 
+            WHERE action = 'email_sent' 
+            AND created_at >= %s
+        ", date('Y-m-01 00:00:00')));
+        
+        // Emails envoyés aujourd'hui
+        $stats['today'] = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*) FROM {$wpdb->prefix}restaurant_logs 
+            WHERE action = 'email_sent' 
+            AND DATE(created_at) = %s
+        ", date('Y-m-d')));
+        
+        // Erreurs d'email ce mois
+        $stats['errors'] = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*) FROM {$wpdb->prefix}restaurant_logs 
+            WHERE action = 'email_error' 
+            AND created_at >= %s
+        ", date('Y-m-01 00:00:00')));
+        
+        return $stats;
     }
 }

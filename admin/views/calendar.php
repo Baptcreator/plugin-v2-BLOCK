@@ -1,6 +1,6 @@
 <?php
 /**
- * Vue du calendrier d'administration
+ * Vue du calendrier des disponibilités
  *
  * @package RestaurantBooking
  * @since 1.0.0
@@ -10,44 +10,24 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Variables disponibles : $month, $year, $service_type
-$current_date = new DateTime();
-$calendar_date = new DateTime("$year-$month-01");
+// Paramètres par défaut
+$current_month = $month ?? date('n');
+$current_year = $year ?? date('Y');
+$service_type = $service_type ?? 'restaurant';
 
-// Navigation mois précédent/suivant
-$prev_month = clone $calendar_date;
-$prev_month->modify('-1 month');
-$next_month = clone $calendar_date;
-$next_month->modify('+1 month');
+// Calculer les dates
+$first_day = mktime(0, 0, 0, $current_month, 1, $current_year);
+$last_day = mktime(0, 0, 0, $current_month + 1, 0, $current_year);
+$days_in_month = date('t', $first_day);
+$first_day_of_week = date('w', $first_day);
 
-// Générer les données du calendrier
-$first_day_of_month = clone $calendar_date;
-$last_day_of_month = clone $calendar_date;
-$last_day_of_month->modify('last day of this month');
+// Navigation
+$prev_month = $current_month == 1 ? 12 : $current_month - 1;
+$prev_year = $current_month == 1 ? $current_year - 1 : $current_year;
+$next_month = $current_month == 12 ? 1 : $current_month + 1;
+$next_year = $current_month == 12 ? $current_year + 1 : $current_year;
 
-// Commencer par le lundi de la semaine contenant le premier jour du mois
-$calendar_start = clone $first_day_of_month;
-$calendar_start->modify('monday this week');
-
-// Finir par le dimanche de la semaine contenant le dernier jour du mois
-$calendar_end = clone $last_day_of_month;
-$calendar_end->modify('sunday this week');
-
-// Données d'exemple pour les réservations
-$sample_bookings = array(
-    '2024-01-15' => array(
-        array('time' => '12:00', 'client' => 'Marie Dupont', 'service' => 'restaurant', 'guests' => 4),
-        array('time' => '19:30', 'client' => 'Pierre Martin', 'service' => 'restaurant', 'guests' => 2)
-    ),
-    '2024-01-20' => array(
-        array('time' => '18:00', 'client' => 'Sophie Bernard', 'service' => 'remorque', 'guests' => 25)
-    ),
-    '2024-01-25' => array(
-        array('time' => '14:00', 'client' => 'Jean Durand', 'service' => 'remorque', 'guests' => 50)
-    )
-);
-
-$months_fr = array(
+$month_names = array(
     1 => 'Janvier', 2 => 'Février', 3 => 'Mars', 4 => 'Avril',
     5 => 'Mai', 6 => 'Juin', 7 => 'Juillet', 8 => 'Août',
     9 => 'Septembre', 10 => 'Octobre', 11 => 'Novembre', 12 => 'Décembre'
@@ -55,56 +35,52 @@ $months_fr = array(
 
 ?>
 <div class="wrap">
-    <h1><?php _e('Calendrier des réservations', 'restaurant-booking'); ?></h1>
+    <h1><?php _e('Calendrier des disponibilités', 'restaurant-booking'); ?></h1>
 
-    <!-- Filtres et navigation -->
     <div class="calendar-header">
-        <div class="calendar-navigation">
-            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-calendar&month=' . $prev_month->format('n') . '&year=' . $prev_month->format('Y') . '&service_type=' . $service_type); ?>" class="button">
-                &laquo; <?php echo $months_fr[(int)$prev_month->format('n')]; ?>
+        <!-- Navigation mensuelle -->
+        <div class="calendar-nav">
+            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-calendar&month=' . $prev_month . '&year=' . $prev_year . '&service_type=' . $service_type); ?>" class="button">
+                ← <?php echo $month_names[$prev_month]; ?>
             </a>
             
-            <h2 class="calendar-title">
-                <?php echo $months_fr[$month] . ' ' . $year; ?>
+            <h2 class="current-month">
+                <?php echo $month_names[$current_month] . ' ' . $current_year; ?>
             </h2>
             
-            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-calendar&month=' . $next_month->format('n') . '&year=' . $next_month->format('Y') . '&service_type=' . $service_type); ?>" class="button">
-                <?php echo $months_fr[(int)$next_month->format('n')]; ?> &raquo;
+            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-calendar&month=' . $next_month . '&year=' . $next_year . '&service_type=' . $service_type); ?>" class="button">
+                <?php echo $month_names[$next_month]; ?> →
             </a>
         </div>
 
-        <div class="calendar-filters">
-            <form method="get" class="calendar-filter-form">
-                <input type="hidden" name="page" value="restaurant-booking-calendar">
-                <input type="hidden" name="month" value="<?php echo $month; ?>">
-                <input type="hidden" name="year" value="<?php echo $year; ?>">
-                
-                <select name="service_type" onchange="this.form.submit()">
-                    <option value=""><?php _e('Tous les services', 'restaurant-booking'); ?></option>
-                    <option value="restaurant" <?php selected($service_type, 'restaurant'); ?>><?php _e('Restaurant', 'restaurant-booking'); ?></option>
-                    <option value="remorque" <?php selected($service_type, 'remorque'); ?>><?php _e('Remorque', 'restaurant-booking'); ?></option>
-                </select>
-
-                <a href="<?php echo admin_url('admin.php?page=restaurant-booking-calendar&month=' . date('n') . '&year=' . date('Y')); ?>" class="button">
-                    <?php _e('Aujourd\'hui', 'restaurant-booking'); ?>
-                </a>
-            </form>
+        <!-- Sélection du service -->
+        <div class="service-selector">
+            <label for="service_type_select"><?php _e('Service :', 'restaurant-booking'); ?></label>
+            <select id="service_type_select" onchange="changeServiceType(this.value)">
+                <option value="restaurant" <?php selected($service_type, 'restaurant'); ?>><?php _e('Restaurant', 'restaurant-booking'); ?></option>
+                <option value="remorque" <?php selected($service_type, 'remorque'); ?>><?php _e('Remorque', 'restaurant-booking'); ?></option>
+                <option value="both" <?php selected($service_type, 'both'); ?>><?php _e('Les deux', 'restaurant-booking'); ?></option>
+            </select>
         </div>
     </div>
 
     <!-- Légende -->
     <div class="calendar-legend">
         <div class="legend-item">
-            <span class="legend-color restaurant"></span>
-            <span><?php _e('Restaurant', 'restaurant-booking'); ?></span>
-        </div>
-        <div class="legend-item">
-            <span class="legend-color remorque"></span>
-            <span><?php _e('Remorque', 'restaurant-booking'); ?></span>
+            <span class="legend-color available"></span>
+            <?php _e('Disponible', 'restaurant-booking'); ?>
         </div>
         <div class="legend-item">
             <span class="legend-color unavailable"></span>
-            <span><?php _e('Indisponible', 'restaurant-booking'); ?></span>
+            <?php _e('Non disponible', 'restaurant-booking'); ?>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color booked"></span>
+            <?php _e('Réservé', 'restaurant-booking'); ?>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color past"></span>
+            <?php _e('Passé', 'restaurant-booking'); ?>
         </div>
     </div>
 
@@ -113,101 +89,137 @@ $months_fr = array(
         <table class="calendar-table">
             <thead>
                 <tr>
+                    <th><?php _e('Dim', 'restaurant-booking'); ?></th>
                     <th><?php _e('Lun', 'restaurant-booking'); ?></th>
                     <th><?php _e('Mar', 'restaurant-booking'); ?></th>
                     <th><?php _e('Mer', 'restaurant-booking'); ?></th>
                     <th><?php _e('Jeu', 'restaurant-booking'); ?></th>
                     <th><?php _e('Ven', 'restaurant-booking'); ?></th>
                     <th><?php _e('Sam', 'restaurant-booking'); ?></th>
-                    <th><?php _e('Dim', 'restaurant-booking'); ?></th>
                 </tr>
             </thead>
             <tbody>
                 <?php
-                $current_week_start = clone $calendar_start;
+                $current_date = 1;
+                $today = date('Y-m-d');
                 
-                while ($current_week_start <= $calendar_end) {
-                    echo '<tr>';
+                // Première semaine (peut commencer par des cases vides)
+                echo '<tr>';
+                for ($i = 0; $i < $first_day_of_week; $i++) {
+                    echo '<td class="empty-day"></td>';
+                }
+                
+                for ($i = $first_day_of_week; $i < 7 && $current_date <= $days_in_month; $i++) {
+                    $date_string = sprintf('%04d-%02d-%02d', $current_year, $current_month, $current_date);
+                    $is_past = $date_string < $today;
+                    $is_today = $date_string == $today;
                     
-                    for ($day = 0; $day < 7; $day++) {
-                        $current_day = clone $current_week_start;
-                        $current_day->modify("+$day days");
+                    // Simuler le statut (à remplacer par une vraie requête)
+                    $status = $is_past ? 'past' : 'available';
+                    if ($current_date % 7 == 0) $status = 'unavailable'; // Exemple: dimanche non disponible
+                    if ($current_date % 15 == 0) $status = 'booked'; // Exemple: quelques jours réservés
+                    
+                    $classes = array('calendar-day', $status);
+                    if ($is_today) $classes[] = 'today';
+                    
+                    echo '<td class="' . implode(' ', $classes) . '" data-date="' . $date_string . '">';
+                    echo '<span class="day-number">' . $current_date . '</span>';
+                    
+                    // Indicateur de statut
+                    if (!$is_past) {
+                        echo '<button type="button" class="toggle-availability" onclick="toggleAvailability(\'' . $date_string . '\', \'' . $service_type . '\')">';
+                        echo $status == 'available' ? '✓' : '✗';
+                        echo '</button>';
+                    }
+                    
+                    echo '</td>';
+                    $current_date++;
+                }
+                echo '</tr>';
+                
+                // Semaines suivantes
+                while ($current_date <= $days_in_month) {
+                    echo '<tr>';
+                    for ($i = 0; $i < 7 && $current_date <= $days_in_month; $i++) {
+                        $date_string = sprintf('%04d-%02d-%02d', $current_year, $current_month, $current_date);
+                        $is_past = $date_string < $today;
+                        $is_today = $date_string == $today;
                         
-                        $day_key = $current_day->format('Y-m-d');
-                        $is_current_month = $current_day->format('n') == $month;
-                        $is_today = $current_day->format('Y-m-d') == date('Y-m-d');
-                        $is_past = $current_day < $current_date;
+                        // Simuler le statut
+                        $status = $is_past ? 'past' : 'available';
+                        if ($current_date % 7 == 0) $status = 'unavailable';
+                        if ($current_date % 15 == 0) $status = 'booked';
                         
-                        $classes = array('calendar-day');
-                        if (!$is_current_month) $classes[] = 'other-month';
+                        $classes = array('calendar-day', $status);
                         if ($is_today) $classes[] = 'today';
-                        if ($is_past) $classes[] = 'past';
                         
-                        // Vérifier s'il y a des réservations ce jour
-                        $day_bookings = isset($sample_bookings[$day_key]) ? $sample_bookings[$day_key] : array();
-                        if (!empty($day_bookings)) {
-                            $classes[] = 'has-bookings';
-                        }
+                        echo '<td class="' . implode(' ', $classes) . '" data-date="' . $date_string . '">';
+                        echo '<span class="day-number">' . $current_date . '</span>';
                         
-                        echo '<td class="' . implode(' ', $classes) . '" data-date="' . $day_key . '">';
-                        echo '<div class="day-header">';
-                        echo '<span class="day-number">' . $current_day->format('j') . '</span>';
-                        
-                        if (!empty($day_bookings)) {
-                            echo '<span class="booking-count">' . count($day_bookings) . '</span>';
-                        }
-                        
-                        echo '</div>';
-                        
-                        // Afficher les réservations du jour
-                        if (!empty($day_bookings)) {
-                            echo '<div class="day-bookings">';
-                            foreach ($day_bookings as $booking) {
-                                if ($service_type && $booking['service'] !== $service_type) {
-                                    continue;
-                                }
-                                
-                                echo '<div class="booking-item ' . $booking['service'] . '">';
-                                echo '<div class="booking-time">' . $booking['time'] . '</div>';
-                                echo '<div class="booking-client">' . esc_html($booking['client']) . '</div>';
-                                echo '<div class="booking-guests">' . $booking['guests'] . ' pers.</div>';
-                                echo '</div>';
-                            }
-                            echo '</div>';
+                        if (!$is_past) {
+                            echo '<button type="button" class="toggle-availability" onclick="toggleAvailability(\'' . $date_string . '\', \'' . $service_type . '\')">';
+                            echo $status == 'available' ? '✓' : '✗';
+                            echo '</button>';
                         }
                         
                         echo '</td>';
+                        $current_date++;
                     }
                     
+                    // Compléter la semaine avec des cases vides si nécessaire
+                    for ($j = $i; $j < 7; $j++) {
+                        echo '<td class="empty-day"></td>';
+                    }
                     echo '</tr>';
-                    $current_week_start->modify('+1 week');
                 }
                 ?>
             </tbody>
         </table>
     </div>
 
-    <!-- Statistiques du mois -->
-    <div class="calendar-stats">
-        <h3><?php _e('Statistiques du mois', 'restaurant-booking'); ?></h3>
-        <div class="stats-grid">
-            <div class="stat-item">
-                <div class="stat-number">24</div>
-                <div class="stat-label"><?php _e('Réservations totales', 'restaurant-booking'); ?></div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">156</div>
-                <div class="stat-label"><?php _e('Couverts', 'restaurant-booking'); ?></div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">3 450 €</div>
-                <div class="stat-label"><?php _e('Chiffre d\'affaires', 'restaurant-booking'); ?></div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number">85%</div>
-                <div class="stat-label"><?php _e('Taux d\'occupation', 'restaurant-booking'); ?></div>
-            </div>
+    <!-- Actions groupées -->
+    <div class="calendar-actions">
+        <div class="actions-group">
+            <h3><?php _e('Actions groupées', 'restaurant-booking'); ?></h3>
+            <button type="button" class="button" onclick="blockWeekends()">
+                <?php _e('Bloquer tous les week-ends', 'restaurant-booking'); ?>
+            </button>
+            <button type="button" class="button" onclick="openBulkBlockModal()">
+                <?php _e('Blocage période', 'restaurant-booking'); ?>
+            </button>
+            <button type="button" class="button button-secondary" onclick="resetMonth()">
+                <?php _e('Réinitialiser le mois', 'restaurant-booking'); ?>
+            </button>
         </div>
+    </div>
+</div>
+
+<!-- Modal de blocage groupé -->
+<div id="bulk-block-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3><?php _e('Blocage de période', 'restaurant-booking'); ?></h3>
+        <form id="bulk-block-form">
+            <div class="form-row">
+                <label for="start_date"><?php _e('Date de début', 'restaurant-booking'); ?></label>
+                <input type="date" id="start_date" name="start_date" required>
+            </div>
+            <div class="form-row">
+                <label for="end_date"><?php _e('Date de fin', 'restaurant-booking'); ?></label>
+                <input type="date" id="end_date" name="end_date" required>
+            </div>
+            <div class="form-row">
+                <label for="block_reason"><?php _e('Raison du blocage', 'restaurant-booking'); ?></label>
+                <input type="text" id="block_reason" name="block_reason" placeholder="Vacances, maintenance...">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="button button-primary" onclick="applyBulkBlock()">
+                    <?php _e('Appliquer', 'restaurant-booking'); ?>
+                </button>
+                <button type="button" class="button" onclick="closeBulkBlockModal()">
+                    <?php _e('Annuler', 'restaurant-booking'); ?>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -216,36 +228,37 @@ $months_fr = array(
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 20px 0;
-    padding: 20px;
+    margin-bottom: 20px;
+    padding: 15px;
     background: #fff;
     border: 1px solid #c3c4c7;
     border-radius: 4px;
 }
 
-.calendar-navigation {
+.calendar-nav {
     display: flex;
     align-items: center;
     gap: 20px;
 }
 
-.calendar-title {
+.current-month {
     margin: 0;
     font-size: 24px;
     font-weight: 600;
+    color: #243127;
 }
 
-.calendar-filter-form {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.service-selector select {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
 }
 
 .calendar-legend {
     display: flex;
     gap: 20px;
     margin-bottom: 20px;
-    padding: 15px;
+    padding: 10px;
     background: #f9f9f9;
     border-radius: 4px;
 }
@@ -253,19 +266,21 @@ $months_fr = array(
 .legend-item {
     display: flex;
     align-items: center;
-    gap: 5px;
-    font-size: 13px;
+    gap: 8px;
+    font-size: 14px;
 }
 
 .legend-color {
-    width: 12px;
-    height: 12px;
+    width: 16px;
+    height: 16px;
     border-radius: 2px;
+    border: 1px solid #ddd;
 }
 
-.legend-color.restaurant { background: #d4edda; }
-.legend-color.remorque { background: #d1ecf1; }
+.legend-color.available { background: #d4edda; }
 .legend-color.unavailable { background: #f8d7da; }
+.legend-color.booked { background: #fff3cd; }
+.legend-color.past { background: #e2e3e5; }
 
 .calendar-container {
     background: #fff;
@@ -280,167 +295,216 @@ $months_fr = array(
 }
 
 .calendar-table th {
-    background: #f9f9f9;
-    padding: 15px 5px;
+    background: #243127;
+    color: #fff;
+    padding: 12px;
     text-align: center;
     font-weight: 600;
-    border-bottom: 1px solid #c3c4c7;
+    border-right: 1px solid #ddd;
+}
+
+.calendar-table th:last-child {
+    border-right: none;
 }
 
 .calendar-day {
     width: 14.28%;
-    height: 120px;
-    vertical-align: top;
-    border: 1px solid #e1e1e1;
+    height: 80px;
+    border: 1px solid #e2e3e5;
     position: relative;
-    background: #fff;
+    vertical-align: top;
+    padding: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
 
-.calendar-day.other-month {
-    background: #f9f9f9;
-    color: #999;
+.calendar-day:hover:not(.past) {
+    background-color: rgba(36, 49, 39, 0.1);
 }
 
-.calendar-day.today {
-    background: #e7f3ff;
+.calendar-day.available {
+    background-color: #d4edda;
+}
+
+.calendar-day.unavailable {
+    background-color: #f8d7da;
+}
+
+.calendar-day.booked {
+    background-color: #fff3cd;
 }
 
 .calendar-day.past {
-    background: #f5f5f5;
+    background-color: #e2e3e5;
+    color: #6c757d;
+    cursor: not-allowed;
 }
 
-.calendar-day.has-bookings {
-    background: #f0f8f0;
-}
-
-.day-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 8px;
-    border-bottom: 1px solid #e1e1e1;
-    background: rgba(0,0,0,0.02);
+.calendar-day.today {
+    border: 2px solid #FFB404;
+    font-weight: bold;
 }
 
 .day-number {
+    display: block;
+    font-size: 16px;
     font-weight: 600;
-    font-size: 14px;
+    margin-bottom: 5px;
 }
 
-.booking-count {
-    background: #0073aa;
-    color: white;
-    border-radius: 10px;
-    padding: 2px 6px;
-    font-size: 11px;
-    font-weight: bold;
+.toggle-availability {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.day-bookings {
-    padding: 5px;
-    max-height: 90px;
-    overflow-y: auto;
+.empty-day {
+    height: 80px;
+    background: #f8f9fa;
 }
 
-.booking-item {
-    margin-bottom: 3px;
-    padding: 3px 5px;
-    border-radius: 3px;
-    font-size: 11px;
-    line-height: 1.2;
-}
-
-.booking-item.restaurant {
-    background: #d4edda;
-    border-left: 3px solid #28a745;
-}
-
-.booking-item.remorque {
-    background: #d1ecf1;
-    border-left: 3px solid #17a2b8;
-}
-
-.booking-time {
-    font-weight: bold;
-}
-
-.booking-client {
-    color: #333;
-}
-
-.booking-guests {
-    color: #666;
-    font-size: 10px;
-}
-
-.calendar-stats {
-    margin-top: 30px;
-    padding: 20px;
+.calendar-actions {
+    margin-top: 20px;
+    padding: 15px;
     background: #fff;
     border: 1px solid #c3c4c7;
     border-radius: 4px;
 }
 
-.calendar-stats h3 {
+.actions-group h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #243127;
+}
+
+.actions-group .button {
+    margin-right: 10px;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h3 {
     margin-top: 0;
     margin-bottom: 20px;
+    color: #243127;
 }
 
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
+.form-row {
+    margin-bottom: 15px;
 }
 
-.stat-item {
-    text-align: center;
-    padding: 15px;
-    background: #f9f9f9;
+.form-row label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.form-row input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
     border-radius: 4px;
 }
 
-.stat-number {
-    font-size: 24px;
-    font-weight: bold;
-    color: #0073aa;
-    margin-bottom: 5px;
+.modal-actions {
+    margin-top: 20px;
+    text-align: right;
 }
 
-.stat-label {
-    font-size: 13px;
-    color: #666;
-}
-
-@media (max-width: 768px) {
-    .calendar-header {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .calendar-day {
-        height: 80px;
-    }
-    
-    .booking-item {
-        font-size: 10px;
-    }
+.modal-actions .button {
+    margin-left: 10px;
 }
 </style>
 
 <script>
-jQuery(document).ready(function($) {
-    // Clic sur une journée pour voir les détails
-    $('.calendar-day').on('click', function() {
-        var date = $(this).data('date');
-        if (date && !$(this).hasClass('past') && !$(this).hasClass('other-month')) {
-            // Ici vous pourriez ouvrir une modal ou rediriger vers une page de détail
-            console.log('Clic sur la date:', date);
-        }
-    });
+function changeServiceType(serviceType) {
+    var url = new URL(window.location);
+    url.searchParams.set('service_type', serviceType);
+    window.location.href = url.toString();
+}
+
+function toggleAvailability(date, serviceType) {
+    // TODO: Implémenter la logique AJAX pour basculer la disponibilité
+    console.log('Toggle availability for', date, serviceType);
     
-    // Survol pour afficher plus d'informations
-    $('.booking-item').on('mouseenter', function() {
-        // Ici vous pourriez afficher une tooltip avec plus de détails
-    });
-});
+    // Simulation visuelle
+    var dayElement = document.querySelector('[data-date="' + date + '"]');
+    var button = dayElement.querySelector('.toggle-availability');
+    
+    if (dayElement.classList.contains('available')) {
+        dayElement.classList.remove('available');
+        dayElement.classList.add('unavailable');
+        button.textContent = '✗';
+    } else {
+        dayElement.classList.remove('unavailable');
+        dayElement.classList.add('available');
+        button.textContent = '✓';
+    }
+}
+
+function blockWeekends() {
+    // TODO: Implémenter le blocage des week-ends
+    alert('Fonctionnalité en cours de développement');
+}
+
+function openBulkBlockModal() {
+    document.getElementById('bulk-block-modal').style.display = 'flex';
+}
+
+function closeBulkBlockModal() {
+    document.getElementById('bulk-block-modal').style.display = 'none';
+}
+
+function applyBulkBlock() {
+    var startDate = document.getElementById('start_date').value;
+    var endDate = document.getElementById('end_date').value;
+    var reason = document.getElementById('block_reason').value;
+    
+    if (!startDate || !endDate) {
+        alert('Veuillez saisir les dates de début et de fin');
+        return;
+    }
+    
+    // TODO: Implémenter la logique AJAX pour le blocage groupé
+    alert('Période bloquée du ' + startDate + ' au ' + endDate + (reason ? ' (' + reason + ')' : ''));
+    closeBulkBlockModal();
+}
+
+function resetMonth() {
+    if (confirm('Êtes-vous sûr de vouloir réinitialiser toutes les disponibilités du mois ?')) {
+        // TODO: Implémenter la réinitialisation
+        alert('Fonctionnalité en cours de développement');
+    }
+}
 </script>

@@ -1,0 +1,179 @@
+/**
+ * Corrections de mise en page pour l'interface admin Block & Co
+ * Suppression des animations et correction des marges/largeurs
+ */
+
+/* Force la largeur complète pour toutes les pages Block & Co */
+.wrap {
+    max-width: none !important;
+    width: 100% !important;
+}
+
+/* Corrections spécifiques pour la page emails */
+.email-status-section {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 30px 0 !important;
+}
+
+.email-status-section .status-card {
+    margin-bottom: 30px !important;
+}
+
+.email-stats {
+    margin: 40px 0 30px 0 !important;
+}
+
+.smtp-recommendations {
+    margin: 40px 0 30px 0 !important;
+}
+
+/* Corrections spécifiques pour la page intégration */
+.restaurant-booking-integration {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.integration-method {
+    margin-bottom: 30px !important;
+}
+
+/* Correction des marges des widgets dans l'onglet intégration */
+.widget-option {
+    padding: 15px !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+}
+
+.widget-options {
+    padding: 0 5px !important;
+    box-sizing: border-box !important;
+}
+
+.step {
+    overflow: hidden !important;
+}
+
+.step-content {
+    overflow: hidden !important;
+}
+
+/* Suppression de tous les transform et animations */
+* {
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Réactivation des transitions basiques uniquement pour les couleurs */
+.button,
+.button-primary,
+.button-secondary,
+.copy-btn,
+.widget-option,
+.shortcode-item,
+.stat-item,
+.recommendation-item,
+.status-card {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
+}
+
+/* Correction des espacements pour éviter les collisions */
+.restaurant-booking-integration h2,
+.email-status-section h2 {
+    margin-top: 40px !important;
+    margin-bottom: 25px !important;
+}
+
+.restaurant-booking-integration h1,
+.email-status-section h1 {
+    margin-bottom: 30px !important;
+}
+
+/* Correction du conseil qui colle au bloc WP Mail SMTP */
+.smtp-recommendations p:first-of-type {
+    margin-bottom: 20px !important;
+}
+
+.smtp-recommendations .recommendation-grid + div {
+    margin-top: 30px !important;
+}
+
+/* Correction des statistiques qui touchent le statut SMTP */
+.email-stats h4 {
+    margin-top: 20px !important;
+}
+
+/* Largeur complète pour tous les conteneurs principaux */
+.restaurant-booking-admin,
+.restaurant-booking-integration,
+.email-status-section {
+    width: 100% !important;
+    max-width: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Correction des marges internes des cartes */
+.admin-card,
+.integration-method,
+.settings-section {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Suppression des box-shadow au hover pour éviter les mouvements visuels */
+.status-card:hover,
+.stat-item:hover,
+.recommendation-item:hover,
+.widget-option:hover,
+.shortcode-item:hover,
+.tip-item:hover,
+.demo-page:hover,
+.usage-method:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+}
+
+/* Correction responsive */
+@media (max-width: 768px) {
+    .wrap {
+        padding: 10px !important;
+    }
+    
+    .restaurant-booking-integration,
+    .email-status-section {
+        margin: 10px 0 !important;
+    }
+    
+    .integration-method,
+    .status-card,
+    .settings-section {
+        margin-bottom: 20px !important;
+        padding: 15px !important;
+    }
+    
+    .widget-options {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        padding: 0 !important;
+    }
+    
+    .widget-option {
+        padding: 12px !important;
+        gap: 10px !important;
+    }
+    
+    .widget-info strong {
+        font-size: 14px !important;
+        white-space: normal !important;
+    }
+    
+    .widget-info p {
+        font-size: 12px !important;
+    }
+}

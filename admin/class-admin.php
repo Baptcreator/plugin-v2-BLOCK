@@ -48,9 +48,36 @@ class RestaurantBooking_Admin
             return;
         }
 
+        // Charger les styles globaux pour toutes les pages Block & Co
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
+
         // Traiter les actions POST
         if (isset($_POST['restaurant_booking_action'])) {
             $this->handle_post_action();
+        }
+    }
+
+    /**
+     * Charger les assets admin
+     */
+    public function enqueue_admin_assets($hook)
+    {
+        // Charger seulement sur les pages Block & Co
+        if (strpos($hook, 'restaurant-booking') !== false) {
+            wp_enqueue_style(
+                'restaurant-booking-admin-global',
+                RESTAURANT_BOOKING_PLUGIN_URL . 'assets/css/admin-global.css',
+                array(),
+                RESTAURANT_BOOKING_VERSION
+            );
+            
+            // Charger les corrections de mise en page
+            wp_enqueue_style(
+                'restaurant-booking-admin-layout-fix',
+                RESTAURANT_BOOKING_PLUGIN_URL . 'assets/css/admin-layout-fix.css',
+                array('restaurant-booking-admin-global'),
+                RESTAURANT_BOOKING_VERSION
+            );
         }
     }
 
@@ -59,10 +86,10 @@ class RestaurantBooking_Admin
      */
     public function add_admin_menus()
     {
-        // Menu principal selon le cahier des charges
+        // Menu principal Block & Co
         add_menu_page(
-            __('Restaurant Devis', 'restaurant-booking'),
-            __('Restaurant Devis', 'restaurant-booking'),
+            __('Block & Co', 'restaurant-booking'),
+            __('Block & Co', 'restaurant-booking'),
             'manage_restaurant_quotes',
             'restaurant-booking',
             array($this, 'dashboard_page'),
@@ -148,6 +175,16 @@ class RestaurantBooking_Admin
             'manage_restaurant_quotes',
             'restaurant-booking-calendar',
             array($this, 'calendar_page')
+        );
+
+        // Sous-menu Google Calendar (intégration)
+        add_submenu_page(
+            'restaurant-booking',
+            __('Google Calendar', 'restaurant-booking'),
+            __('Google Calendar', 'restaurant-booking'),
+            'manage_restaurant_settings',
+            'restaurant-booking-google-settings',
+            array($this, 'google_calendar_page')
         );
 
         // Sous-menu Diagnostics (visible seulement en mode debug)
@@ -436,6 +473,34 @@ class RestaurantBooking_Admin
         }
 
         include RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/views/calendar.php';
+    }
+
+    /**
+     * Page de configuration Google Calendar
+     */
+    public function google_calendar_page()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-google-calendar.php';
+        
+        $google_calendar = RestaurantBooking_Google_Calendar::get_instance();
+        
+        // Traitement des actions
+        if (isset($_POST['save_google_settings'])) {
+            $this->save_google_calendar_settings($_POST);
+        }
+        
+        if (isset($_POST['test_connection'])) {
+            $test_result = $google_calendar->test_connection();
+        }
+        
+        if (isset($_POST['sync_calendar'])) {
+            $google_calendar->sync_calendar();
+        }
+        
+        $auth_url = $google_calendar->get_auth_url();
+        $is_connected = !empty(get_option('restaurant_booking_google_access_token'));
+        
+        include RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/views/google-calendar-settings.php';
     }
 
     /**
@@ -751,5 +816,45 @@ class RestaurantBooking_Admin
         header('Content-Disposition: attachment; filename="restaurant-booking-settings-' . date('Y-m-d') . '.json"');
         echo json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         exit;
+    }
+
+    /**
+     * Sauvegarder les paramètres Google Calendar
+     */
+    private function save_google_calendar_settings($data)
+    {
+        // Vérifier le nonce
+        if (!wp_verify_nonce($data['_wpnonce'], 'google_calendar_settings')) {
+            return new WP_Error('invalid_nonce', __('Token de sécurité invalide', 'restaurant-booking'));
+        }
+
+        // Sauvegarder les paramètres
+        update_option('restaurant_booking_google_client_id', sanitize_text_field($data['client_id']));
+        update_option('restaurant_booking_google_client_secret', sanitize_text_field($data['client_secret']));
+        update_option('restaurant_booking_google_calendar_id', sanitize_text_field($data['calendar_id']));
+        update_option('restaurant_booking_google_sync_frequency', sanitize_text_field($data['sync_frequency']));
+
+        // Programmer la synchronisation automatique
+        $this->schedule_google_sync($data['sync_frequency']);
+
+        add_action('admin_notices', function() {
+            echo '<div class="notice notice-success"><p>' . __('Paramètres Google Calendar sauvegardés', 'restaurant-booking') . '</p></div>';
+        });
+
+        return true;
+    }
+
+    /**
+     * Programmer la synchronisation Google Calendar
+     */
+    private function schedule_google_sync($frequency)
+    {
+        // Supprimer l'ancien cron
+        wp_clear_scheduled_hook('restaurant_booking_google_sync');
+
+        // Programmer le nouveau si ce n'est pas manuel
+        if ($frequency !== 'manual') {
+            wp_schedule_event(time(), $frequency, 'restaurant_booking_google_sync');
+        }
     }
 }
