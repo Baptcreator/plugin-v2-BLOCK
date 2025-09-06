@@ -249,17 +249,6 @@ class RestaurantBooking_Products_BuffetSucre_Admin
                         </td>
                     </tr>
 
-                    <tr>
-                        <th scope="row">
-                            <label for="unit_per_person"><?php _e('Quantité par personne', 'restaurant-booking'); ?></label>
-                        </th>
-                        <td>
-                            <input type="text" id="unit_per_person" name="unit_per_person" 
-                                   value="<?php echo $product ? esc_attr($product['unit_per_person']) : '1 portion/pers'; ?>" 
-                                   class="regular-text" placeholder="Ex: 1 portion/pers ou 2 pièces/pers">
-                            <p class="description"><?php _e('Quantité recommandée par personne.', 'restaurant-booking'); ?></p>
-                        </td>
-                    </tr>
 
                     <tr>
                         <th scope="row">
@@ -269,26 +258,27 @@ class RestaurantBooking_Products_BuffetSucre_Admin
                             <input type="number" id="product_price" name="product_price" 
                                    value="<?php echo $product ? $product['price'] : ''; ?>" 
                                    step="0.01" min="0" class="small-text" required> €
-                            <p class="description"><?php _e('Prix pour la quantité indiquée.', 'restaurant-booking'); ?></p>
+                            <p class="description"><?php _e('Prix du dessert.', 'restaurant-booking'); ?></p>
                         </td>
                     </tr>
 
+
                     <tr>
                         <th scope="row">
-                            <label for="unit_label"><?php _e('Unité de vente', 'restaurant-booking'); ?></label>
+                            <label><?php _e('Suppléments disponibles', 'restaurant-booking'); ?></label>
                         </th>
                         <td>
-                            <select id="unit_label" name="unit_label">
-                                <option value="/6 personnes" <?php selected($product['unit_label'] ?? '', '/6 personnes'); ?>>
-                                    <?php _e('Par 6 personnes', 'restaurant-booking'); ?>
-                                </option>
-                                <option value="/10 personnes" <?php selected($product['unit_label'] ?? '', '/10 personnes'); ?>>
-                                    <?php _e('Par 10 personnes', 'restaurant-booking'); ?>
-                                </option>
-                                <option value="/portion" <?php selected($product['unit_label'] ?? '', '/portion'); ?>>
-                                    <?php _e('Par portion individuelle', 'restaurant-booking'); ?>
-                                </option>
-                            </select>
+                            <div id="supplements_container">
+                                <p class="description"><?php _e('Ajoutez des suppléments optionnels pour ce dessert (ex: "Chantilly" +1€)', 'restaurant-booking'); ?></p>
+                                
+                                <div id="supplements_list">
+                                    <!-- Les suppléments seront ajoutés dynamiquement ici -->
+                                </div>
+                                
+                                <button type="button" class="button button-secondary" id="add_supplement_button">
+                                    <?php _e('+ Ajouter un supplément', 'restaurant-booking'); ?>
+                                </button>
+                            </div>
                         </td>
                     </tr>
 
@@ -297,10 +287,17 @@ class RestaurantBooking_Products_BuffetSucre_Admin
                             <label for="product_image"><?php _e('Image du dessert', 'restaurant-booking'); ?></label>
                         </th>
                         <td>
-                            <input type="url" id="product_image" name="product_image" 
-                                   value="<?php echo $product ? esc_url($product['image_url']) : ''; ?>" 
-                                   class="regular-text">
-                            <p class="description"><?php _e('URL de l\'image du dessert (optionnel).', 'restaurant-booking'); ?></p>
+                            <button type="button" class="button" id="upload_image_button">
+                                <?php _e('Choisir une image', 'restaurant-booking'); ?>
+                            </button>
+                            <input type="hidden" id="product_image_id" name="product_image_id" 
+                                   value="<?php echo $product ? esc_attr($product['image_id']) : ''; ?>">
+                            <div id="image_preview" style="margin-top: 10px;">
+                                <?php if ($product && $product['image_id']): ?>
+                                    <?php echo wp_get_attachment_image($product['image_id'], 'thumbnail'); ?>
+                                <?php endif; ?>
+                            </div>
+                            <p class="description"><?php _e('Image du dessert depuis la médiathèque WordPress.', 'restaurant-booking'); ?></p>
                         </td>
                     </tr>
 
@@ -321,6 +318,161 @@ class RestaurantBooking_Products_BuffetSucre_Admin
                 <?php submit_button($product ? __('Mettre à jour le dessert', 'restaurant-booking') : __('Créer le dessert', 'restaurant-booking')); ?>
             </form>
         </div>
+
+        <!-- Modal pour ajouter un supplément -->
+        <div id="supplement_modal" style="display: none;">
+            <div class="supplement-modal-content">
+                <h3 id="supplement_modal_title"><?php _e('Ajouter un supplément', 'restaurant-booking'); ?></h3>
+                <form id="supplement_form">
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="supplement_name"><?php _e('Nom du supplément', 'restaurant-booking'); ?> *</label></th>
+                            <td>
+                                <input type="text" id="supplement_name" name="supplement_name" class="regular-text" required
+                                       placeholder="<?php _e('Ex: Chantilly, Coulis de fruits, Crème anglaise', 'restaurant-booking'); ?>">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="supplement_price"><?php _e('Prix', 'restaurant-booking'); ?> *</label></th>
+                            <td>
+                                <input type="number" id="supplement_price" name="supplement_price" step="0.01" min="0" class="small-text" required> €
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="supplement_max_qty"><?php _e('Quantité maximum', 'restaurant-booking'); ?></label></th>
+                            <td>
+                                <input type="number" id="supplement_max_qty" name="supplement_max_qty" min="1" max="10" value="10" class="small-text">
+                                <p class="description"><?php _e('Quantité maximum par commande (1-10)', 'restaurant-booking'); ?></p>
+                            </td>
+                        </tr>
+                    </table>
+                    <p class="submit">
+                        <input type="submit" class="button-primary" value="<?php _e('Enregistrer', 'restaurant-booking'); ?>">
+                        <button type="button" class="button" id="cancel_supplement"><?php _e('Annuler', 'restaurant-booking'); ?></button>
+                    </p>
+                </form>
+            </div>
+        </div>
+
+        <script>
+        jQuery(document).ready(function($) {
+            var mediaUploader;
+            var supplementCounter = 0;
+            
+            // Sélecteur d'images WordPress
+            $('#upload_image_button').click(function(e) {
+                e.preventDefault();
+                
+                if (mediaUploader) {
+                    mediaUploader.open();
+                    return;
+                }
+                
+                mediaUploader = wp.media({
+                    title: '<?php _e('Choisir une image', 'restaurant-booking'); ?>',
+                    button: {
+                        text: '<?php _e('Utiliser cette image', 'restaurant-booking'); ?>'
+                    },
+                    multiple: false
+                });
+                
+                mediaUploader.on('select', function() {
+                    var attachment = mediaUploader.state().get('selection').first().toJSON();
+                    $('#product_image_id').val(attachment.id);
+                    $('#image_preview').html('<img src="' + attachment.sizes.thumbnail.url + '" alt="">');
+                });
+                
+                mediaUploader.open();
+            });
+            
+            // Gestion des suppléments
+            $('#add_supplement_button').click(function() {
+                $('#supplement_modal_title').text('<?php _e('Ajouter un supplément', 'restaurant-booking'); ?>');
+                $('#supplement_form')[0].reset();
+                $('#supplement_max_qty').val(10);
+                $('#supplement_modal').show();
+            });
+            
+            $('#cancel_supplement').click(function() {
+                $('#supplement_modal').hide();
+            });
+            
+            // Soumettre le formulaire de supplément
+            $('#supplement_form').on('submit', function(e) {
+                e.preventDefault();
+                
+                var supplementName = $('#supplement_name').val();
+                var supplementPrice = $('#supplement_price').val();
+                var supplementMaxQty = $('#supplement_max_qty').val();
+                
+                if (!supplementName || !supplementPrice) {
+                    alert('<?php _e('Veuillez remplir tous les champs obligatoires.', 'restaurant-booking'); ?>');
+                    return;
+                }
+                
+                // Ajouter le supplément à la liste
+                var supplementHtml = '<div class="supplement-item" data-supplement-id="' + supplementCounter + '">';
+                supplementHtml += '<h4>' + supplementName + ' (+' + parseFloat(supplementPrice).toFixed(2) + '€) [Quantité: 1-' + supplementMaxQty + ']</h4>';
+                supplementHtml += '<input type="hidden" name="supplements[' + supplementCounter + '][name]" value="' + supplementName + '">';
+                supplementHtml += '<input type="hidden" name="supplements[' + supplementCounter + '][price]" value="' + supplementPrice + '">';
+                supplementHtml += '<input type="hidden" name="supplements[' + supplementCounter + '][max_qty]" value="' + supplementMaxQty + '">';
+                supplementHtml += '<button type="button" class="button button-small delete-supplement" data-supplement-id="' + supplementCounter + '">';
+                supplementHtml += '<?php _e('Supprimer', 'restaurant-booking'); ?>';
+                supplementHtml += '</button>';
+                supplementHtml += '</div>';
+                
+                $('#supplements_list').append(supplementHtml);
+                supplementCounter++;
+                
+                $('#supplement_modal').hide();
+            });
+            
+            // Supprimer un supplément
+            $(document).on('click', '.delete-supplement', function() {
+                if (confirm('<?php _e('Êtes-vous sûr de vouloir supprimer ce supplément ?', 'restaurant-booking'); ?>')) {
+                    $(this).closest('.supplement-item').remove();
+                }
+            });
+        });
+        </script>
+
+        <style>
+        #supplement_modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .supplement-modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .supplement-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .supplement-item h4 {
+            margin: 0;
+            flex: 1;
+        }
+        </style>
         <?php
     }
 

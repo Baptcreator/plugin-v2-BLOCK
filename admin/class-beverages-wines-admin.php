@@ -393,6 +393,25 @@ class RestaurantBooking_Beverages_Wines_Admin
 
                     <tr>
                         <th scope="row">
+                            <label for="product_image"><?php _e('Image du vin', 'restaurant-booking'); ?></label>
+                        </th>
+                        <td>
+                            <button type="button" class="button" id="upload_image_button">
+                                <?php _e('Choisir une image', 'restaurant-booking'); ?>
+                            </button>
+                            <input type="hidden" id="product_image_id" name="product_image_id" 
+                                   value="<?php echo $product ? esc_attr($product['image_id']) : ''; ?>">
+                            <div id="image_preview" style="margin-top: 10px;">
+                                <?php if ($product && $product['image_id']): ?>
+                                    <?php echo wp_get_attachment_image($product['image_id'], 'thumbnail'); ?>
+                                <?php endif; ?>
+                            </div>
+                            <p class="description"><?php _e('Image du vin depuis la médiathèque WordPress.', 'restaurant-booking'); ?></p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th scope="row">
                             <label for="is_active"><?php _e('Statut', 'restaurant-booking'); ?></label>
                         </th>
                         <td>
@@ -408,6 +427,38 @@ class RestaurantBooking_Beverages_Wines_Admin
                 <?php submit_button($product ? __('Mettre à jour le vin', 'restaurant-booking') : __('Créer le vin', 'restaurant-booking')); ?>
             </form>
         </div>
+
+        <script>
+        jQuery(document).ready(function($) {
+            var mediaUploader;
+            
+            // Sélecteur d'images WordPress
+            $('#upload_image_button').click(function(e) {
+                e.preventDefault();
+                
+                if (mediaUploader) {
+                    mediaUploader.open();
+                    return;
+                }
+                
+                mediaUploader = wp.media({
+                    title: '<?php _e('Choisir une image', 'restaurant-booking'); ?>',
+                    button: {
+                        text: '<?php _e('Utiliser cette image', 'restaurant-booking'); ?>'
+                    },
+                    multiple: false
+                });
+                
+                mediaUploader.on('select', function() {
+                    var attachment = mediaUploader.state().get('selection').first().toJSON();
+                    $('#product_image_id').val(attachment.id);
+                    $('#image_preview').html('<img src="' + attachment.sizes.thumbnail.url + '" alt="">');
+                });
+                
+                mediaUploader.open();
+            });
+        });
+        </script>
         <?php
     }
 

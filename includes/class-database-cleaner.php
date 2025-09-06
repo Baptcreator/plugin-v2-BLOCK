@@ -23,13 +23,15 @@ class RestaurantBooking_Database_Cleaner
             // Commencer une transaction
             $wpdb->query('START TRANSACTION');
             
-            // Supprimer les données liées aux produits
+            // Supprimer les données liées aux produits ET les catégories dupliquées
             $tables_to_clean = array(
-                $wpdb->prefix . 'restaurant_product_supplements',
-                $wpdb->prefix . 'restaurant_accompaniment_options',
+                $wpdb->prefix . 'restaurant_product_supplements_v2', // Nouveaux suppléments
+                $wpdb->prefix . 'restaurant_product_supplements',    // Anciens suppléments
                 $wpdb->prefix . 'restaurant_accompaniment_suboptions',
+                $wpdb->prefix . 'restaurant_accompaniment_options',
                 $wpdb->prefix . 'restaurant_beverage_sizes',
-                $wpdb->prefix . 'restaurant_products'
+                $wpdb->prefix . 'restaurant_products',
+                $wpdb->prefix . 'restaurant_categories' // Supprimer TOUTES les catégories pour éliminer doublons
             );
             
             $deleted_counts = array();

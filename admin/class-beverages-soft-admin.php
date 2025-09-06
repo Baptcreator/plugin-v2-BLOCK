@@ -100,8 +100,8 @@ class RestaurantBooking_Beverages_Soft_Admin
                                     </div>
                                 </td>
                                 <td>
-                                    <strong><?php echo $product['volume_cl']; ?> cl</strong>
-                                    <br><small><?php echo esc_html($product['unit_label']); ?></small>
+                                    <strong><?php echo esc_html($product['size_label']); ?></strong>
+                                    <br><small><?php echo $product['size_cl']; ?> cl</small>
                                 </td>
                                 <td>
                                     <strong><?php echo number_format($product['price'], 2, ',', ' '); ?> €</strong>
@@ -477,19 +477,19 @@ class RestaurantBooking_Beverages_Soft_Admin
             height: 100%;
             background: rgba(0,0,0,0.5);
             z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .size-modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             background: white;
             padding: 20px;
             border-radius: 5px;
             max-width: 600px;
             width: 90%;
-            max-height: 80%;
+            max-height: 80vh;
             overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
         .size-item {
             border: 1px solid #ddd;
@@ -524,28 +524,71 @@ class RestaurantBooking_Beverages_Soft_Admin
     }
 
     /**
-     * Obtenir les boissons soft depuis la base de données
+     * Obtenir les boissons soft depuis la base de données (nouveau système multi-tailles)
      */
     private function get_soft_beverages()
     {
         global $wpdb;
 
+        // Récupérer les boissons avec leurs tailles
+        $beverages = array();
+        
         $products = $wpdb->get_results($wpdb->prepare("
             SELECT p.*, c.service_type
             FROM {$wpdb->prefix}restaurant_products p
             INNER JOIN {$wpdb->prefix}restaurant_categories c ON p.category_id = c.id
-            WHERE c.type = %s
-            ORDER BY p.suggested_beverage DESC, p.display_order ASC, p.name ASC
+            WHERE c.type = %s AND p.is_active = 1
+            ORDER BY p.display_order ASC, p.name ASC
         ", 'soft'), ARRAY_A);
 
-        // Convertir les types
-        foreach ($products as &$product) {
-            $product['price'] = (float) $product['price'];
-            $product['volume_cl'] = (int) $product['volume_cl'];
-            $product['suggested_beverage'] = (bool) $product['suggested_beverage'];
-            $product['is_active'] = (bool) $product['is_active'];
+        foreach ($products as $product) {
+            if ($product['has_multiple_sizes']) {
+                // Récupérer toutes les tailles pour cette boisson
+                $sizes = $wpdb->get_results($wpdb->prepare("
+                    SELECT * FROM {$wpdb->prefix}restaurant_beverage_sizes 
+                    WHERE product_id = %d
+                    ORDER BY display_order ASC, size_cl ASC
+                ", $product['id']), ARRAY_A);
+                
+                foreach ($sizes as $size) {
+                    $beverages[] = array(
+                        'id' => $product['id'],
+                        'size_id' => $size['id'],
+                        'name' => $product['name'],
+                        'description' => $product['description'],
+                        'size_label' => $size['size_label'],
+                        'size_cl' => (int) $size['size_cl'],
+                        'price' => (float) $size['price'],
+                        'image_id' => $size['image_id'],
+                        'image_url' => $size['image_id'] ? wp_get_attachment_image_url($size['image_id'], 'thumbnail') : '',
+                        'is_featured' => (bool) $size['is_featured'],
+                        'suggested_beverage' => (bool) $size['is_featured'], // Utiliser is_featured comme suggestion
+                        'is_active' => (bool) $product['is_active'],
+                        'service_type' => $product['service_type'],
+                        'has_multiple_sizes' => true
+                    );
+                }
+            } else {
+                // Ancien système (compatibilité)
+                $beverages[] = array(
+                    'id' => $product['id'],
+                    'size_id' => null,
+                    'name' => $product['name'],
+                    'description' => $product['description'],
+                    'size_label' => $product['volume_cl'] . 'cl',
+                    'size_cl' => (int) $product['volume_cl'],
+                    'price' => (float) $product['price'],
+                    'image_id' => $product['image_id'],
+                    'image_url' => $product['image_id'] ? wp_get_attachment_image_url($product['image_id'], 'thumbnail') : '',
+                    'is_featured' => false,
+                    'suggested_beverage' => (bool) $product['suggested_beverage'],
+                    'is_active' => (bool) $product['is_active'],
+                    'service_type' => $product['service_type'],
+                    'has_multiple_sizes' => false
+                );
+            }
         }
 
-        return $products ?: array();
+        return $beverages;
     }
 }

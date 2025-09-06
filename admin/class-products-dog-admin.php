@@ -345,10 +345,17 @@ class RestaurantBooking_Products_Dog_Admin
                             <label for="product_image"><?php _e('Image du plat', 'restaurant-booking'); ?></label>
                         </th>
                         <td>
-                            <input type="url" id="product_image" name="product_image" 
-                                   value="<?php echo $product ? esc_url($product['image_url']) : ''; ?>" 
-                                   class="regular-text">
-                            <p class="description"><?php _e('URL de l\'image du plat (optionnel).', 'restaurant-booking'); ?></p>
+                            <button type="button" class="button" id="upload_image_button">
+                                <?php _e('Choisir une image', 'restaurant-booking'); ?>
+                            </button>
+                            <input type="hidden" id="product_image_id" name="product_image_id" 
+                                   value="<?php echo $product ? esc_attr($product['image_id']) : ''; ?>">
+                            <div id="image_preview" style="margin-top: 10px;">
+                                <?php if ($product && $product['image_id']): ?>
+                                    <?php echo wp_get_attachment_image($product['image_id'], 'thumbnail'); ?>
+                                <?php endif; ?>
+                            </div>
+                            <p class="description"><?php _e('Image du plat depuis la médiathèque WordPress.', 'restaurant-booking'); ?></p>
                         </td>
                     </tr>
 
@@ -371,9 +378,40 @@ class RestaurantBooking_Products_Dog_Admin
         </div>
 
         <script>
-        document.getElementById('has_supplement').addEventListener('change', function() {
-            const supplementDetails = document.getElementById('supplement_details');
-            supplementDetails.style.display = this.checked ? 'table-row' : 'none';
+        jQuery(document).ready(function($) {
+            var mediaUploader;
+            
+            // Sélecteur d'images WordPress
+            $('#upload_image_button').click(function(e) {
+                e.preventDefault();
+                
+                if (mediaUploader) {
+                    mediaUploader.open();
+                    return;
+                }
+                
+                mediaUploader = wp.media({
+                    title: '<?php _e('Choisir une image', 'restaurant-booking'); ?>',
+                    button: {
+                        text: '<?php _e('Utiliser cette image', 'restaurant-booking'); ?>'
+                    },
+                    multiple: false
+                });
+                
+                mediaUploader.on('select', function() {
+                    var attachment = mediaUploader.state().get('selection').first().toJSON();
+                    $('#product_image_id').val(attachment.id);
+                    $('#image_preview').html('<img src="' + attachment.sizes.thumbnail.url + '" alt="">');
+                });
+                
+                mediaUploader.open();
+            });
+            
+            // Gestion des suppléments
+            $('#has_supplement').change(function() {
+                const supplementDetails = $('#supplement_details');
+                supplementDetails.toggle(this.checked);
+            });
         });
         </script>
         <?php

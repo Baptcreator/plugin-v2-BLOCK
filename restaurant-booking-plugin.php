@@ -224,6 +224,20 @@ class RestaurantBookingPlugin
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-migration-admin.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-migration-admin.php';
         }
+        
+        // Classes d'administration des boissons
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-beverages-soft-admin.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-beverages-soft-admin.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-beverages-beers-admin.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-beverages-beers-admin.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-beverages-kegs-admin.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-beverages-kegs-admin.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-beverages-wines-admin.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-beverages-wines-admin.php';
+        }
 
         // Interface publique
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-public.php')) {

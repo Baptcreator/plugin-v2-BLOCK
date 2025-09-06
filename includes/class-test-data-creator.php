@@ -85,10 +85,18 @@ class RestaurantBooking_Test_Data_Creator
                 $results['supplements_created'] += isset($buffet_sucre_result['supplements_created']) ? $buffet_sucre_result['supplements_created'] : 0;
             }
             
-            // 7. Créer une boisson avec tailles multiples
+            // 7. Créer une boisson simple (sans multi-tailles) pour test
+            $simple_beverage_result = self::create_test_simple_beverage();
+            if (is_wp_error($simple_beverage_result)) {
+                $results['errors'][] = 'Boisson simple: ' . $simple_beverage_result->get_error_message();
+            } else {
+                $results['products_created']++;
+            }
+            
+            // 8. Créer une boisson avec tailles multiples
             $beverage_result = self::create_test_beverage();
             if (is_wp_error($beverage_result)) {
-                $results['errors'][] = 'Boisson: ' . $beverage_result->get_error_message();
+                $results['errors'][] = 'Boisson multi-tailles: ' . $beverage_result->get_error_message();
             } else {
                 $results['products_created']++;
                 $results['sizes_created'] += $beverage_result['sizes_created'];
@@ -98,6 +106,14 @@ class RestaurantBooking_Test_Data_Creator
             $vin_result = self::create_test_vin();
             if (is_wp_error($vin_result)) {
                 $results['errors'][] = 'Vin: ' . $vin_result->get_error_message();
+            } else {
+                $results['products_created']++;
+            }
+            
+            // 9. Créer une bière
+            $biere_result = self::create_test_biere();
+            if (is_wp_error($biere_result)) {
+                $results['errors'][] = 'Bière: ' . $biere_result->get_error_message();
             } else {
                 $results['products_created']++;
             }
@@ -418,6 +434,37 @@ class RestaurantBooking_Test_Data_Creator
     }
     
     /**
+     * Créer une bière de test
+     */
+    private static function create_test_biere()
+    {
+        // Obtenir la catégorie bière
+        $category = RestaurantBooking_Category::get_by_type('biere_bouteille');
+        if (!$category) {
+            return new WP_Error('no_category', 'Catégorie bière non trouvée');
+        }
+        
+        // Créer le produit
+        $product_data = array(
+            'category_id' => $category['id'],
+            'name' => 'Kronenbourg 1664 (Test)',
+            'description' => 'Bière blonde française, 25cl, 5.0°',
+            'price' => 3.50,
+            'unit_type' => 'bouteille',
+            'unit_label' => '/bouteille',
+            'is_active' => 1,
+            'display_order' => 1
+        );
+        
+        $product_id = RestaurantBooking_Product::create($product_data);
+        if (!$product_id) {
+            return new WP_Error('product_creation_failed', 'Échec de la création de la bière');
+        }
+        
+        return array('product_id' => $product_id);
+    }
+    
+    /**
      * Créer un accompagnement de test avec options
      */
     private static function create_test_accompaniment()
@@ -526,12 +573,45 @@ class RestaurantBooking_Test_Data_Creator
     }
     
     /**
+     * Créer une boisson simple de test (sans multi-tailles)
+     */
+    private static function create_test_simple_beverage()
+    {
+        // Obtenir la catégorie boisson soft
+        $category = RestaurantBooking_Category::get_by_type('soft');
+        if (!$category) {
+            return new WP_Error('no_category', 'Catégorie boisson soft non trouvée');
+        }
+        
+        // Créer le produit boisson simple
+        $product_data = array(
+            'category_id' => $category['id'],
+            'name' => 'Sprite Simple (Test)',
+            'description' => 'Boisson gazeuse au citron-citron vert, 33cl',
+            'price' => 2.50,
+            'unit_type' => 'bouteille',
+            'unit_label' => '/bouteille',
+            'volume_cl' => 33,
+            'has_multiple_sizes' => 0, // Pas de tailles multiples
+            'is_active' => 1,
+            'display_order' => 1
+        );
+        
+        $product_id = RestaurantBooking_Product::create($product_data);
+        if (!$product_id) {
+            return new WP_Error('product_creation_failed', 'Échec de la création de la boisson simple');
+        }
+        
+        return array('product_id' => $product_id);
+    }
+    
+    /**
      * Créer une boisson de test avec tailles multiples
      */
     private static function create_test_beverage()
     {
         // Obtenir la catégorie boisson soft
-        $category = RestaurantBooking_Category::get_by_type('boisson_soft');
+        $category = RestaurantBooking_Category::get_by_type('soft');
         if (!$category) {
             return new WP_Error('no_category', 'Catégorie boisson soft non trouvée');
         }
@@ -606,7 +686,7 @@ class RestaurantBooking_Test_Data_Creator
         $categories_to_create = array(
             // Plats principaux
             array(
-                'name' => '🍽️ Plats Signature DOG',
+                'name' => 'Plats Signature DOG',
                 'type' => 'plat_signature_dog',
                 'service_type' => 'restaurant',
                 'description' => 'Plats signature à base de hot-dogs',
@@ -615,7 +695,7 @@ class RestaurantBooking_Test_Data_Creator
                 'max_selection' => null
             ),
             array(
-                'name' => '🍽️ Plats Signature CROQ',
+                'name' => 'Plats Signature CROQ',
                 'type' => 'plat_signature_croq',
                 'service_type' => 'restaurant',
                 'description' => 'Plats signature à base de croques',
@@ -624,7 +704,7 @@ class RestaurantBooking_Test_Data_Creator
                 'max_selection' => null
             ),
             array(
-                'name' => '🍽️ Menu Enfant (Mini Boss)',
+                'name' => 'Menu Enfant (Mini Boss)',
                 'type' => 'mini_boss',
                 'service_type' => 'restaurant',
                 'description' => 'Menus spécialement conçus pour les enfants',
@@ -646,7 +726,7 @@ class RestaurantBooking_Test_Data_Creator
             
             // Buffets
             array(
-                'name' => '🍽️ Buffet Salé',
+                'name' => 'Buffet Salé',
                 'type' => 'buffet_sale',
                 'service_type' => 'remorque',
                 'description' => 'Plats salés pour buffet',
@@ -655,7 +735,7 @@ class RestaurantBooking_Test_Data_Creator
                 'max_selection' => null
             ),
             array(
-                'name' => '🍽️ Buffet Sucré',
+                'name' => 'Buffet Sucré',
                 'type' => 'buffet_sucre',
                 'service_type' => 'remorque',
                 'description' => 'Desserts pour buffet',
@@ -666,8 +746,8 @@ class RestaurantBooking_Test_Data_Creator
             
             // Boissons
             array(
-                'name' => '🍷 Boissons Soft',
-                'type' => 'boisson_soft',
+                'name' => 'Boissons Soft',
+                'type' => 'soft',
                 'service_type' => 'both',
                 'description' => 'Boissons sans alcool avec tailles multiples',
                 'is_required' => 0,
@@ -675,7 +755,7 @@ class RestaurantBooking_Test_Data_Creator
                 'max_selection' => null
             ),
             array(
-                'name' => '🍷 Vins Blancs',
+                'name' => 'Vins Blancs',
                 'type' => 'vin_blanc',
                 'service_type' => 'both',
                 'description' => 'Sélection de vins blancs',
@@ -684,7 +764,7 @@ class RestaurantBooking_Test_Data_Creator
                 'max_selection' => null
             ),
             array(
-                'name' => '🍷 Vins Rouges',
+                'name' => 'Vins Rouges',
                 'type' => 'vin_rouge',
                 'service_type' => 'both',
                 'description' => 'Sélection de vins rouges',
@@ -693,7 +773,7 @@ class RestaurantBooking_Test_Data_Creator
                 'max_selection' => null
             ),
             array(
-                'name' => '🍷 Bières Bouteilles',
+                'name' => 'Bières Bouteilles',
                 'type' => 'biere_bouteille',
                 'service_type' => 'both',
                 'description' => 'Bières en bouteilles',
@@ -702,7 +782,7 @@ class RestaurantBooking_Test_Data_Creator
                 'max_selection' => null
             ),
             array(
-                'name' => '🍷 Fûts de Bière',
+                'name' => 'Fûts de Bière',
                 'type' => 'fut',
                 'service_type' => 'both',
                 'description' => 'Bières à la pression',
@@ -715,10 +795,11 @@ class RestaurantBooking_Test_Data_Creator
         $created_count = 0;
         
         foreach ($categories_to_create as $cat_data) {
-            // Vérifier si la catégorie existe déjà
+            // Vérifier si la catégorie existe déjà (par type ET par nom pour éviter les doublons)
             $existing = $wpdb->get_var($wpdb->prepare(
-                "SELECT id FROM {$wpdb->prefix}restaurant_categories WHERE type = %s",
-                $cat_data['type']
+                "SELECT id FROM {$wpdb->prefix}restaurant_categories WHERE type = %s OR name = %s LIMIT 1",
+                $cat_data['type'],
+                $cat_data['name']
             ));
             
             if (!$existing) {
@@ -727,7 +808,8 @@ class RestaurantBooking_Test_Data_Creator
                 $cat_data['updated_at'] = current_time('mysql');
                 $cat_data['is_active'] = 1;
                 $cat_data['display_order'] = $created_count;
-                $cat_data['slug'] = sanitize_title($cat_data['name']);
+                // Créer un slug propre sans emojis
+                $cat_data['slug'] = sanitize_title(str_replace(['🍽️', '🍷', '🍺', '🥤'], '', $cat_data['name']));
                 
                 $result = $wpdb->insert(
                     $wpdb->prefix . 'restaurant_categories',
@@ -737,10 +819,12 @@ class RestaurantBooking_Test_Data_Creator
                 
                 if ($result !== false) {
                     $created_count++;
-                    RestaurantBooking_Logger::info("Catégorie créée: {$cat_data['name']} ({$cat_data['type']})");
+                    RestaurantBooking_Logger::info("Catégorie créée: {$cat_data['name']} ({$cat_data['type']}) - Slug: {$cat_data['slug']}");
                 } else {
                     RestaurantBooking_Logger::error("Erreur création catégorie {$cat_data['name']}: " . $wpdb->last_error);
                 }
+            } else {
+                RestaurantBooking_Logger::info("Catégorie {$cat_data['name']} ({$cat_data['type']}) existe déjà, ignorée");
             }
         }
         

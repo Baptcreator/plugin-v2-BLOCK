@@ -853,6 +853,24 @@ class RestaurantBooking_Admin
             case 'export_settings':
                 $this->export_settings();
                 break;
+            case 'save_product_mini_boss':
+                $this->handle_save_product_mini_boss();
+                break;
+            case 'save_product_accompaniment':
+                $this->handle_save_product_accompaniment();
+                break;
+            case 'save_product_dog':
+                $this->handle_save_product_dog();
+                break;
+            case 'save_product_croq':
+                $this->handle_save_product_croq();
+                break;
+            case 'save_beer':
+                $this->handle_save_beer();
+                break;
+            case 'save_keg':
+                $this->handle_save_keg();
+                break;
         }
     }
 
@@ -1018,6 +1036,128 @@ class RestaurantBooking_Admin
     }
 
     /**
+     * Gérer la sauvegarde des produits Mini Boss
+     */
+    private function handle_save_product_mini_boss()
+    {
+        // Vérifier les permissions
+        if (!current_user_can('manage_restaurant_quotes')) {
+            wp_die(__('Permissions insuffisantes', 'restaurant-booking'));
+        }
+        
+        // Vérifier le nonce
+        if (!wp_verify_nonce($_POST['product_mini_boss_nonce'], 'restaurant_booking_product_mini_boss')) {
+            wp_die(__('Token de sécurité invalide', 'restaurant-booking'));
+        }
+        
+        $product_id = isset($_POST['product_id']) ? (int) $_POST['product_id'] : 0;
+        $is_edit = $product_id > 0;
+        
+        // Obtenir la catégorie mini_boss
+        $category = RestaurantBooking_Category::get_by_type('mini_boss');
+        if (!$category) {
+            wp_die(__('Catégorie Mini Boss non trouvée', 'restaurant-booking'));
+        }
+        
+        // Préparer les données du produit
+        $product_data = array(
+            'category_id' => $category['id'],
+            'name' => sanitize_text_field($_POST['product_name']),
+            'description' => sanitize_textarea_field($_POST['product_description']),
+            'price' => floatval($_POST['product_price']),
+            'unit_type' => 'piece',
+            'unit_label' => '/menu',
+            'image_url' => !empty($_POST['product_image']) ? esc_url_raw($_POST['product_image']) : null,
+            'is_active' => isset($_POST['is_active']) ? 1 : 0,
+            'display_order' => 0
+        );
+        
+        // Gérer le service_type via la catégorie
+        if (isset($_POST['service_type'])) {
+            $service_type = sanitize_text_field($_POST['service_type']);
+            // Mettre à jour le service_type de la catégorie si nécessaire
+            RestaurantBooking_Category::update($category['id'], array('service_type' => $service_type));
+        }
+        
+        if ($is_edit) {
+            $result = RestaurantBooking_Product::update($product_id, $product_data);
+            $message = $result ? __('Menu enfant mis à jour avec succès.', 'restaurant-booking') : __('Erreur lors de la mise à jour.', 'restaurant-booking');
+        } else {
+            $result = RestaurantBooking_Product::create($product_data);
+            $message = $result ? __('Menu enfant créé avec succès.', 'restaurant-booking') : __('Erreur lors de la création.', 'restaurant-booking');
+        }
+        
+        // Redirection avec message
+        $redirect_url = admin_url('admin.php?page=restaurant-booking-products-mini-boss');
+        if ($result) {
+            $redirect_url = add_query_arg('message', 'success', $redirect_url);
+        } else {
+            $redirect_url = add_query_arg('message', 'error', $redirect_url);
+        }
+        
+        wp_redirect($redirect_url);
+        exit;
+    }
+    
+    /**
+     * Gérer la sauvegarde des accompagnements
+     */
+    private function handle_save_product_accompaniment()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-products-accompaniments-admin.php';
+        $accompaniments_admin = new RestaurantBooking_Products_Accompaniments_Admin();
+        $accompaniments_admin->handle_save_accompaniment();
+    }
+    
+    /**
+     * Gérer la sauvegarde des produits DOG
+     */
+    private function handle_save_product_dog()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-products-dog-admin.php';
+        $dog_admin = new RestaurantBooking_Products_Dog_Admin();
+        if (method_exists($dog_admin, 'handle_save_product')) {
+            $dog_admin->handle_save_product();
+        }
+    }
+    
+    /**
+     * Gérer la sauvegarde des produits CROQ
+     */
+    private function handle_save_product_croq()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-products-croq-admin.php';
+        $croq_admin = new RestaurantBooking_Products_Croq_Admin();
+        if (method_exists($croq_admin, 'handle_save_product')) {
+            $croq_admin->handle_save_product();
+        }
+    }
+    
+    /**
+     * Gérer la sauvegarde des bières
+     */
+    private function handle_save_beer()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-beverages-beers-admin.php';
+        $beer_admin = new RestaurantBooking_Beverages_Beers_Admin();
+        if (method_exists($beer_admin, 'handle_save_beer')) {
+            $beer_admin->handle_save_beer();
+        }
+    }
+    
+    /**
+     * Gérer la sauvegarde des fûts
+     */
+    private function handle_save_keg()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-beverages-kegs-admin.php';
+        $keg_admin = new RestaurantBooking_Beverages_Kegs_Admin();
+        if (method_exists($keg_admin, 'handle_save_keg')) {
+            $keg_admin->handle_save_keg();
+        }
+    }
+
+    /**
      * Page Accompagnements
      */
     public function products_accompaniments_page()
@@ -1142,18 +1282,19 @@ class RestaurantBooking_Admin
      */
     public function beverages_kegs_page()
     {
-        echo '<div class="wrap">';
-        echo '<h1>🍷 ' . __('Fûts de Bière', 'restaurant-booking') . '</h1>';
-        echo '<div class="restaurant-booking-info-card" style="background: #fff3e0; border: 1px solid #ffcc02; padding: 15px; border-radius: 4px;">';
-        echo '<h3 style="margin-top: 0; color: #ef6c00;">' . __('Fûts pour la remorque', 'restaurant-booking') . '</h3>';
-        echo '<ul>';
-        echo '<li>' . __('✓ Fûts 10L et 20L disponibles', 'restaurant-booking') . '</li>';
-        echo '<li>' . __('✓ Catégories : BLONDE, BLANCHE, IPA, AMBRÉE', 'restaurant-booking') . '</li>';
-        echo '<li>' . __('✓ Option "Mise à disposition tireuse" requise (50€)', 'restaurant-booking') . '</li>';
-        echo '</ul>';
-        echo '</div>';
-        echo '<p>' . __('Interface en cours de développement...', 'restaurant-booking') . '</p>';
-        echo '</div>';
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-beverages-kegs-admin.php';
+        $beverages_admin = new RestaurantBooking_Beverages_Kegs_Admin();
+        
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
+        
+        switch ($action) {
+            case 'add':
+            case 'edit':
+                $beverages_admin->display_form();
+                break;
+            default:
+                $beverages_admin->display_list();
+        }
     }
 
     /**

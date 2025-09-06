@@ -338,26 +338,7 @@ class RestaurantBooking_Products_Accompaniments_Admin
                                 <p class="description"><?php _e('Ajoutez des options payantes pour cet accompagnement (ex: "Enrobée sauce chimichurri" +1€)', 'restaurant-booking'); ?></p>
                                 
                                 <div id="options_list">
-                                    <?php if ($product): ?>
-                                        <?php $options = RestaurantBooking_Accompaniment_Option_Manager::get_product_options($product['id']); ?>
-                                        <?php foreach ($options as $option): ?>
-                                            <div class="option-item" data-option-id="<?php echo $option->id; ?>">
-                                                <h4><?php echo esc_html($option->option_name); ?> - <?php echo number_format($option->option_price, 2); ?>€</h4>
-                                                <div class="suboptions">
-                                                    <?php $suboptions = RestaurantBooking_Accompaniment_Option_Manager::get_option_suboptions($option->id); ?>
-                                                    <?php foreach ($suboptions as $suboption): ?>
-                                                        <span class="suboption-tag"><?php echo esc_html($suboption->suboption_name); ?></span>
-                                                    <?php endforeach; ?>
-                                                </div>
-                                                <button type="button" class="button button-small edit-option" data-option-id="<?php echo $option->id; ?>">
-                                                    <?php _e('Modifier', 'restaurant-booking'); ?>
-                                                </button>
-                                                <button type="button" class="button button-small delete-option" data-option-id="<?php echo $option->id; ?>">
-                                                    <?php _e('Supprimer', 'restaurant-booking'); ?>
-                                                </button>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
+                                    <!-- Les options seront ajoutées dynamiquement ici -->
                                 </div>
                                 
                                 <button type="button" class="button button-secondary" id="add_option_button">
@@ -386,9 +367,51 @@ class RestaurantBooking_Products_Accompaniments_Admin
             </form>
         </div>
 
+        <!-- Modal pour ajouter/modifier une option -->
+        <div id="option_modal" style="display: none;">
+            <div class="option-modal-content">
+                <h3 id="option_modal_title"><?php _e('Ajouter une option', 'restaurant-booking'); ?></h3>
+                <form id="option_form">
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="option_name"><?php _e('Nom de l\'option', 'restaurant-booking'); ?> *</label></th>
+                            <td>
+                                <input type="text" id="option_name" name="option_name" class="regular-text" required
+                                       placeholder="<?php _e('Ex: Enrobée sauce chimichurri', 'restaurant-booking'); ?>">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="option_price"><?php _e('Prix', 'restaurant-booking'); ?> *</label></th>
+                            <td>
+                                <input type="number" id="option_price" name="option_price" step="0.01" min="0" class="small-text" required> €
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="suboptions"><?php _e('Sous-options', 'restaurant-booking'); ?></label></th>
+                            <td>
+                                <div id="suboptions_container">
+                                    <p class="description"><?php _e('Ajoutez des sous-options gratuites (ex: Ketchup, Mayo)', 'restaurant-booking'); ?></p>
+                                    <div id="suboptions_list"></div>
+                                    <button type="button" class="button button-small" id="add_suboption_button">
+                                        <?php _e('+ Ajouter une sous-option', 'restaurant-booking'); ?>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                    <p class="submit">
+                        <input type="submit" class="button-primary" value="<?php _e('Enregistrer', 'restaurant-booking'); ?>">
+                        <button type="button" class="button" id="cancel_option"><?php _e('Annuler', 'restaurant-booking'); ?></button>
+                    </p>
+                </form>
+            </div>
+        </div>
+
         <script>
         jQuery(document).ready(function($) {
             var mediaUploader;
+            var optionCounter = 0;
+            var suboptions = [];
             
             // Sélecteur d'images WordPress
             $('#upload_image_button').click(function(e) {
@@ -415,6 +438,91 @@ class RestaurantBooking_Products_Accompaniments_Admin
                 
                 mediaUploader.open();
             });
+            
+            // Gestion des options
+            $('#add_option_button').click(function() {
+                $('#option_modal_title').text('<?php _e('Ajouter une option', 'restaurant-booking'); ?>');
+                $('#option_form')[0].reset();
+                $('#suboptions_list').empty();
+                suboptions = [];
+                $('#option_modal').show();
+            });
+            
+            $('#cancel_option').click(function() {
+                $('#option_modal').hide();
+            });
+            
+            // Ajouter une sous-option
+            $('#add_suboption_button').click(function() {
+                var suboptionName = prompt('<?php _e('Nom de la sous-option:', 'restaurant-booking'); ?>');
+                if (suboptionName && suboptionName.trim()) {
+                    suboptions.push(suboptionName.trim());
+                    updateSuboptionsList();
+                }
+            });
+            
+            function updateSuboptionsList() {
+                var html = '';
+                suboptions.forEach(function(suboption, index) {
+                    html += '<div class="suboption-item">';
+                    html += '<span class="suboption-name">' + suboption + '</span>';
+                    html += '<button type="button" class="button button-small remove-suboption" data-index="' + index + '">Supprimer</button>';
+                    html += '</div>';
+                });
+                $('#suboptions_list').html(html);
+            }
+            
+            // Supprimer une sous-option
+            $(document).on('click', '.remove-suboption', function() {
+                var index = $(this).data('index');
+                suboptions.splice(index, 1);
+                updateSuboptionsList();
+            });
+            
+            // Soumettre le formulaire d'option
+            $('#option_form').on('submit', function(e) {
+                e.preventDefault();
+                
+                var optionName = $('#option_name').val();
+                var optionPrice = $('#option_price').val();
+                
+                if (!optionName || !optionPrice) {
+                    alert('<?php _e('Veuillez remplir tous les champs obligatoires.', 'restaurant-booking'); ?>');
+                    return;
+                }
+                
+                // Ajouter l'option à la liste
+                var optionHtml = '<div class="option-item" data-option-id="' + optionCounter + '">';
+                optionHtml += '<h4>' + optionName + ' - ' + parseFloat(optionPrice).toFixed(2) + '€</h4>';
+                optionHtml += '<input type="hidden" name="options[' + optionCounter + '][name]" value="' + optionName + '">';
+                optionHtml += '<input type="hidden" name="options[' + optionCounter + '][price]" value="' + optionPrice + '">';
+                
+                if (suboptions.length > 0) {
+                    optionHtml += '<div class="suboptions">';
+                    suboptions.forEach(function(suboption, index) {
+                        optionHtml += '<span class="suboption-tag">' + suboption + '</span>';
+                        optionHtml += '<input type="hidden" name="options[' + optionCounter + '][suboptions][' + index + ']" value="' + suboption + '">';
+                    });
+                    optionHtml += '</div>';
+                }
+                
+                optionHtml += '<button type="button" class="button button-small delete-option" data-option-id="' + optionCounter + '">';
+                optionHtml += '<?php _e('Supprimer', 'restaurant-booking'); ?>';
+                optionHtml += '</button>';
+                optionHtml += '</div>';
+                
+                $('#options_list').append(optionHtml);
+                optionCounter++;
+                
+                $('#option_modal').hide();
+            });
+            
+            // Supprimer une option
+            $(document).on('click', '.delete-option', function() {
+                if (confirm('<?php _e('Êtes-vous sûr de vouloir supprimer cette option ?', 'restaurant-booking'); ?>')) {
+                    $(this).closest('.option-item').remove();
+                }
+            });
         });
         </script>
 
@@ -437,10 +545,38 @@ class RestaurantBooking_Products_Accompaniments_Admin
         }
         .suboption-item {
             margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 10px;
+            background: #f9f9f9;
+            border-radius: 3px;
         }
         #image_preview img {
             max-width: 150px;
             height: auto;
+        }
+        #option_modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .option-modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
         </style>
         <?php
