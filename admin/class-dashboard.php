@@ -17,6 +17,68 @@ class RestaurantBooking_Dashboard
      */
     public function display()
     {
+        // Diagnostic de la base de données
+        $db_status = $this->check_database_status();
+        
+        // Traitement des actions de nettoyage et migration
+        if (isset($_POST['action'])) {
+            if ($_POST['action'] === 'clean_database' && wp_verify_nonce($_POST['clean_database_nonce'], 'clean_database')) {
+                $result = RestaurantBooking_Database_Cleaner::clean_all_products();
+                if ($result['success']) {
+                    RestaurantBooking_Database_Cleaner::reset_auto_increment();
+                    echo '<div class="notice notice-success is-dismissible"><p>' . __('Base de données nettoyée avec succès !', 'restaurant-booking') . '</p></div>';
+                } else {
+                    echo '<div class="notice notice-error is-dismissible"><p>' . __('Erreur lors du nettoyage: ', 'restaurant-booking') . $result['error'] . '</p></div>';
+                }
+            } elseif ($_POST['action'] === 'run_migration_v3' && wp_verify_nonce($_POST['migration_v3_nonce'], 'run_migration_v3')) {
+                if (class_exists('RestaurantBooking_Migration_V3')) {
+                    $result = RestaurantBooking_Migration_V3::force_migrate();
+                    if ($result) {
+                        echo '<div class="notice notice-success is-dismissible"><p>' . __('Migration v3 exécutée avec succès !', 'restaurant-booking') . '</p></div>';
+                    } else {
+                        echo '<div class="notice notice-error is-dismissible"><p>' . __('Erreur lors de la migration v3', 'restaurant-booking') . '</p></div>';
+                    }
+                    
+                    // Afficher l'état de la table après migration
+                    global $wpdb;
+                    $columns = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}restaurant_products");
+                    echo '<div class="notice notice-info"><p><strong>Colonnes actuelles dans restaurant_products:</strong><br>';
+                    foreach ($columns as $column) {
+                        echo "- {$column->Field} ({$column->Type})<br>";
+                    }
+                    echo '</p></div>';
+                } else {
+                    echo '<div class="notice notice-error is-dismissible"><p>' . __('Classe de migration v3 non trouvée', 'restaurant-booking') . '</p></div>';
+                }
+            } elseif ($_POST['action'] === 'create_test_products' && wp_verify_nonce($_POST['test_products_nonce'], 'create_test_products')) {
+                if (class_exists('RestaurantBooking_Test_Data_Creator')) {
+                    // S'assurer que les catégories existent
+                    RestaurantBooking_Test_Data_Creator::ensure_categories_exist();
+                    
+                    $result = RestaurantBooking_Test_Data_Creator::create_test_products();
+                    if ($result['success']) {
+                        echo '<div class="notice notice-success is-dismissible"><p>' . 
+                             sprintf(__('Produits de test créés avec succès ! %d produits, %d suppléments, %d options, %d sous-options, %d tailles', 'restaurant-booking'), 
+                                     $result['products_created'], $result['supplements_created'], $result['options_created'], $result['suboptions_created'], $result['sizes_created']) . 
+                             '</p></div>';
+                    } else {
+                        echo '<div class="notice notice-error is-dismissible"><p>' . __('Erreur lors de la création des produits de test: ', 'restaurant-booking') . $result['error'] . '</p></div>';
+                    }
+                } else {
+                    echo '<div class="notice notice-error is-dismissible"><p>' . __('Classe de création de produits de test non trouvée', 'restaurant-booking') . '</p></div>';
+                }
+            } elseif ($_POST['action'] === 'create_categories' && wp_verify_nonce($_POST['create_categories_nonce'], 'create_categories')) {
+                if (class_exists('RestaurantBooking_Test_Data_Creator')) {
+                    $created_count = RestaurantBooking_Test_Data_Creator::ensure_categories_exist();
+                    echo '<div class="notice notice-success is-dismissible"><p>' . 
+                         sprintf(__('%d catégories créées avec succès !', 'restaurant-booking'), $created_count) . 
+                         '</p></div>';
+                } else {
+                    echo '<div class="notice notice-error is-dismissible"><p>' . __('Classe de création de catégories non trouvée', 'restaurant-booking') . '</p></div>';
+                }
+            }
+        }
+
         // Obtenir les statistiques
         $stats = $this->get_dashboard_stats();
         $recent_quotes = $this->get_recent_quotes();
@@ -137,25 +199,84 @@ class RestaurantBooking_Dashboard
                     <div class="restaurant-booking-widget">
                         <h2><?php _e('Actions rapides', 'restaurant-booking'); ?></h2>
                         <div class="restaurant-booking-quick-actions">
-                            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-products&action=add'); ?>" 
+                            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-products-dog&action=add'); ?>" 
                                class="button button-primary button-large">
-                                <?php _e('Ajouter un produit', 'restaurant-booking'); ?>
+                                🍽️ <?php _e('Ajouter un plat DOG', 'restaurant-booking'); ?>
                             </a>
                             
-                            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-categories&action=add'); ?>" 
+                            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-products-croq&action=add'); ?>" 
                                class="button button-secondary button-large">
-                                <?php _e('Ajouter une catégorie', 'restaurant-booking'); ?>
+                                🍽️ <?php _e('Ajouter un plat CROQ', 'restaurant-booking'); ?>
+                            </a>
+                            
+                            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-wines&action=add'); ?>" 
+                               class="button button-secondary button-large">
+                                🍷 <?php _e('Ajouter un vin', 'restaurant-booking'); ?>
                             </a>
                             
                             <a href="<?php echo admin_url('admin.php?page=restaurant-booking-calendar'); ?>" 
                                class="button button-secondary button-large">
-                                <?php _e('Gérer le calendrier', 'restaurant-booking'); ?>
+                                📅 <?php _e('Gérer le calendrier', 'restaurant-booking'); ?>
                             </a>
+                            
                             
                             <a href="<?php echo admin_url('admin.php?page=restaurant-booking-settings'); ?>" 
                                class="button button-secondary button-large">
                                 <?php _e('Paramètres', 'restaurant-booking'); ?>
                             </a>
+                            
+                            <hr style="margin: 20px 0;">
+                            
+                            <h3><?php _e('🔧 Outils de maintenance', 'restaurant-booking'); ?></h3>
+                            
+                            <form method="post" action="" style="display: inline-block; margin-right: 10px;">
+                                <?php wp_nonce_field('run_migration_v3', 'migration_v3_nonce'); ?>
+                                <input type="hidden" name="action" value="run_migration_v3">
+                                <button type="submit" class="button button-primary button-large" 
+                                        onclick="return confirm('<?php _e('Exécuter la migration v3 ? Cela va mettre à jour la structure de la base de données.', 'restaurant-booking'); ?>')">
+                                    🚀 <?php _e('Exécuter migration v3', 'restaurant-booking'); ?>
+                                </button>
+                            </form>
+                            
+                            <form method="post" action="" style="display: inline-block; margin-right: 10px;">
+                                <?php wp_nonce_field('clean_database', 'clean_database_nonce'); ?>
+                                <input type="hidden" name="action" value="clean_database">
+                                <button type="submit" class="button button-secondary button-large" 
+                                        style="background: #dc3545; border-color: #dc3545; color: white;"
+                                        onclick="return confirm('<?php _e('ATTENTION: Cela va supprimer TOUS les produits existants ! Cette action est irréversible. Continuer ?', 'restaurant-booking'); ?>')">
+                                    🗑️ <?php _e('Nettoyer la base de données', 'restaurant-booking'); ?>
+                                </button>
+                            </form>
+                            
+                            <form method="post" action="" style="display: inline-block; margin-right: 10px;">
+                                <?php wp_nonce_field('create_categories', 'create_categories_nonce'); ?>
+                                <input type="hidden" name="action" value="create_categories">
+                                <button type="submit" class="button button-secondary button-large" 
+                                        style="background: #17a2b8; border-color: #17a2b8; color: white;"
+                                        onclick="return confirm('<?php _e('Créer toutes les catégories de produits manquantes ?', 'restaurant-booking'); ?>')">
+                                    📋 <?php _e('Créer catégories', 'restaurant-booking'); ?>
+                                </button>
+                            </form>
+                            
+                            <form method="post" action="" style="display: inline-block;">
+                                <?php wp_nonce_field('create_test_products', 'test_products_nonce'); ?>
+                                <input type="hidden" name="action" value="create_test_products">
+                                <button type="submit" class="button button-secondary button-large" 
+                                        style="background: #28a745; border-color: #28a745; color: white;"
+                                        onclick="return confirm('<?php _e('Créer 2 produits de test avec les nouvelles fonctionnalités ?', 'restaurant-booking'); ?>')">
+                                    🧪 <?php _e('Créer produits de test', 'restaurant-booking'); ?>
+                                </button>
+                            </form>
+                            
+                            <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">
+                                <p style="margin: 0; font-size: 13px;">
+                                    <strong><?php _e('Instructions:', 'restaurant-booking'); ?></strong><br>
+                                    1. <?php _e('Exécutez d\'abord la migration v3 pour créer les nouvelles tables', 'restaurant-booking'); ?><br>
+                                    2. <?php _e('Ensuite, nettoyez la base de données pour supprimer les anciens produits', 'restaurant-booking'); ?><br>
+                                    3. <?php _e('Créez les catégories manquantes (DOG, CROQ, Buffets, etc.)', 'restaurant-booking'); ?><br>
+                                    4. <?php _e('Enfin, créez des produits de test pour tester les nouvelles fonctionnalités', 'restaurant-booking'); ?>
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -375,13 +496,13 @@ class RestaurantBooking_Dashboard
             AND YEAR(created_at) = YEAR(NOW())
         ");
 
-        // Chiffre d'affaires prévisionnel ce mois
+        // Chiffre d'affaires prévisionnel ce mois (tous les devis)
         $stats['revenue_month'] = $wpdb->get_var("
             SELECT COALESCE(SUM(total_price), 0) 
             FROM {$wpdb->prefix}restaurant_quotes 
             WHERE MONTH(created_at) = MONTH(NOW()) 
             AND YEAR(created_at) = YEAR(NOW())
-            AND status IN ('sent', 'confirmed')
+            AND status != 'cancelled'
         ");
 
         // Taux de conversion
@@ -461,6 +582,77 @@ class RestaurantBooking_Dashboard
         }
 
         return $events;
+    }
+
+    /**
+     * Vérifier l'état de la base de données
+     */
+    private function check_database_status()
+    {
+        global $wpdb;
+        
+        $table_products = $wpdb->prefix . 'restaurant_products';
+        
+        $required_columns = array(
+            'suggested_beverage',
+            'sauce_options', 
+            'accompaniment_type',
+            'has_chimichurri',
+            'unit_per_person',
+            'beer_category',
+            'keg_sizes',
+            'wine_category',
+            'volume_cl',
+            'alcohol_degree'
+        );
+        
+        $existing_columns = $wpdb->get_col("DESCRIBE `$table_products`");
+        $missing_columns = array_diff($required_columns, $existing_columns);
+        
+        return array(
+            'columns_ok' => empty($missing_columns),
+            'missing_columns' => $missing_columns,
+            'existing_columns' => $existing_columns
+        );
+    }
+
+    /**
+     * Forcer l'ajout des colonnes manquantes
+     */
+    private function force_add_missing_columns()
+    {
+        global $wpdb;
+        
+        $table_products = $wpdb->prefix . 'restaurant_products';
+        
+        $columns_to_add = array(
+            'suggested_beverage' => 'tinyint(1) DEFAULT 0',
+            'sauce_options' => 'json DEFAULT NULL',
+            'accompaniment_type' => 'varchar(50) DEFAULT NULL',
+            'has_chimichurri' => 'tinyint(1) DEFAULT 0',
+            'unit_per_person' => 'varchar(50) DEFAULT NULL',
+            'beer_category' => 'varchar(50) DEFAULT NULL',
+            'keg_sizes' => 'json DEFAULT NULL',
+            'wine_category' => 'varchar(100) DEFAULT NULL',
+            'volume_cl' => 'int(11) DEFAULT NULL',
+            'alcohol_degree' => 'decimal(3,1) DEFAULT NULL'
+        );
+        
+        foreach ($columns_to_add as $column => $definition) {
+            $sql = "ALTER TABLE `$table_products` ADD COLUMN `$column` $definition";
+            $wpdb->query($sql);
+        }
+        
+        // Mettre à jour l'enum des catégories aussi
+        $table_categories = $wpdb->prefix . 'restaurant_categories';
+        $new_enum = "enum('plat_signature_dog', 'plat_signature_croq', 'mini_boss', 'accompagnement', 'buffet_sale', 'buffet_sucre', 'soft', 'vin_blanc', 'vin_rouge', 'vin_rose', 'cremant', 'biere_bouteille', 'fut', 'jeu', 'option_restaurant', 'option_remorque') NOT NULL";
+        $sql = "ALTER TABLE `$table_categories` MODIFY COLUMN `type` $new_enum";
+        $wpdb->query($sql);
+        
+        // Insérer les catégories par défaut
+        if (class_exists('RestaurantBooking_Database')) {
+            RestaurantBooking_Database::insert_default_data();
+        }
     }
 
     /**

@@ -69,7 +69,7 @@ class RestaurantBooking_Database
             id int(11) NOT NULL AUTO_INCREMENT,
             name varchar(255) NOT NULL,
             slug varchar(100) NOT NULL DEFAULT '',
-            type enum('plat_signature', 'mini_boss', 'accompagnement', 'buffet_sale', 'buffet_sucre', 'soft', 'vin_blanc', 'vin_rouge', 'vin_rose', 'cremant', 'biere', 'fut', 'option_restaurant', 'option_remorque') NOT NULL,
+            type enum('plat_signature_dog', 'plat_signature_croq', 'mini_boss', 'accompagnement', 'buffet_sale', 'buffet_sucre', 'soft', 'vin_blanc', 'vin_rouge', 'vin_rose', 'cremant', 'biere_bouteille', 'fut', 'jeu', 'option_restaurant', 'option_remorque') NOT NULL,
             service_type enum('restaurant', 'remorque', 'both') NOT NULL DEFAULT 'both',
             description text,
             image_id bigint(20) DEFAULT NULL,
@@ -108,6 +108,14 @@ class RestaurantBooking_Database
             image_id bigint(20) DEFAULT NULL,
             alcohol_degree decimal(3,1) DEFAULT NULL,
             volume_cl int(11) DEFAULT NULL,
+            suggested_beverage tinyint(1) DEFAULT 0,
+            sauce_options json DEFAULT NULL,
+            accompaniment_type varchar(50) DEFAULT NULL,
+            has_chimichurri tinyint(1) DEFAULT 0,
+            unit_per_person varchar(50) DEFAULT NULL,
+            beer_category varchar(50) DEFAULT NULL,
+            keg_sizes json DEFAULT NULL,
+            wine_category varchar(100) DEFAULT NULL,
             display_order int(11) NOT NULL DEFAULT 0,
             is_active tinyint(1) NOT NULL DEFAULT 1,
             created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -231,6 +239,18 @@ class RestaurantBooking_Database
         dbDelta($sql_delivery_zones);
         dbDelta($sql_logs);
 
+        // Créer des données de test si c'est une nouvelle installation
+        if (get_option('restaurant_booking_sample_data_created') !== 'yes') {
+            $this->create_sample_data();
+            update_option('restaurant_booking_sample_data_created', 'yes');
+        }
+        
+        // Mettre à jour le schéma de la base de données si nécessaire
+        $this->update_database_schema();
+
+        // Forcer la création des données d'exemple si elles n'existent pas
+        $this->ensure_sample_data_exists();
+
         // Log de la création des tables
         if (class_exists('RestaurantBooking_Logger')) {
             RestaurantBooking_Logger::log('Tables de base de données créées', 'info');
@@ -256,6 +276,99 @@ class RestaurantBooking_Database
         
         if (class_exists('RestaurantBooking_Logger')) {
             RestaurantBooking_Logger::info('Données corrompues nettoyées');
+        }
+    }
+
+    /**
+     * Mettre à jour le schéma de la base de données
+     */
+    private function update_database_schema()
+    {
+        global $wpdb;
+        
+        $table_products = $wpdb->prefix . 'restaurant_products';
+        $table_categories = $wpdb->prefix . 'restaurant_categories';
+        
+        // Vérifier et ajouter les nouvelles colonnes dans restaurant_products
+        $columns_to_add = array(
+            'suggested_beverage' => 'tinyint(1) DEFAULT 0',
+            'sauce_options' => 'json DEFAULT NULL',
+            'accompaniment_type' => 'varchar(50) DEFAULT NULL',
+            'has_chimichurri' => 'tinyint(1) DEFAULT 0',
+            'unit_per_person' => 'varchar(50) DEFAULT NULL',
+            'beer_category' => 'varchar(50) DEFAULT NULL',
+            'keg_sizes' => 'json DEFAULT NULL',
+            'wine_category' => 'varchar(100) DEFAULT NULL',
+            'volume_cl' => 'int(11) DEFAULT NULL',
+            'alcohol_degree' => 'decimal(3,1) DEFAULT NULL'
+        );
+        
+        foreach ($columns_to_add as $column => $definition) {
+            // Vérifier si la colonne existe
+            $column_exists = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s",
+                DB_NAME, $table_products, $column
+            ));
+            
+            if (!$column_exists) {
+                $sql = "ALTER TABLE `$table_products` ADD COLUMN `$column` $definition";
+                $result = $wpdb->query($sql);
+                
+                if ($result === false) {
+                    // En cas d'erreur, essayer une approche alternative
+                    $sql_alt = "ALTER TABLE `$table_products` ADD `$column` $definition";
+                    $result = $wpdb->query($sql_alt);
+                }
+                
+                if (class_exists('RestaurantBooking_Logger')) {
+                    if ($result !== false) {
+                        RestaurantBooking_Logger::log("Colonne ajoutée avec succès: $column dans $table_products", 'info');
+                    } else {
+                        RestaurantBooking_Logger::log("Erreur lors de l'ajout de la colonne: $column - " . $wpdb->last_error, 'error');
+                    }
+                }
+            }
+        }
+        
+        // Mettre à jour l'enum des types de catégories
+        $current_enum = $wpdb->get_row($wpdb->prepare(
+            "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = 'type'",
+            DB_NAME, $table_categories
+        ));
+        
+        if ($current_enum && !strpos($current_enum->COLUMN_TYPE, 'plat_signature_dog')) {
+            $new_enum = "enum('plat_signature_dog', 'plat_signature_croq', 'mini_boss', 'accompagnement', 'buffet_sale', 'buffet_sucre', 'soft', 'vin_blanc', 'vin_rouge', 'vin_rose', 'cremant', 'biere_bouteille', 'fut', 'jeu', 'option_restaurant', 'option_remorque') NOT NULL";
+            $sql = "ALTER TABLE `$table_categories` MODIFY COLUMN `type` $new_enum";
+            $wpdb->query($sql);
+            
+            // Insérer les nouvelles catégories si elles n'existent pas
+            self::insert_default_data();
+            
+            if (class_exists('RestaurantBooking_Logger')) {
+                RestaurantBooking_Logger::log("Types de catégories mis à jour dans $table_categories", 'info');
+            }
+        }
+    }
+
+    /**
+     * S'assurer que les données d'exemple existent
+     */
+    private function ensure_sample_data_exists()
+    {
+        global $wpdb;
+        
+        // Vérifier si des produits existent
+        $products_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}restaurant_products");
+        
+        if ($products_count == 0) {
+            // Aucun produit n'existe, créer les données d'exemple
+            $this->create_sample_data();
+            
+            if (class_exists('RestaurantBooking_Logger')) {
+                RestaurantBooking_Logger::log('Données d\'exemple créées car aucun produit n\'existait', 'info');
+            }
         }
     }
 
@@ -361,20 +474,31 @@ class RestaurantBooking_Database
 
         // Catégories par défaut
         $default_categories = array(
-            // Restaurant
-            array('Plats Signature', 'plats-signature', 'plat_signature', 'restaurant', 'Nos plats emblématiques', 1, 1, 3, 0),
-            array('Mini Boss', 'mini-boss', 'mini_boss', 'restaurant', 'Petites portions gourmandes', 1, 2, 5, 1),
-            array('Accompagnements', 'accompagnements', 'accompagnement', 'restaurant', 'Pour compléter votre repas', 1, 1, null, 1),
+            // Plats Signature
+            array('Plats Signature DOG', 'plats-signature-dog', 'plat_signature_dog', 'both', 'Nos hot-dogs emblématiques', 1, 1, null, 1),
+            array('Plats Signature CROQ', 'plats-signature-croq', 'plat_signature_croq', 'both', 'Nos croque-monsieur gourmands', 1, 1, null, 1),
             
-            // Remorque
-            array('Buffet Salé', 'buffet-sale', 'buffet_sale', 'remorque', 'Sélection salée pour buffet', 1, 3, 8, 1),
-            array('Buffet Sucré', 'buffet-sucre', 'buffet_sucre', 'remorque', 'Desserts et douceurs', 0, 0, 3, 0),
+            // Menu Enfant et Accompagnements
+            array('Mini Boss', 'mini-boss', 'mini_boss', 'both', 'Menus enfants spécialement conçus', 0, 0, null, 0),
+            array('Accompagnements', 'accompagnements', 'accompagnement', 'both', 'Accompagnements 4€ - min 1/personne', 1, 1, null, 1),
             
-            // Boissons (les deux services)
+            // Buffets
+            array('Buffet Salé', 'buffet-sale', 'buffet_sale', 'both', 'Min 2 recettes + min 1/personne', 1, 2, null, 1),
+            array('Buffet Sucré', 'buffet-sucre', 'buffet_sucre', 'both', 'Min 1 recette + min 1/personne', 1, 1, null, 1),
+            
+            // Boissons
             array('Boissons Soft', 'boissons-soft', 'soft', 'both', 'Boissons sans alcool', 0, 0, null, 0),
             array('Vins Blancs', 'vins-blancs', 'vin_blanc', 'both', 'Sélection de vins blancs', 0, 0, null, 0),
             array('Vins Rouges', 'vins-rouges', 'vin_rouge', 'both', 'Sélection de vins rouges', 0, 0, null, 0),
-            array('Bières', 'bieres', 'biere', 'both', 'Bières artisanales et classiques', 0, 0, null, 0),
+            array('Vins Rosés', 'vins-roses', 'vin_rose', 'both', 'Sélection de vins rosés', 0, 0, null, 0),
+            array('Crémants', 'cremants', 'cremant', 'both', 'Bulles et crémants', 0, 0, null, 0),
+            array('Bières Bouteilles', 'bieres-bouteilles', 'biere_bouteille', 'both', 'Bières en bouteilles', 0, 0, null, 0),
+            array('Fûts de Bière', 'futs-biere', 'fut', 'remorque', 'Fûts 10L et 20L pour remorque', 0, 0, null, 0),
+            
+            // Options
+            array('Jeux', 'jeux', 'jeu', 'remorque', 'Jeux gonflables et animations', 0, 0, null, 0),
+            array('Options Restaurant', 'options-restaurant', 'option_restaurant', 'restaurant', 'Options spécifiques restaurant', 0, 0, null, 0),
+            array('Options Remorque', 'options-remorque', 'option_remorque', 'remorque', 'Options spécifiques remorque', 0, 0, null, 0),
         );
 
         foreach ($default_categories as $index => $category) {
@@ -423,6 +547,214 @@ class RestaurantBooking_Database
         // Log de l'insertion des données par défaut
         if (class_exists('RestaurantBooking_Logger')) {
             RestaurantBooking_Logger::log('Données par défaut insérées', 'info');
+        }
+    }
+
+    /**
+     * Forcer la mise à jour du schéma de base de données (méthode publique)
+     */
+    public static function force_update_schema()
+    {
+        $instance = new self();
+        $instance->update_database_schema();
+        
+        if (class_exists('RestaurantBooking_Logger')) {
+            RestaurantBooking_Logger::log('Schéma de base de données mis à jour manuellement', 'info');
+        }
+    }
+
+    /**
+     * Forcer la recréation des données d'exemple (méthode publique)
+     */
+    public static function force_recreate_sample_data()
+    {
+        $instance = new self();
+        $instance->update_database_schema(); // Mettre à jour le schéma d'abord
+        $instance->create_sample_data();
+        
+        if (class_exists('RestaurantBooking_Logger')) {
+            RestaurantBooking_Logger::log('Données d\'exemple forcées à être recréées', 'info');
+        }
+    }
+
+    /**
+     * Créer des données de test
+     */
+    private function create_sample_data()
+    {
+        global $wpdb;
+
+        // Obtenir les IDs des catégories créées
+        $categories = $wpdb->get_results("SELECT id, type FROM {$wpdb->prefix}restaurant_categories", ARRAY_A);
+        $category_ids = array();
+        foreach ($categories as $category) {
+            $category_ids[$category['type']] = $category['id'];
+        }
+
+        // Supprimer les produits d'exemple existants pour éviter les doublons
+        $wpdb->query("DELETE FROM {$wpdb->prefix}restaurant_products WHERE name LIKE 'Hot-Dog%' OR name LIKE 'Croque-%' OR name LIKE '%Frites%' OR name LIKE '%Bordeaux%' OR name LIKE '%Plateau%'");
+
+        // Données de test pour les plats signature DOG
+        if (isset($category_ids['plat_signature_dog'])) {
+            $dog_products = array(
+                array('Hot-Dog Classique', 'Saucisse de porc, pain brioché, oignons confits, moutarde à l\'ancienne', 8.50, 1, 'Fromage supplémentaire', 1.50),
+                array('Hot-Dog Végétarien', 'Saucisse végétale, pain complet, légumes grillés, sauce barbecue', 9.00, 0, null, 0),
+                array('Hot-Dog Gourmet', 'Saucisse artisanale, pain aux graines, confit de tomates, roquette', 11.50, 1, 'Avocat', 2.00),
+            );
+
+            foreach ($dog_products as $product) {
+                $wpdb->insert(
+                    $wpdb->prefix . 'restaurant_products',
+                    array(
+                        'category_id' => $category_ids['plat_signature_dog'],
+                        'name' => $product[0],
+                        'description' => $product[1],
+                        'price' => $product[2],
+                        'unit_type' => 'piece',
+                        'unit_label' => '/pièce',
+                        'has_supplement' => $product[3],
+                        'supplement_name' => $product[4],
+                        'supplement_price' => $product[5],
+                        'is_active' => 1
+                    ),
+                    array('%d', '%s', '%s', '%f', '%s', '%s', '%d', '%s', '%f', '%d')
+                );
+            }
+        }
+
+        // Données de test pour les plats signature CROQ
+        if (isset($category_ids['plat_signature_croq'])) {
+            $croq_products = array(
+                array('Croque-Monsieur Traditionnel', 'Jambon blanc, fromage Gruyère, pain de mie, béchamel', 9.50, 0, null, 0),
+                array('Croque-Madame', 'Jambon blanc, fromage Gruyère, œuf au plat, pain de mie', 11.00, 1, 'Œuf au plat supplémentaire', 2.00),
+                array('Croque-Végétarien', 'Légumes grillés, fromage de chèvre, pain complet, pesto', 10.50, 1, 'Avocat', 2.00),
+            );
+
+            foreach ($croq_products as $product) {
+                $wpdb->insert(
+                    $wpdb->prefix . 'restaurant_products',
+                    array(
+                        'category_id' => $category_ids['plat_signature_croq'],
+                        'name' => $product[0],
+                        'description' => $product[1],
+                        'price' => $product[2],
+                        'unit_type' => 'piece',
+                        'unit_label' => '/pièce',
+                        'has_supplement' => $product[3],
+                        'supplement_name' => $product[4],
+                        'supplement_price' => $product[5],
+                        'is_active' => 1
+                    ),
+                    array('%d', '%s', '%s', '%f', '%s', '%s', '%d', '%s', '%f', '%d')
+                );
+            }
+        }
+
+        // Données de test pour les accompagnements
+        if (isset($category_ids['accompagnement'])) {
+            $accompaniment_products = array(
+                array(
+                    'name' => 'Salade Verte',
+                    'description' => 'Salade verte fraîche, vinaigrette maison',
+                    'accompaniment_type' => 'salade',
+                    'sauce_options' => null,
+                    'has_chimichurri' => 0
+                ),
+                array(
+                    'name' => 'Frites Maison',
+                    'description' => 'Frites fraîches coupées maison',
+                    'accompaniment_type' => 'frites',
+                    'sauce_options' => json_encode(array(
+                        array('name' => 'Ketchup'),
+                        array('name' => 'Mayonnaise'),
+                        array('name' => 'Moutarde'),
+                        array('name' => 'Sauce barbecue')
+                    )),
+                    'has_chimichurri' => 1
+                ),
+            );
+
+            foreach ($accompaniment_products as $product) {
+                $wpdb->insert(
+                    $wpdb->prefix . 'restaurant_products',
+                    array(
+                        'category_id' => $category_ids['accompagnement'],
+                        'name' => $product['name'],
+                        'description' => $product['description'],
+                        'price' => 4.00,
+                        'unit_type' => 'piece',
+                        'unit_label' => '/portion',
+                        'accompaniment_type' => $product['accompaniment_type'],
+                        'sauce_options' => $product['sauce_options'],
+                        'has_chimichurri' => $product['has_chimichurri'],
+                        'is_active' => 1
+                    ),
+                    array('%d', '%s', '%s', '%f', '%s', '%s', '%s', '%s', '%d', '%d')
+                );
+            }
+        }
+
+        // Données de test pour les vins avec catégories
+        if (isset($category_ids['vin_blanc'])) {
+            $wine_products = array(
+                array('Sancerre AOC', 'Vin blanc sec de Loire, notes minérales', 'Loire', 28.00, 1),
+                array('Chablis Premier Cru', 'Vin blanc de Bourgogne, élégant et frais', 'Bourgogne', 32.00, 0),
+                array('Muscadet Sèvre-et-Maine', 'Vin blanc sec parfait avec les fruits de mer', 'Loire', 18.00, 1),
+            );
+
+            foreach ($wine_products as $product) {
+                $wpdb->insert(
+                    $wpdb->prefix . 'restaurant_products',
+                    array(
+                        'category_id' => $category_ids['vin_blanc'],
+                        'name' => $product[0],
+                        'description' => $product[1],
+                        'wine_category' => $product[2],
+                        'price' => $product[3],
+                        'unit_type' => 'bouteille',
+                        'unit_label' => '/bouteille 75cl',
+                        'volume_cl' => 75,
+                        'alcohol_degree' => 12.5,
+                        'suggested_beverage' => $product[4],
+                        'is_active' => 1
+                    ),
+                    array('%d', '%s', '%s', '%s', '%f', '%s', '%s', '%d', '%f', '%d', '%d')
+                );
+            }
+        }
+
+        // Données de test pour les buffets salés
+        if (isset($category_ids['buffet_sale'])) {
+            $buffet_sale_products = array(
+                array('Plateau de Charcuterie', 'Sélection de charcuteries artisanales', '150g/pers', 12.00, 1, 'Cornichons supplémentaires', 2.00),
+                array('Assortiment de Fromages', 'Plateau de fromages français affinés', '120g/pers', 15.00, 0, null, 0),
+                array('Verrines Salées', 'Verrines variées aux légumes et terrines', '3 pièces/pers', 8.50, 1, 'Verrine végétarienne', 1.50),
+            );
+
+            foreach ($buffet_sale_products as $product) {
+                $wpdb->insert(
+                    $wpdb->prefix . 'restaurant_products',
+                    array(
+                        'category_id' => $category_ids['buffet_sale'],
+                        'name' => $product[0],
+                        'description' => $product[1],
+                        'unit_per_person' => $product[2],
+                        'price' => $product[3],
+                        'unit_type' => 'portion_6p',
+                        'unit_label' => '/6 personnes',
+                        'has_supplement' => $product[4],
+                        'supplement_name' => $product[5],
+                        'supplement_price' => $product[6],
+                        'is_active' => 1
+                    ),
+                    array('%d', '%s', '%s', '%s', '%f', '%s', '%s', '%d', '%s', '%f', '%d')
+                );
+            }
+        }
+
+        // Log de la création des données de test
+        if (class_exists('RestaurantBooking_Logger')) {
+            RestaurantBooking_Logger::log('Données de test créées', 'info');
         }
     }
 

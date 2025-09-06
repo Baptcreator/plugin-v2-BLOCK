@@ -24,7 +24,7 @@ class RestaurantBooking_Settings_Admin
             'email' => __('Email', 'restaurant-booking'),
             'pdf' => __('PDF', 'restaurant-booking'),
             'calendar' => __('Calendrier', 'restaurant-booking'),
-            'integration' => __('Shortcodes & Intégration', 'restaurant-booking'),
+            'integration' => __('Widgets & Intégration', 'restaurant-booking'),
             'advanced' => __('Avancé', 'restaurant-booking')
         );
 
@@ -319,159 +319,173 @@ class RestaurantBooking_Settings_Admin
      */
     private function display_integration_settings()
     {
-        // Charger le CSS spécifique pour cette page
-        wp_enqueue_style(
-            'restaurant-booking-integration',
-            RESTAURANT_BOOKING_PLUGIN_URL . 'assets/css/admin-integration.css',
-            array(),
-            RESTAURANT_BOOKING_VERSION
-        );
-        
-        // CSS spécifique pour corriger le débordement des widgets
-        wp_enqueue_style(
-            'restaurant-booking-widget-fix',
-            RESTAURANT_BOOKING_PLUGIN_URL . 'assets/css/admin-widget-fix.css',
-            array('restaurant-booking-integration'),
-            RESTAURANT_BOOKING_VERSION
-        );
-        
-        // JavaScript pour forcer la correction des widgets
-        wp_enqueue_script(
-            'restaurant-booking-widget-fix-js',
-            RESTAURANT_BOOKING_PLUGIN_URL . 'assets/js/admin-widget-fix.js',
-            array('jquery'),
-            RESTAURANT_BOOKING_VERSION,
-            true
-        );
         
         ?>
-        <div class="restaurant-booking-integration">
-            <h1><?php _e('Guide d\'intégration - Formulaires Block & Co', 'restaurant-booking'); ?></h1>
-            <h2><?php _e('🚀 Intégration Elementor', 'restaurant-booking'); ?></h2>
-            
-            <div class="integration-method recommended">
-                <h4>✅ <?php _e('Méthode recommandée : Widgets Elementor', 'restaurant-booking'); ?></h4>
-                <div class="method-content">
-                    <div class="method-steps">
-                        <div class="step">
-                            <div class="step-number">1</div>
-                            <div class="step-content">
-                                <h5><?php _e('Ouvrir l\'éditeur Elementor', 'restaurant-booking'); ?></h5>
-                                <p><?php _e('Éditez votre page avec Elementor', 'restaurant-booking'); ?></p>
-                            </div>
-                        </div>
-                        
-                        <div class="step">
-                            <div class="step-number">2</div>
-                            <div class="step-content">
-                                <h5><?php _e('Chercher "Block"', 'restaurant-booking'); ?></h5>
-                                <p><?php _e('Dans le panneau des widgets, recherchez "Block" ou "Restaurant"', 'restaurant-booking'); ?></p>
-                            </div>
-                        </div>
-                        
-                        <div class="step">
-                            <div class="step-number">3</div>
-                            <div class="step-content">
-                                <h5><?php _e('Choisir votre formulaire', 'restaurant-booking'); ?></h5>
-                                <div class="widget-options">
-                                    <div class="widget-option">
-                                        <div class="widget-icon">🍽️</div>
-                                        <div class="widget-info">
-                                            <strong><?php _e('Devis Restaurant', 'restaurant-booking'); ?></strong>
-                                            <p><?php _e('Formulaire 4 étapes pour service restaurant', 'restaurant-booking'); ?></p>
-                                        </div>
-                                    </div>
-                                    <div class="widget-option">
-                                        <div class="widget-icon">🚚</div>
-                                        <div class="widget-info">
-                                            <strong><?php _e('Devis Remorque', 'restaurant-booking'); ?></strong>
-                                            <p><?php _e('Formulaire 5 étapes pour service remorque mobile', 'restaurant-booking'); ?></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="step">
-                            <div class="step-number">4</div>
-                            <div class="step-content">
-                                <h5><?php _e('Glisser-déposer', 'restaurant-booking'); ?></h5>
-                                <p><?php _e('Faites glisser le widget sur votre page et configurez les options', 'restaurant-booking'); ?></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <div class="wrap">
+            <h1><?php _e('Widgets & Intégration', 'restaurant-booking'); ?></h1>
+            <!-- Carte d'information principale -->
+            <div class="restaurant-booking-info-card">
+                <h3><?php _e('Widget Formulaire Unifié Block & Co', 'restaurant-booking'); ?></h3>
+                <p><?php _e('Un seul widget Elementor intelligent qui s\'adapte automatiquement selon le service choisi par le client.', 'restaurant-booking'); ?></p>
+                <ul>
+                    <li><?php _e('✅ Sélection automatique Restaurant ou Remorque', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✅ Formulaire adaptatif selon le choix', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✅ Toutes les étapes du cahier des charges', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✅ Design responsive et moderne', 'restaurant-booking'); ?></li>
+                </ul>
             </div>
 
-            <div class="integration-method alternative">
-                <h4>⚙️ <?php _e('Méthode alternative : Shortcodes', 'restaurant-booking'); ?></h4>
-                <div class="method-content">
-                    <p><?php _e('Si vous préférez utiliser des shortcodes, voici les codes disponibles :', 'restaurant-booking'); ?></p>
+            <!-- Instructions d'utilisation -->
+            <div class="restaurant-booking-steps">
+                <h3><?php _e('Comment intégrer le widget', 'restaurant-booking'); ?></h3>
+                <div class="steps-grid">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h4><?php _e('Ouvrir Elementor', 'restaurant-booking'); ?></h4>
+                        <p><?php _e('Éditez votre page avec Elementor', 'restaurant-booking'); ?></p>
+                    </div>
                     
-                    <div class="shortcode-list">
-                        <div class="shortcode-item">
-                            <div class="shortcode-code">
-                                <code>[restaurant_booking_form type="restaurant"]</code>
-                                <button type="button" class="copy-btn" onclick="copyShortcode('[restaurant_booking_form type=&quot;restaurant&quot;]')">
-                                    <?php _e('Copier', 'restaurant-booking'); ?>
-                                </button>
-                            </div>
-                            <div class="shortcode-description">
-                                <strong>🍽️ <?php _e('Formulaire Restaurant', 'restaurant-booking'); ?></strong>
-                                <p><?php _e('Affiche le formulaire de devis restaurant (4 étapes)', 'restaurant-booking'); ?></p>
-                            </div>
-                        </div>
-                        
-                        <div class="shortcode-item">
-                            <div class="shortcode-code">
-                                <code>[restaurant_booking_form type="remorque"]</code>
-                                <button type="button" class="copy-btn" onclick="copyShortcode('[restaurant_booking_form type=&quot;remorque&quot;]')">
-                                    <?php _e('Copier', 'restaurant-booking'); ?>
-                                </button>
-                            </div>
-                            <div class="shortcode-description">
-                                <strong>🚚 <?php _e('Formulaire Remorque', 'restaurant-booking'); ?></strong>
-                                <p><?php _e('Affiche le formulaire de devis remorque mobile (5 étapes)', 'restaurant-booking'); ?></p>
-                            </div>
-                        </div>
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h4><?php _e('Rechercher "Block"', 'restaurant-booking'); ?></h4>
+                        <p><?php _e('Tapez "Block" dans la recherche de widgets', 'restaurant-booking'); ?></p>
                     </div>
-
-                    <div class="shortcode-usage">
-                        <h5><?php _e('Comment utiliser les shortcodes', 'restaurant-booking'); ?></h5>
-                        <div class="usage-methods">
-                            <div class="usage-method">
-                                <h6><?php _e('Dans Elementor', 'restaurant-booking'); ?></h6>
-                                <ol>
-                                    <li><?php _e('Ajoutez un widget "Shortcode"', 'restaurant-booking'); ?></li>
-                                    <li><?php _e('Collez le code dans le champ shortcode', 'restaurant-booking'); ?></li>
-                                    <li><?php _e('Sauvegardez et prévisualisez', 'restaurant-booking'); ?></li>
-                                </ol>
-                            </div>
-                            <div class="usage-method">
-                                <h6><?php _e('Dans l\'éditeur WordPress', 'restaurant-booking'); ?></h6>
-                                <ol>
-                                    <li><?php _e('Ajoutez un bloc "Shortcode"', 'restaurant-booking'); ?></li>
-                                    <li><?php _e('Collez le code dans le bloc', 'restaurant-booking'); ?></li>
-                                    <li><?php _e('Publiez votre page', 'restaurant-booking'); ?></li>
-                                </ol>
-                            </div>
-                        </div>
+                    
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h4><?php _e('Glisser-déposer', 'restaurant-booking'); ?></h4>
+                        <p><?php _e('Ajoutez le widget "Formulaire Unifié" à votre page', 'restaurant-booking'); ?></p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <h4><?php _e('Publier', 'restaurant-booking'); ?></h4>
+                        <p><?php _e('Sauvegardez et publiez votre page', 'restaurant-booking'); ?></p>
                     </div>
                 </div>
             </div>
 
-            <div class="integration-tips">
-                <h4>💡 <?php _e('Conseils d\'intégration', 'restaurant-booking'); ?></h4>
-                <div class="tips-grid">
-                    <div class="tip-item">
-                        <div class="tip-icon">🎨</div>
-                        <div class="tip-content">
-                            <h5><?php _e('Design cohérent', 'restaurant-booking'); ?></h5>
-                            <p><?php _e('Les formulaires utilisent automatiquement la charte graphique Block & Co', 'restaurant-booking'); ?></p>
-                        </div>
+            <!-- Avantages -->
+            <div class="restaurant-booking-features">
+                <h3><?php _e('Avantages du widget unifié', 'restaurant-booking'); ?></h3>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h4><?php _e('Simplicité', 'restaurant-booking'); ?></h4>
+                        <p><?php _e('Un seul widget pour tous vos besoins', 'restaurant-booking'); ?></p>
                     </div>
-                    <div class="tip-item">
-                        <div class="tip-icon">📱</div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h4><?php _e('Performance', 'restaurant-booking'); ?></h4>
+                        <p><?php _e('Chargement rapide et optimisé', 'restaurant-booking'); ?></p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📱</div>
+                        <h4><?php _e('Responsive', 'restaurant-booking'); ?></h4>
+                        <p><?php _e('Parfait sur tous les écrans', 'restaurant-booking'); ?></p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔒</div>
+                        <h4><?php _e('Sécurisé', 'restaurant-booking'); ?></h4>
+                        <p><?php _e('Protection complète des données', 'restaurant-booking'); ?></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <style>
+        .restaurant-booking-info-card {
+            background: #f0f6fc;
+            border: 1px solid #0073aa;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .restaurant-booking-info-card h3 {
+            margin-top: 0;
+            color: #0073aa;
+        }
+        .restaurant-booking-info-card ul {
+            margin-bottom: 0;
+        }
+        .restaurant-booking-steps {
+            margin: 30px 0;
+        }
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .step-card {
+            background: #fff;
+            border: 1px solid #c3c4c7;
+            border-radius: 4px;
+            padding: 20px;
+            text-align: center;
+        }
+        .step-number {
+            background: #0073aa;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 0 auto 15px auto;
+        }
+        .step-card h4 {
+            margin: 0 0 10px 0;
+            color: #1d2327;
+        }
+        .step-card p {
+            margin: 0;
+            color: #646970;
+        }
+        .restaurant-booking-features {
+            margin: 30px 0;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .feature-card {
+            background: #fff;
+            border: 1px solid #c3c4c7;
+            border-radius: 4px;
+            padding: 20px;
+            text-align: center;
+        }
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+        .feature-card h4 {
+            margin: 0 0 10px 0;
+            color: #1d2327;
+        }
+        .feature-card p {
+            margin: 0;
+            color: #646970;
+        }
+        </style>
+
+        <script>
+        // JavaScript pour les widgets Elementor (si nécessaire dans le futur)
+        console.log('Block & Co - Widgets Elementor disponibles');
+        </script>
+        <?php
+    }
+
+    /**
                         <div class="tip-content">
                             <h5><?php _e('Responsive', 'restaurant-booking'); ?></h5>
                             <p><?php _e('Les formulaires s\'adaptent automatiquement à tous les écrans', 'restaurant-booking'); ?></p>
@@ -1105,30 +1119,8 @@ class RestaurantBooking_Settings_Admin
         </style>
 
         <script>
-        function copyShortcode(shortcode) {
-            // Créer un élément temporaire pour la copie
-            const tempInput = document.createElement('input');
-            tempInput.value = shortcode;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            
-            try {
-                document.execCommand('copy');
-                // Feedback visuel
-                event.target.textContent = '✓ Copié !';
-                event.target.style.background = '#00a32a';
-                
-                setTimeout(() => {
-                    event.target.textContent = '<?php _e('Copier', 'restaurant-booking'); ?>';
-                    event.target.style.background = '#FFB404';
-                }, 2000);
-            } catch (err) {
-                console.error('Erreur lors de la copie:', err);
-                alert('Erreur lors de la copie. Veuillez copier manuellement : ' + shortcode);
-            }
-            
-            document.body.removeChild(tempInput);
-        }
+        // JavaScript pour les widgets Elementor (si nécessaire dans le futur)
+        console.log('Block & Co - Widgets Elementor disponibles');
         </script>
         <?php
     }

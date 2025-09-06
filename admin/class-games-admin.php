@@ -39,17 +39,19 @@ class RestaurantBooking_Games_Admin
 
     /**
      * Ajouter le menu d'administration
+     * Désactivé - géré maintenant dans class-admin.php pour contrôler l'ordre des menus
      */
     public function add_admin_menu()
     {
-        add_submenu_page(
-            'restaurant-booking',
-            __('Gestion des Jeux', 'restaurant-booking'),
-            __('Jeux', 'restaurant-booking'),
-            class_exists('RestaurantBooking_Permissions') ? RestaurantBooking_Permissions::get_required_capability('games') : 'manage_options',
-            'restaurant-booking-games',
-            array($this, 'render_games_page')
-        );
+        // Menu désactivé - géré dans class-admin.php
+        // add_submenu_page(
+        //     'restaurant-booking',
+        //     __('Gestion des Jeux', 'restaurant-booking'),
+        //     __('🎮 Jeux', 'restaurant-booking'),
+        //     class_exists('RestaurantBooking_Permissions') ? RestaurantBooking_Permissions::get_required_capability('games') : 'manage_options',
+        //     'restaurant-booking-games',
+        //     array($this, 'render_games_page')
+        // );
     }
 
     /**

@@ -146,12 +146,28 @@ class RestaurantBookingPlugin
         // Classes v2 (nouvelles fonctionnalités)
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-v2.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-v2.php';
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-v3.php';
         }
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-game.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-game.php';
         }
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-supplement-manager.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-supplement-manager.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-accompaniment-option-manager.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-accompaniment-option-manager.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-product-supplement-manager.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-product-supplement-manager.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-beverage-size-manager.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-beverage-size-manager.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-database-cleaner.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-database-cleaner.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-test-data-creator.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-test-data-creator.php';
         }
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-beverage-manager.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-beverage-manager.php';
@@ -200,6 +216,14 @@ class RestaurantBookingPlugin
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-settings-admin.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-settings-admin.php';
         }
+        
+        // Classes d'administration v2
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-games-admin.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-games-admin.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-migration-admin.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-migration-admin.php';
+        }
 
         // Interface publique
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-public.php')) {
@@ -243,11 +267,25 @@ class RestaurantBookingPlugin
         if (class_exists('RestaurantBooking_Migration_V2')) {
             RestaurantBooking_Migration_V2::get_instance();
         }
+        
+        // Exécuter la migration v3 si nécessaire
+        if (class_exists('RestaurantBooking_Migration_V3') && RestaurantBooking_Migration_V3::needs_migration()) {
+            RestaurantBooking_Migration_V3::migrate();
+        }
         if (class_exists('RestaurantBooking_Game')) {
             RestaurantBooking_Game::get_instance();
         }
         if (class_exists('RestaurantBooking_Supplement_Manager')) {
             RestaurantBooking_Supplement_Manager::get_instance();
+        }
+        if (class_exists('RestaurantBooking_Accompaniment_Option_Manager')) {
+            RestaurantBooking_Accompaniment_Option_Manager::get_instance();
+        }
+        if (class_exists('RestaurantBooking_Beverage_Size_Manager')) {
+            RestaurantBooking_Beverage_Size_Manager::get_instance();
+        }
+        if (class_exists('RestaurantBooking_Product_Supplement_Manager')) {
+            RestaurantBooking_Product_Supplement_Manager::get_instance();
         }
         if (class_exists('RestaurantBooking_Beverage_Manager')) {
             RestaurantBooking_Beverage_Manager::get_instance();
@@ -275,10 +313,11 @@ class RestaurantBookingPlugin
             // Charger les classes d'administration v2
             if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-games-admin.php')) {
                 require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-games-admin.php';
+                RestaurantBooking_Games_Admin::get_instance();
             }
             if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-migration-admin.php')) {
                 require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-migration-admin.php';
-                RestaurantBooking_Migration_Admin::get_instance();
+                // RestaurantBooking_Migration_Admin::get_instance(); // Désactivé - migration terminée
             }
         }
 
@@ -560,17 +599,17 @@ function restaurant_booking_cleanup_task()
     global $wpdb;
     
     // Supprimer les devis brouillons de plus de 30 jours
-    $wpdb->query($wpdb->prepare("
+    $wpdb->query("
         DELETE FROM {$wpdb->prefix}restaurant_quotes 
         WHERE status = 'draft' 
         AND created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)
-    "));
+    ");
     
     // Nettoyer les logs de plus de 90 jours
-    $wpdb->query($wpdb->prepare("
+    $wpdb->query("
         DELETE FROM {$wpdb->prefix}restaurant_logs 
         WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY)
-    "));
+    ");
     
     RestaurantBooking_Logger::log('Nettoyage automatique effectué', 'info');
 }

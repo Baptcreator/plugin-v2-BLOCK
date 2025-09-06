@@ -47,6 +47,11 @@ class RestaurantBooking_Admin
         if (!current_user_can('manage_restaurant_quotes')) {
             return;
         }
+        
+        // Gérer l'ancienne URL de création de produits de test (compatibilité)
+        if (isset($_GET['create_test_products']) && $_GET['create_test_products'] === '1' && wp_verify_nonce($_GET['_wpnonce'], 'create_test_products')) {
+            $this->create_test_products();
+        }
 
         // Charger les styles globaux pour toutes les pages Block & Co
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
@@ -97,99 +102,168 @@ class RestaurantBooking_Admin
             30
         );
 
+        // Sous-menu Tableau de bord
+        add_submenu_page(
+            'restaurant-booking',
+            __('Tableau de bord', 'restaurant-booking'),
+            __('📊 Tableau de bord', 'restaurant-booking'),
+            'manage_restaurant_quotes',
+            'restaurant-booking',
+            array($this, 'dashboard_page')
+        );
+
         // Sous-menu Gestion des devis
         add_submenu_page(
             'restaurant-booking',
             __('Gestion des devis', 'restaurant-booking'),
-            __('Gestion des devis', 'restaurant-booking'),
+            __('📋 Gestion des devis', 'restaurant-booking'),
             'manage_restaurant_quotes',
             'restaurant-booking-quotes',
             array($this, 'quotes_page')
         );
 
-        // Sous-menu Catégories
+        // === PRODUITS ALIMENTAIRES ===
         add_submenu_page(
             'restaurant-booking',
-            __('Catégories', 'restaurant-booking'),
-            __('Catégories', 'restaurant-booking'),
+            __('Plats Signature DOG', 'restaurant-booking'),
+            __('🍽️ Plats Signature DOG', 'restaurant-booking'),
             'manage_restaurant_products',
-            'restaurant-booking-categories',
-            array($this, 'categories_page')
+            'restaurant-booking-products-dog',
+            array($this, 'products_dog_page')
         );
 
-        // Sous-menu Produits
         add_submenu_page(
             'restaurant-booking',
-            __('Produits', 'restaurant-booking'),
-            __('Produits', 'restaurant-booking'),
+            __('Plats Signature CROQ', 'restaurant-booking'),
+            __('🍽️ Plats Signature CROQ', 'restaurant-booking'),
             'manage_restaurant_products',
-            'restaurant-booking-products',
-            array($this, 'products_page')
+            'restaurant-booking-products-croq',
+            array($this, 'products_croq_page')
         );
 
-        // Sous-menu Jeux (v2)
-        if (class_exists('RestaurantBooking_Games_Admin')) {
-            RestaurantBooking_Games_Admin::get_instance();
-        }
-
-        // Sous-menu Tarification (selon le cahier des charges)
         add_submenu_page(
             'restaurant-booking',
-            __('Tarification', 'restaurant-booking'),
-            __('Tarification', 'restaurant-booking'),
-            'manage_restaurant_settings',
-            'restaurant-booking-pricing',
-            array($this, 'pricing_page')
+            __('Menu Enfant (Mini Boss)', 'restaurant-booking'),
+            __('🍽️ Menu Enfant (Mini Boss)', 'restaurant-booking'),
+            'manage_restaurant_products',
+            'restaurant-booking-products-mini-boss',
+            array($this, 'products_mini_boss_page')
         );
 
-        // Sous-menu Textes interface (selon le cahier des charges)
         add_submenu_page(
             'restaurant-booking',
-            __('Textes interface', 'restaurant-booking'),
-            __('Textes interface', 'restaurant-booking'),
-            'manage_restaurant_settings',
-            'restaurant-booking-texts',
-            array($this, 'texts_page')
+            __('Accompagnements', 'restaurant-booking'),
+            __('🍽️ Accompagnements', 'restaurant-booking'),
+            'manage_restaurant_products',
+            'restaurant-booking-products-accompaniments',
+            array($this, 'products_accompaniments_page')
         );
 
-        // Sous-menu Emails (selon le cahier des charges)
         add_submenu_page(
             'restaurant-booking',
-            __('Emails', 'restaurant-booking'),
-            __('Emails', 'restaurant-booking'),
-            'manage_restaurant_settings',
-            'restaurant-booking-emails',
-            array($this, 'emails_page')
+            __('Buffet Salé', 'restaurant-booking'),
+            __('🍽️ Buffet Salé', 'restaurant-booking'),
+            'manage_restaurant_products',
+            'restaurant-booking-products-buffet-sale',
+            array($this, 'products_buffet_sale_page')
         );
 
-        // Sous-menu Paramètres généraux (renommé)
         add_submenu_page(
             'restaurant-booking',
-            __('Paramètres', 'restaurant-booking'),
-            __('Paramètres', 'restaurant-booking'),
-            'manage_restaurant_settings',
-            'restaurant-booking-settings',
-            array($this, 'settings_page')
+            __('Buffet Sucré', 'restaurant-booking'),
+            __('🍽️ Buffet Sucré', 'restaurant-booking'),
+            'manage_restaurant_products',
+            'restaurant-booking-products-buffet-sucre',
+            array($this, 'products_buffet_sucre_page')
         );
+
+        // === GESTION DES BOISSONS ===
+        add_submenu_page(
+            'restaurant-booking',
+            __('Boissons Soft', 'restaurant-booking'),
+            __('🍷 Boissons Soft', 'restaurant-booking'),
+            'manage_restaurant_products',
+            'restaurant-booking-beverages-soft',
+            array($this, 'beverages_soft_page')
+        );
+
+        add_submenu_page(
+            'restaurant-booking',
+            __('Vins', 'restaurant-booking'),
+            __('🍷 Vins', 'restaurant-booking'),
+            'manage_restaurant_products',
+            'restaurant-booking-beverages-wines',
+            array($this, 'beverages_wines_page')
+        );
+
+        add_submenu_page(
+            'restaurant-booking',
+            __('Bières Bouteilles', 'restaurant-booking'),
+            __('🍷 Bières Bouteilles', 'restaurant-booking'),
+            'manage_restaurant_products',
+            'restaurant-booking-beverages-beers',
+            array($this, 'beverages_beers_page')
+        );
+
+        add_submenu_page(
+            'restaurant-booking',
+            __('Fûts de Bière', 'restaurant-booking'),
+            __('🍷 Fûts de Bière', 'restaurant-booking'),
+            'manage_restaurant_products',
+            'restaurant-booking-beverages-kegs',
+            array($this, 'beverages_kegs_page')
+        );
+
+        // === OPTIONS ===
+
+        add_submenu_page(
+            'restaurant-booking',
+            __('Options Restaurant', 'restaurant-booking'),
+            __('🔢 Options Restaurant', 'restaurant-booking'),
+            'manage_restaurant_products',
+            'restaurant-booking-options-restaurant',
+            array($this, 'options_restaurant_page')
+        );
+
+        add_submenu_page(
+            'restaurant-booking',
+            __('Options Remorque', 'restaurant-booking'),
+            __('🔢 Options Remorque', 'restaurant-booking'),
+            'manage_restaurant_products',
+            'restaurant-booking-options-remorque',
+            array($this, 'options_remorque_page')
+        );
+
+        // Sous-menu pour créer les produits de test (temporaire)
 
         // Sous-menu Calendrier
         add_submenu_page(
             'restaurant-booking',
             __('Calendrier', 'restaurant-booking'),
-            __('Calendrier', 'restaurant-booking'),
+            __('📅 Calendrier', 'restaurant-booking'),
             'manage_restaurant_quotes',
             'restaurant-booking-calendar',
             array($this, 'calendar_page')
         );
 
-        // Sous-menu Google Calendar (intégration)
+        // Sous-menu Jeux (repositionné avant Paramètres)
         add_submenu_page(
             'restaurant-booking',
-            __('Google Calendar', 'restaurant-booking'),
-            __('Google Calendar', 'restaurant-booking'),
+            __('Gestion des Jeux', 'restaurant-booking'),
+            __('🎮 Jeux', 'restaurant-booking'),
+            'manage_restaurant_products',
+            'restaurant-booking-games',
+            array($this, 'games_page')
+        );
+
+        // Sous-menu Paramètres (avec sous-sections)
+        add_submenu_page(
+            'restaurant-booking',
+            __('Paramètres', 'restaurant-booking'),
+            __('⚙️ Paramètres', 'restaurant-booking'),
             'manage_restaurant_settings',
-            'restaurant-booking-google-settings',
-            array($this, 'google_calendar_page')
+            'restaurant-booking-settings',
+            array($this, 'settings_page')
         );
 
         // Sous-menu Diagnostics (visible seulement en mode debug)
@@ -478,6 +552,22 @@ class RestaurantBooking_Admin
         }
 
         include RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/views/calendar.php';
+    }
+
+    /**
+     * Page des jeux
+     */
+    public function games_page()
+    {
+        if (class_exists('RestaurantBooking_Games_Admin')) {
+            $games_admin = RestaurantBooking_Games_Admin::get_instance();
+            $games_admin->render_games_page();
+        } else {
+            echo '<div class="wrap">';
+            echo '<h1>🎮 ' . __('Jeux', 'restaurant-booking') . '</h1>';
+            echo '<p>' . __('Module jeux non disponible.', 'restaurant-booking') . '</p>';
+            echo '</div>';
+        }
     }
 
     /**
@@ -862,4 +952,270 @@ class RestaurantBooking_Admin
             wp_schedule_event(time(), $frequency, 'restaurant_booking_google_sync');
         }
     }
+
+    // ========================================
+    // NOUVELLES MÉTHODES POUR LES PRODUITS SPÉCIALISÉS
+    // ========================================
+
+    /**
+     * Page Plats Signature DOG
+     */
+    public function products_dog_page()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-products-dog-admin.php';
+        $products_admin = new RestaurantBooking_Products_Dog_Admin();
+        
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
+        
+        switch ($action) {
+            case 'add':
+            case 'edit':
+                $products_admin->display_form();
+                break;
+            default:
+                $products_admin->display_list();
+        }
+    }
+
+    /**
+     * Page Plats Signature CROQ
+     */
+    public function products_croq_page()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-products-croq-admin.php';
+        $products_admin = new RestaurantBooking_Products_Croq_Admin();
+        
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
+        
+        switch ($action) {
+            case 'add':
+            case 'edit':
+                $products_admin->display_form();
+                break;
+            default:
+                $products_admin->display_list();
+        }
+    }
+
+    /**
+     * Page Menu Enfant (Mini Boss)
+     */
+    public function products_mini_boss_page()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-products-mini-boss-admin.php';
+        $products_admin = new RestaurantBooking_Products_MiniBoss_Admin();
+        
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
+        
+        switch ($action) {
+            case 'add':
+            case 'edit':
+                $products_admin->display_form();
+                break;
+            default:
+                $products_admin->display_list();
+        }
+    }
+
+    /**
+     * Page Accompagnements
+     */
+    public function products_accompaniments_page()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-products-accompaniments-admin.php';
+        $products_admin = new RestaurantBooking_Products_Accompaniments_Admin();
+        
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
+        
+        switch ($action) {
+            case 'add':
+            case 'edit':
+                $products_admin->display_form();
+                break;
+            default:
+                $products_admin->display_list();
+        }
+    }
+
+    /**
+     * Page Buffet Salé
+     */
+    public function products_buffet_sale_page()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-products-buffet-sale-admin.php';
+        $products_admin = new RestaurantBooking_Products_BuffetSale_Admin();
+        
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
+        
+        switch ($action) {
+            case 'add':
+            case 'edit':
+                $products_admin->display_form();
+                break;
+            default:
+                $products_admin->display_list();
+        }
+    }
+
+    /**
+     * Page Buffet Sucré
+     */
+    public function products_buffet_sucre_page()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-products-buffet-sucre-admin.php';
+        $products_admin = new RestaurantBooking_Products_BuffetSucre_Admin();
+        
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
+        
+        switch ($action) {
+            case 'add':
+            case 'edit':
+                $products_admin->display_form();
+                break;
+            default:
+                $products_admin->display_list();
+        }
+    }
+
+    /**
+     * Page Boissons Soft
+     */
+    public function beverages_soft_page()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-beverages-soft-admin.php';
+        $beverages_admin = new RestaurantBooking_Beverages_Soft_Admin();
+        
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
+        
+        switch ($action) {
+            case 'add':
+            case 'edit':
+                $beverages_admin->display_form();
+                break;
+            default:
+                $beverages_admin->display_list();
+        }
+    }
+
+    /**
+     * Page Vins
+     */
+    public function beverages_wines_page()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-beverages-wines-admin.php';
+        $beverages_admin = new RestaurantBooking_Beverages_Wines_Admin();
+        
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
+        
+        switch ($action) {
+            case 'add':
+            case 'edit':
+                $beverages_admin->display_form();
+                break;
+            default:
+                $beverages_admin->display_list();
+        }
+    }
+
+    /**
+     * Page Bières Bouteilles
+     */
+    public function beverages_beers_page()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-beverages-beers-admin.php';
+        $beverages_admin = new RestaurantBooking_Beverages_Beers_Admin();
+        
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
+        
+        switch ($action) {
+            case 'add':
+            case 'edit':
+                $beverages_admin->display_form();
+                break;
+            default:
+                $beverages_admin->display_list();
+        }
+    }
+
+    /**
+     * Page Fûts de Bière
+     */
+    public function beverages_kegs_page()
+    {
+        echo '<div class="wrap">';
+        echo '<h1>🍷 ' . __('Fûts de Bière', 'restaurant-booking') . '</h1>';
+        echo '<div class="restaurant-booking-info-card" style="background: #fff3e0; border: 1px solid #ffcc02; padding: 15px; border-radius: 4px;">';
+        echo '<h3 style="margin-top: 0; color: #ef6c00;">' . __('Fûts pour la remorque', 'restaurant-booking') . '</h3>';
+        echo '<ul>';
+        echo '<li>' . __('✓ Fûts 10L et 20L disponibles', 'restaurant-booking') . '</li>';
+        echo '<li>' . __('✓ Catégories : BLONDE, BLANCHE, IPA, AMBRÉE', 'restaurant-booking') . '</li>';
+        echo '<li>' . __('✓ Option "Mise à disposition tireuse" requise (50€)', 'restaurant-booking') . '</li>';
+        echo '</ul>';
+        echo '</div>';
+        echo '<p>' . __('Interface en cours de développement...', 'restaurant-booking') . '</p>';
+        echo '</div>';
+    }
+
+    /**
+     * Page Options Restaurant
+     */
+    public function options_restaurant_page()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-options-restaurant-admin.php';
+        $options_admin = new RestaurantBooking_Options_Restaurant_Admin();
+        
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
+        
+        switch ($action) {
+            case 'add':
+            case 'edit':
+                $options_admin->display_form();
+                break;
+            default:
+                $options_admin->display_list();
+        }
+    }
+
+    /**
+     * Page Options Remorque
+     */
+    public function options_remorque_page()
+    {
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-options-remorque-admin.php';
+        $options_admin = new RestaurantBooking_Options_Remorque_Admin();
+        
+        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
+        
+        switch ($action) {
+            case 'add':
+            case 'edit':
+                $options_admin->display_form();
+                break;
+            default:
+                $options_admin->display_list();
+        }
+    }
+
+    /**
+     * Fonction de compatibilité - rediriger vers la nouvelle classe
+     * @deprecated Utiliser RestaurantBooking_Test_Data_Creator::create_test_products()
+     */
+    public function create_test_products()
+    {
+        // Rediriger vers la nouvelle classe
+        if (class_exists('RestaurantBooking_Test_Data_Creator')) {
+            RestaurantBooking_Test_Data_Creator::ensure_categories_exist();
+            $result = RestaurantBooking_Test_Data_Creator::create_test_products();
+            
+            if ($result['success']) {
+                wp_redirect(admin_url('admin.php?page=restaurant-booking&message=test_products_created'));
+            } else {
+                wp_redirect(admin_url('admin.php?page=restaurant-booking&error=test_products_failed'));
+            }
+            exit;
+                } else {
+            wp_die(__('Classe de création de produits de test non trouvée', 'restaurant-booking'));
+        }
+    }
+
 }

@@ -21,7 +21,8 @@ class RestaurantBooking_Category
      * Types de catégories disponibles
      */
     const CATEGORY_TYPES = array(
-        'plat_signature' => 'Plats Signature',
+        'plat_signature_dog' => 'Plats Signature DOG',
+        'plat_signature_croq' => 'Plats Signature CROQ',
         'mini_boss' => 'Mini Boss',
         'accompagnement' => 'Accompagnements',
         'buffet_sale' => 'Buffet Salé',
@@ -31,8 +32,9 @@ class RestaurantBooking_Category
         'vin_rouge' => 'Vins Rouges',
         'vin_rose' => 'Vins Rosés',
         'cremant' => 'Crémants',
-        'biere' => 'Bières',
-        'fut' => 'Fûts',
+        'biere_bouteille' => 'Bières Bouteilles',
+        'fut' => 'Fûts de Bière',
+        'jeu' => 'Jeux',
         'option_restaurant' => 'Options Restaurant',
         'option_remorque' => 'Options Remorque'
     );
@@ -185,6 +187,31 @@ class RestaurantBooking_Category
         $category = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$wpdb->prefix}restaurant_categories WHERE slug = %s",
             $slug
+        ), ARRAY_A);
+
+        if (!$category) {
+            return null;
+        }
+
+        // Convertir les types
+        $category['is_required'] = (bool) $category['is_required'];
+        $category['min_per_person'] = (bool) $category['min_per_person'];
+        $category['is_active'] = (bool) $category['is_active'];
+        $category['max_selection'] = $category['max_selection'] ? (int) $category['max_selection'] : null;
+
+        return $category;
+    }
+
+    /**
+     * Obtenir une catégorie par type
+     */
+    public static function get_by_type($type)
+    {
+        global $wpdb;
+
+        $category = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}restaurant_categories WHERE type = %s LIMIT 1",
+            $type
         ), ARRAY_A);
 
         if (!$category) {
