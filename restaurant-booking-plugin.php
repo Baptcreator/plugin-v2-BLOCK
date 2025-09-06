@@ -140,6 +140,29 @@ class RestaurantBookingPlugin
         require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-product.php';
         require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-category.php';
         
+        // Classes v2 (nouvelles fonctionnalités)
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-v2.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-v2.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-game.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-game.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-supplement-manager.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-supplement-manager.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-beverage-manager.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-beverage-manager.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-distance-calculator.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-distance-calculator.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-quote-calculator-v2.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-quote-calculator-v2.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler-v2.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler-v2.php';
+        }
+
         // Classes optionnelles avec vérification
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-email.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-email.php';
@@ -209,6 +232,26 @@ class RestaurantBookingPlugin
         
         // Initialiser le logger
         RestaurantBooking_Logger::get_instance();
+        
+        // Initialiser les composants v2
+        if (class_exists('RestaurantBooking_Migration_V2')) {
+            RestaurantBooking_Migration_V2::get_instance();
+        }
+        if (class_exists('RestaurantBooking_Game')) {
+            RestaurantBooking_Game::get_instance();
+        }
+        if (class_exists('RestaurantBooking_Supplement_Manager')) {
+            RestaurantBooking_Supplement_Manager::get_instance();
+        }
+        if (class_exists('RestaurantBooking_Beverage_Manager')) {
+            RestaurantBooking_Beverage_Manager::get_instance();
+        }
+        if (class_exists('RestaurantBooking_Distance_Calculator')) {
+            RestaurantBooking_Distance_Calculator::get_instance();
+        }
+        if (class_exists('RestaurantBooking_Ajax_Handler_V2')) {
+            RestaurantBooking_Ajax_Handler_V2::get_instance();
+        }
     }
 
     /**
@@ -219,6 +262,11 @@ class RestaurantBookingPlugin
         // Interface d'administration
         if (is_admin()) {
             RestaurantBooking_Admin::get_instance();
+            
+            // Charger les classes d'administration v2
+            if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-games-admin.php')) {
+                require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-games-admin.php';
+            }
         }
 
         // Interface publique
@@ -272,6 +320,26 @@ class RestaurantBookingPlugin
             RESTAURANT_BOOKING_VERSION,
             true
         );
+
+        // Scripts et styles v2 (formulaire unifié)
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'assets/css/quote-form-unified.css')) {
+            wp_enqueue_style(
+                'restaurant-booking-quote-form-unified',
+                RESTAURANT_BOOKING_PLUGIN_URL . 'assets/css/quote-form-unified.css',
+                array(),
+                RESTAURANT_BOOKING_VERSION
+            );
+        }
+
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'assets/js/quote-form-unified.js')) {
+            wp_enqueue_script(
+                'restaurant-booking-quote-form-unified',
+                RESTAURANT_BOOKING_PLUGIN_URL . 'assets/js/quote-form-unified.js',
+                array('jquery'),
+                RESTAURANT_BOOKING_VERSION,
+                true
+            );
+        }
 
         // Localisation des scripts
         wp_localize_script('restaurant-booking-public', 'restaurant_booking_ajax', array(

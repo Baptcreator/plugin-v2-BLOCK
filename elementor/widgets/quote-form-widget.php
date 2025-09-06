@@ -497,3 +497,4 @@ class RestaurantBooking_Quote_Form_Widget extends \Elementor\Widget_Base
         <?php
     }
 }
+

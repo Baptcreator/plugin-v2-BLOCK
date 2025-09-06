@@ -127,6 +127,11 @@ class RestaurantBooking_Admin
             array($this, 'products_page')
         );
 
+        // Sous-menu Jeux (v2)
+        if (class_exists('RestaurantBooking_Games_Admin')) {
+            RestaurantBooking_Games_Admin::get_instance();
+        }
+
         // Sous-menu Tarification (selon le cahier des charges)
         add_submenu_page(
             'restaurant-booking',

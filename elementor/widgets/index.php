@@ -15,3 +15,4 @@ if (!defined('ABSPATH')) {
 // Rediriger vers la page d'accueil
 wp_redirect(home_url());
 exit;
+
