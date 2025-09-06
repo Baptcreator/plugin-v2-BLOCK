@@ -1,6 +1,6 @@
 <?php
 /**
- * Widget Elementor - Formulaire de devis unifié v2
+ * Widget Elementor - Formulaire de Devis Unifié v2
  *
  * @package RestaurantBooking
  * @since 2.0.0
@@ -13,15 +13,15 @@ if (!defined('ABSPATH')) {
 class RestaurantBooking_Quote_Form_Unified_Widget extends \Elementor\Widget_Base
 {
     /**
-     * Obtenir le nom du widget
+     * Nom du widget
      */
     public function get_name()
     {
-        return 'restaurant_booking_quote_form_unified';
+        return 'restaurant-booking-unified-form';
     }
 
     /**
-     * Obtenir le titre du widget
+     * Titre du widget
      */
     public function get_title()
     {
@@ -29,7 +29,7 @@ class RestaurantBooking_Quote_Form_Unified_Widget extends \Elementor\Widget_Base
     }
 
     /**
-     * Obtenir l'icône du widget
+     * Icône du widget
      */
     public function get_icon()
     {
@@ -37,7 +37,7 @@ class RestaurantBooking_Quote_Form_Unified_Widget extends \Elementor\Widget_Base
     }
 
     /**
-     * Obtenir les catégories du widget
+     * Catégories du widget
      */
     public function get_categories()
     {
@@ -45,67 +45,67 @@ class RestaurantBooking_Quote_Form_Unified_Widget extends \Elementor\Widget_Base
     }
 
     /**
-     * Obtenir les mots-clés du widget
+     * Mots-clés pour la recherche
      */
     public function get_keywords()
     {
-        return ['restaurant', 'booking', 'devis', 'formulaire', 'block', 'unified', 'v2'];
+        return ['restaurant', 'booking', 'devis', 'formulaire', 'privatisation', 'remorque'];
     }
 
     /**
-     * Obtenir les scripts nécessaires
+     * Scripts nécessaires
      */
     public function get_script_depends()
     {
-        return ['restaurant-booking-quote-form-unified'];
+        return ['restaurant-booking-unified-form'];
     }
 
     /**
-     * Obtenir les styles nécessaires
+     * Styles nécessaires
      */
     public function get_style_depends()
     {
-        return ['restaurant-booking-quote-form-unified'];
+        return ['restaurant-booking-unified-form'];
     }
 
     /**
-     * Enregistrer les contrôles du widget
+     * Contrôles du widget
      */
     protected function register_controls()
     {
-        // Section Contenu Principal
+        // Section Contenu
         $this->start_controls_section(
             'content_section',
             [
-                'label' => __('Configuration Générale', 'restaurant-booking'),
+                'label' => __('Contenu', 'restaurant-booking'),
                 'tab' => \Elementor\Controls_Manager::TAB_CONTENT,
             ]
         );
 
         $this->add_control(
-            'widget_title',
+            'form_title',
             [
-                'label' => __('Titre du widget', 'restaurant-booking'),
+                'label' => __('Titre du formulaire', 'restaurant-booking'),
                 'type' => \Elementor\Controls_Manager::TEXT,
-                'default' => __('Demande de devis privatisation', 'restaurant-booking'),
-                'placeholder' => __('Saisissez le titre', 'restaurant-booking'),
+                'default' => __('Demande de Devis', 'restaurant-booking'),
+                'placeholder' => __('Entrez le titre...', 'restaurant-booking'),
             ]
         );
 
         $this->add_control(
-            'widget_subtitle',
+            'form_subtitle',
             [
                 'label' => __('Sous-titre', 'restaurant-booking'),
                 'type' => \Elementor\Controls_Manager::TEXTAREA,
-                'default' => __('Choisissez votre service et obtenez votre devis personnalisé', 'restaurant-booking'),
-                'placeholder' => __('Saisissez le sous-titre', 'restaurant-booking'),
+                'default' => __('Choisissez votre service de privatisation', 'restaurant-booking'),
+                'placeholder' => __('Entrez le sous-titre...', 'restaurant-booking'),
             ]
         );
 
         $this->add_control(
-            'show_progress_bar',
+            'show_calculator',
             [
-                'label' => __('Afficher la barre de progression', 'restaurant-booking'),
+                'label' => __('Afficher le calculateur de prix', 'restaurant-booking'),
                 'type' => \Elementor\Controls_Manager::SWITCHER,
                 'label_on' => __('Oui', 'restaurant-booking'),
                 'label_off' => __('Non', 'restaurant-booking'),
@@ -117,127 +117,27 @@ class RestaurantBooking_Quote_Form_Unified_Widget extends \Elementor\Widget_Base
         $this->add_control(
             'calculator_position',
             [
-                'label' => __('Position du calculateur de prix', 'restaurant-booking'),
+                'label' => __('Position du calculateur', 'restaurant-booking'),
                 'type' => \Elementor\Controls_Manager::SELECT,
-                'default' => 'bottom',
+                'default' => 'right',
                 'options' => [
-                    'bottom' => __('En bas', 'restaurant-booking'),
-                    'right' => __('À droite', 'restaurant-booking'),
-                    'floating' => __('Flottant', 'restaurant-booking'),
+                    'left' => __('Gauche', 'restaurant-booking'),
+                    'right' => __('Droite', 'restaurant-booking'),
+                    'bottom' => __('Bas', 'restaurant-booking'),
+                ],
+                'condition' => [
+                    'show_calculator' => 'yes',
                 ],
             ]
         );
 
         $this->end_controls_section();
 
-        // Section Textes Service Selection
+        // Section Style
         $this->start_controls_section(
-            'service_selection_section',
+            'style_section',
             [
-                'label' => __('Sélection de Service', 'restaurant-booking'),
-                'tab' => \Elementor\Controls_Manager::TAB_CONTENT,
-            ]
-        );
-
-        $this->add_control(
-            'service_selection_title',
-            [
-                'label' => __('Titre sélection service', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::TEXT,
-                'default' => RestaurantBooking_Settings::get('widget_service_selection_title', 'Choisissez votre service'),
-            ]
-        );
-
-        $this->add_control(
-            'restaurant_card_title',
-            [
-                'label' => __('Titre card restaurant', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::TEXT,
-                'default' => RestaurantBooking_Settings::get('widget_restaurant_card_title', 'PRIVATISATION DU RESTAURANT'),
-            ]
-        );
-
-        $this->add_control(
-            'restaurant_card_subtitle',
-            [
-                'label' => __('Sous-titre card restaurant', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::TEXT,
-                'default' => RestaurantBooking_Settings::get('widget_restaurant_card_subtitle', 'De 10 à 30 personnes'),
-            ]
-        );
-
-        $this->add_control(
-            'restaurant_card_description',
-            [
-                'label' => __('Description card restaurant', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::WYSIWYG,
-                'default' => RestaurantBooking_Settings::get('widget_restaurant_card_description', 'Privatisez notre restaurant pour vos événements intimes et profitez d\'un service personnalisé dans un cadre chaleureux.'),
-            ]
-        );
-
-        $this->add_control(
-            'remorque_card_title',
-            [
-                'label' => __('Titre card remorque', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::TEXT,
-                'default' => RestaurantBooking_Settings::get('widget_remorque_card_title', 'Privatisation de la remorque Block'),
-            ]
-        );
-
-        $this->add_control(
-            'remorque_card_subtitle',
-            [
-                'label' => __('Sous-titre card remorque', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::TEXT,
-                'default' => RestaurantBooking_Settings::get('widget_remorque_card_subtitle', 'À partir de 20 personnes'),
-            ]
-        );
-
-        $this->add_control(
-            'remorque_card_description',
-            [
-                'label' => __('Description card remorque', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::WYSIWYG,
-                'default' => RestaurantBooking_Settings::get('widget_remorque_card_description', 'Notre remorque mobile se déplace pour vos événements extérieurs et grandes réceptions.'),
-            ]
-        );
-
-        $this->end_controls_section();
-
-        // Section Messages
-        $this->start_controls_section(
-            'messages_section',
-            [
-                'label' => __('Messages et Validation', 'restaurant-booking'),
-                'tab' => \Elementor\Controls_Manager::TAB_CONTENT,
-            ]
-        );
-
-        $this->add_control(
-            'success_message',
-            [
-                'label' => __('Message de succès', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::WYSIWYG,
-                'default' => RestaurantBooking_Settings::get('quote_success_message', 'Votre devis est d\'ores et déjà disponible dans votre boîte mail, la suite ? Block va prendre contact avec vous afin d\'affiner celui-ci et de créer avec vous toute l\'expérience dont vous rêvez'),
-            ]
-        );
-
-        $this->add_control(
-            'loading_message',
-            [
-                'label' => __('Message de chargement', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::TEXT,
-                'default' => __('Génération de votre devis en cours...', 'restaurant-booking'),
-            ]
-        );
-
-        $this->end_controls_section();
-
-        // Section Style - Général
-        $this->start_controls_section(
-            'general_style_section',
-            [
-                'label' => __('Style Général', 'restaurant-booking'),
+                'label' => __('Style', 'restaurant-booking'),
                 'tab' => \Elementor\Controls_Manager::TAB_STYLE,
             ]
         );
@@ -248,9 +148,6 @@ class RestaurantBooking_Quote_Form_Unified_Widget extends \Elementor\Widget_Base
                 'label' => __('Couleur primaire', 'restaurant-booking'),
                 'type' => \Elementor\Controls_Manager::COLOR,
                 'default' => '#243127',
-                'selectors' => [
-                    '{{WRAPPER}}' => '--rb-primary-color: {{VALUE}}',
-                ],
             ]
         );
 
@@ -260,9 +157,6 @@ class RestaurantBooking_Quote_Form_Unified_Widget extends \Elementor\Widget_Base
                 'label' => __('Couleur secondaire', 'restaurant-booking'),
                 'type' => \Elementor\Controls_Manager::COLOR,
                 'default' => '#FFB404',
-                'selectors' => [
-                    '{{WRAPPER}}' => '--rb-secondary-color: {{VALUE}}',
-                ],
             ]
         );
 
@@ -272,279 +166,56 @@ class RestaurantBooking_Quote_Form_Unified_Widget extends \Elementor\Widget_Base
                 'label' => __('Couleur d\'accent', 'restaurant-booking'),
                 'type' => \Elementor\Controls_Manager::COLOR,
                 'default' => '#EF3D1D',
-                'selectors' => [
-                    '{{WRAPPER}}' => '--rb-accent-color: {{VALUE}}',
-                ],
-            ]
-        );
-
-        $this->add_responsive_control(
-            'container_padding',
-            [
-                'label' => __('Espacement interne', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::DIMENSIONS,
-                'size_units' => ['px', 'em', '%'],
-                'selectors' => [
-                    '{{WRAPPER}} .rb-quote-form-container' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
-                ],
-            ]
-        );
-
-        $this->add_group_control(
-            \Elementor\Group_Control_Border::get_type(),
-            [
-                'name' => 'container_border',
-                'selector' => '{{WRAPPER}} .rb-quote-form-container',
-            ]
-        );
-
-        $this->add_responsive_control(
-            'container_border_radius',
-            [
-                'label' => __('Rayon de bordure', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::DIMENSIONS,
-                'size_units' => ['px', '%'],
-                'selectors' => [
-                    '{{WRAPPER}} .rb-quote-form-container' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
-                ],
-            ]
-        );
-
-        $this->end_controls_section();
-
-        // Section Style - Cards de service
-        $this->start_controls_section(
-            'service_cards_style_section',
-            [
-                'label' => __('Style Cards de Service', 'restaurant-booking'),
-                'tab' => \Elementor\Controls_Manager::TAB_STYLE,
-            ]
-        );
-
-        $this->add_responsive_control(
-            'cards_gap',
-            [
-                'label' => __('Espacement entre les cards', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::SLIDER,
-                'size_units' => ['px', 'em'],
-                'range' => [
-                    'px' => [
-                        'min' => 0,
-                        'max' => 100,
-                        'step' => 5,
-                    ],
-                ],
-                'default' => [
-                    'unit' => 'px',
-                    'size' => 30,
-                ],
-                'selectors' => [
-                    '{{WRAPPER}} .rb-service-cards' => 'gap: {{SIZE}}{{UNIT}};',
-                ],
-            ]
-        );
-
-        $this->add_group_control(
-            \Elementor\Group_Control_Background::get_type(),
-            [
-                'name' => 'card_background',
-                'types' => ['classic', 'gradient'],
-                'selector' => '{{WRAPPER}} .rb-service-card',
-            ]
-        );
-
-        $this->add_group_control(
-            \Elementor\Group_Control_Border::get_type(),
-            [
-                'name' => 'card_border',
-                'selector' => '{{WRAPPER}} .rb-service-card',
-            ]
-        );
-
-        $this->add_responsive_control(
-            'card_border_radius',
-            [
-                'label' => __('Rayon de bordure des cards', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::DIMENSIONS,
-                'size_units' => ['px', '%'],
-                'selectors' => [
-                    '{{WRAPPER}} .rb-service-card' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
-                ],
-            ]
-        );
-
-        $this->add_group_control(
-            \Elementor\Group_Control_Box_Shadow::get_type(),
-            [
-                'name' => 'card_box_shadow',
-                'selector' => '{{WRAPPER}} .rb-service-card',
-            ]
-        );
-
-        $this->end_controls_section();
-
-        // Section Style - Boutons
-        $this->start_controls_section(
-            'buttons_style_section',
-            [
-                'label' => __('Style des Boutons', 'restaurant-booking'),
-                'tab' => \Elementor\Controls_Manager::TAB_STYLE,
             ]
         );
 
         $this->add_group_control(
             \Elementor\Group_Control_Typography::get_type(),
             [
-                'name' => 'button_typography',
-                'selector' => '{{WRAPPER}} .rb-btn',
-            ]
-        );
-
-        $this->start_controls_tabs('button_tabs');
-
-        $this->start_controls_tab(
-            'button_normal_tab',
-            [
-                'label' => __('Normal', 'restaurant-booking'),
-            ]
-        );
-
-        $this->add_control(
-            'button_text_color',
-            [
-                'label' => __('Couleur du texte', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::COLOR,
-                'default' => '#ffffff',
-                'selectors' => [
-                    '{{WRAPPER}} .rb-btn' => 'color: {{VALUE}}',
-                ],
-            ]
-        );
-
-        $this->add_group_control(
-            \Elementor\Group_Control_Background::get_type(),
-            [
-                'name' => 'button_background',
-                'types' => ['classic', 'gradient'],
-                'selector' => '{{WRAPPER}} .rb-btn',
-            ]
-        );
-
-        $this->end_controls_tab();
-
-        $this->start_controls_tab(
-            'button_hover_tab',
-            [
-                'label' => __('Survol', 'restaurant-booking'),
-            ]
-        );
-
-        $this->add_control(
-            'button_hover_text_color',
-            [
-                'label' => __('Couleur du texte', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::COLOR,
-                'selectors' => [
-                    '{{WRAPPER}} .rb-btn:hover' => 'color: {{VALUE}}',
-                ],
-            ]
-        );
-
-        $this->add_group_control(
-            \Elementor\Group_Control_Background::get_type(),
-            [
-                'name' => 'button_hover_background',
-                'types' => ['classic', 'gradient'],
-                'selector' => '{{WRAPPER}} .rb-btn:hover',
-            ]
-        );
-
-        $this->end_controls_tab();
-
-        $this->end_controls_tabs();
-
-        $this->add_responsive_control(
-            'button_padding',
-            [
-                'label' => __('Espacement interne', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::DIMENSIONS,
-                'size_units' => ['px', 'em', '%'],
-                'selectors' => [
-                    '{{WRAPPER}} .rb-btn' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
-                ],
-                'separator' => 'before',
-            ]
-        );
-
-        $this->add_responsive_control(
-            'button_border_radius',
-            [
-                'label' => __('Rayon de bordure', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::DIMENSIONS,
-                'size_units' => ['px', '%'],
-                'selectors' => [
-                    '{{WRAPPER}} .rb-btn' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
-                ],
-            ]
-        );
-
-        $this->end_controls_section();
-
-        // Section Style - Calculateur de prix
-        $this->start_controls_section(
-            'calculator_style_section',
-            [
-                'label' => __('Style Calculateur de Prix', 'restaurant-booking'),
-                'tab' => \Elementor\Controls_Manager::TAB_STYLE,
-            ]
-        );
-
-        $this->add_group_control(
-            \Elementor\Group_Control_Background::get_type(),
-            [
-                'name' => 'calculator_background',
-                'types' => ['classic', 'gradient'],
-                'selector' => '{{WRAPPER}} .rb-price-calculator',
-            ]
-        );
-
-        $this->add_group_control(
-            \Elementor\Group_Control_Border::get_type(),
-            [
-                'name' => 'calculator_border',
-                'selector' => '{{WRAPPER}} .rb-price-calculator',
-            ]
-        );
-
-        $this->add_responsive_control(
-            'calculator_padding',
-            [
-                'label' => __('Espacement interne', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::DIMENSIONS,
-                'size_units' => ['px', 'em', '%'],
-                'selectors' => [
-                    '{{WRAPPER}} .rb-price-calculator' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
-                ],
-            ]
-        );
-
-        $this->add_control(
-            'calculator_price_color',
-            [
-                'label' => __('Couleur du prix', 'restaurant-booking'),
-                'type' => \Elementor\Controls_Manager::COLOR,
-                'default' => '#243127',
-                'selectors' => [
-                    '{{WRAPPER}} .rb-price-total' => 'color: {{VALUE}}',
-                ],
+                'name' => 'title_typography',
+                'label' => __('Typographie du titre', 'restaurant-booking'),
+                'selector' => '{{WRAPPER}} .rb-form-title',
             ]
         );
 
         $this->add_group_control(
             \Elementor\Group_Control_Typography::get_type(),
             [
-                'name' => 'calculator_price_typography',
-                'selector' => '{{WRAPPER}} .rb-price-total',
+                'name' => 'subtitle_typography',
+                'label' => __('Typographie du sous-titre', 'restaurant-booking'),
+                'selector' => '{{WRAPPER}} .rb-form-subtitle',
+            ]
+        );
+
+        $this->end_controls_section();
+
+        // Section Avancé
+        $this->start_controls_section(
+            'advanced_section',
+            [
+                'label' => __('Avancé', 'restaurant-booking'),
+                'tab' => \Elementor\Controls_Manager::TAB_CONTENT,
+            ]
+        );
+
+        $this->add_control(
+            'enable_analytics',
+            [
+                'label' => __('Activer le suivi analytics', 'restaurant-booking'),
+                'type' => \Elementor\Controls_Manager::SWITCHER,
+                'label_on' => __('Oui', 'restaurant-booking'),
+                'label_off' => __('Non', 'restaurant-booking'),
+                'return_value' => 'yes',
+                'default' => 'yes',
+            ]
+        );
+
+        $this->add_control(
+            'custom_css_class',
+            [
+                'label' => __('Classe CSS personnalisée', 'restaurant-booking'),
+                'type' => \Elementor\Controls_Manager::TEXT,
+                'placeholder' => __('ma-classe-personnalisee', 'restaurant-booking'),
             ]
         );
 
@@ -557,59 +228,30 @@ class RestaurantBooking_Quote_Form_Unified_Widget extends \Elementor\Widget_Base
     protected function render()
     {
         $settings = $this->get_settings_for_display();
-
-        // Vérifier que les classes nécessaires existent
-        if (!class_exists('RestaurantBooking_Migration_V2')) {
-            echo '<div class="rb-error">';
-            echo __('Erreur : Le système v2 n\'est pas encore initialisé.', 'restaurant-booking');
-            echo '</div>';
-            return;
-        }
-
-        // Vérifier l'état de la migration
-        $migration_status = RestaurantBooking_Migration_V2::get_migration_status();
-        if ($migration_status['migration_needed']) {
-            echo '<div class="rb-error">';
-            echo __('Migration v2 requise. Veuillez contacter l\'administrateur.', 'restaurant-booking');
-            echo '</div>';
-            return;
-        }
-
-        // Préparer les paramètres pour le formulaire
+        
+        // Configuration du formulaire
         $form_config = array(
+            'title' => $settings['form_title'] ?? __('Demande de Devis', 'restaurant-booking'),
+            'subtitle' => $settings['form_subtitle'] ?? __('Choisissez votre service de privatisation', 'restaurant-booking'),
+            'show_calculator' => $settings['show_calculator'] === 'yes',
+            'calculator_position' => $settings['calculator_position'] ?? 'right',
+            'enable_analytics' => $settings['enable_analytics'] === 'yes',
+            'custom_css_class' => $settings['custom_css_class'] ?? '',
+            'theme_colors' => array(
+                'primary' => $settings['primary_color'] ?? '#243127',
+                'secondary' => $settings['secondary_color'] ?? '#FFB404',
+                'accent' => $settings['accent_color'] ?? '#EF3D1D',
+            ),
             'widget_id' => $this->get_id(),
-            'widget_title' => $settings['widget_title'],
-            'widget_subtitle' => $settings['widget_subtitle'],
-            'show_progress_bar' => ($settings['show_progress_bar'] === 'yes'),
-            'calculator_position' => $settings['calculator_position'],
-            
-            // Textes service selection
-            'service_selection_title' => $settings['service_selection_title'],
-            'restaurant_card' => array(
-                'title' => $settings['restaurant_card_title'],
-                'subtitle' => $settings['restaurant_card_subtitle'],
-                'description' => $settings['restaurant_card_description']
-            ),
-            'remorque_card' => array(
-                'title' => $settings['remorque_card_title'],
-                'subtitle' => $settings['remorque_card_subtitle'],
-                'description' => $settings['remorque_card_description']
-            ),
-            
-            // Messages
-            'success_message' => $settings['success_message'],
-            'loading_message' => $settings['loading_message'],
-            
-            // Couleurs
-            'colors' => array(
-                'primary' => $settings['primary_color'],
-                'secondary' => $settings['secondary_color'],
-                'accent' => $settings['accent_color']
-            )
         );
 
-        // Inclure le template du formulaire unifié
+        // Ajouter les variables CSS personnalisées
+        echo '<div style="--rb-primary-color: ' . esc_attr($form_config['theme_colors']['primary']) . '; --rb-secondary-color: ' . esc_attr($form_config['theme_colors']['secondary']) . '; --rb-accent-color: ' . esc_attr($form_config['theme_colors']['accent']) . ';">';
+        
+        // Rendu du formulaire unifié
         $this->render_unified_form($form_config);
+        
+        echo '</div>';
     }
 
     /**
@@ -617,284 +259,190 @@ class RestaurantBooking_Quote_Form_Unified_Widget extends \Elementor\Widget_Base
      */
     private function render_unified_form($config)
     {
-        // Générer un ID unique pour ce widget
-        $widget_id = 'rb-quote-form-' . $config['widget_id'];
-        
+        $css_classes = array('rb-unified-form');
+        if (!empty($config['custom_css_class'])) {
+            $css_classes[] = sanitize_html_class($config['custom_css_class']);
+        }
         ?>
-        <div class="rb-quote-form-container" id="<?php echo esc_attr($widget_id); ?>" data-config="<?php echo esc_attr(json_encode($config)); ?>">
+        <div class="<?php echo implode(' ', $css_classes); ?>" id="rb-form-<?php echo esc_attr($config['widget_id']); ?>">
             
-            <!-- En-tête du widget -->
-            <?php if (!empty($config['widget_title']) || !empty($config['widget_subtitle'])): ?>
-            <div class="rb-widget-header">
-                <?php if (!empty($config['widget_title'])): ?>
-                    <h2 class="rb-widget-title"><?php echo esc_html($config['widget_title']); ?></h2>
+            <!-- En-tête du formulaire -->
+            <div class="rb-form-header">
+                <?php if (!empty($config['title'])): ?>
+                    <h2 class="rb-form-title"><?php echo esc_html($config['title']); ?></h2>
                 <?php endif; ?>
                 
-                <?php if (!empty($config['widget_subtitle'])): ?>
-                    <p class="rb-widget-subtitle"><?php echo esc_html($config['widget_subtitle']); ?></p>
+                <?php if (!empty($config['subtitle'])): ?>
+                    <p class="rb-form-subtitle"><?php echo esc_html($config['subtitle']); ?></p>
                 <?php endif; ?>
             </div>
-            <?php endif; ?>
 
-            <!-- Barre de progression -->
-            <?php if ($config['show_progress_bar']): ?>
-            <div class="rb-progress-bar" style="display: none;">
-                <div class="rb-progress-steps">
-                    <div class="rb-progress-step active" data-step="0">
-                        <span class="rb-step-number">1</span>
-                        <span class="rb-step-label"><?php _e('Service', 'restaurant-booking'); ?></span>
+            <!-- Container principal -->
+            <div class="rb-form-container <?php echo $config['calculator_position']; ?>">
+                
+                <!-- Formulaire principal -->
+                <div class="rb-form-main">
+                    
+                    <!-- Étape 0: Sélection du service -->
+                    <div class="rb-form-step rb-step-0 active" data-step="0">
+                        <div class="rb-service-selection">
+                            
+                            <!-- Card Restaurant -->
+                            <div class="rb-service-card" data-service="restaurant">
+                                <div class="rb-card-icon">🏠</div>
+                                <h3><?php echo esc_html(get_option('widget_restaurant_card_title', 'PRIVATISATION DU RESTAURANT')); ?></h3>
+                                <p class="rb-card-subtitle"><?php echo esc_html(get_option('widget_restaurant_card_subtitle', 'De 10 à 30 personnes')); ?></p>
+                                <p class="rb-card-description"><?php echo esc_html(get_option('widget_restaurant_card_description', 'Privatisez notre restaurant pour vos événements intimes et profitez d\'un service personnalisé dans un cadre chaleureux.')); ?></p>
+                                <button type="button" class="rb-select-service-btn">
+                                    <?php _e('Choisir ce service', 'restaurant-booking'); ?>
+                                </button>
+                            </div>
+
+                            <!-- Card Remorque -->
+                            <div class="rb-service-card" data-service="remorque">
+                                <div class="rb-card-icon">🚚</div>
+                                <h3><?php echo esc_html(get_option('widget_remorque_card_title', 'PRIVATISATION DE LA REMORQUE BLOCK')); ?></h3>
+                                <p class="rb-card-subtitle"><?php echo esc_html(get_option('widget_remorque_card_subtitle', 'À partir de 20 personnes')); ?></p>
+                                <p class="rb-card-description"><?php echo esc_html(get_option('widget_remorque_card_description', 'Notre remorque mobile se déplace pour vos événements extérieurs et grandes réceptions.')); ?></p>
+                                <button type="button" class="rb-select-service-btn">
+                                    <?php _e('Choisir ce service', 'restaurant-booking'); ?>
+                                </button>
+                            </div>
+
+                        </div>
                     </div>
-                    <div class="rb-progress-step" data-step="1">
-                        <span class="rb-step-number">2</span>
-                        <span class="rb-step-label"><?php _e('Forfait', 'restaurant-booking'); ?></span>
+
+                    <!-- Étapes dynamiques (seront générées par JavaScript) -->
+                    <div class="rb-dynamic-steps"></div>
+
+                    <!-- Navigation -->
+                    <div class="rb-form-navigation" style="display: none;">
+                        <button type="button" class="rb-btn rb-btn-secondary rb-prev-btn">
+                            <?php _e('Précédent', 'restaurant-booking'); ?>
+                        </button>
+                        <button type="button" class="rb-btn rb-btn-primary rb-next-btn">
+                            <?php _e('Suivant', 'restaurant-booking'); ?>
+                        </button>
+                        <button type="submit" class="rb-btn rb-btn-primary rb-submit-btn" style="display: none;">
+                            <?php _e('Envoyer la demande', 'restaurant-booking'); ?>
+                        </button>
                     </div>
-                    <div class="rb-progress-step" data-step="2">
-                        <span class="rb-step-number">3</span>
-                        <span class="rb-step-label"><?php _e('Repas', 'restaurant-booking'); ?></span>
+
+                </div>
+
+                <!-- Calculateur de prix (si activé) -->
+                <?php if ($config['show_calculator']): ?>
+                <div class="rb-price-calculator">
+                    <div class="rb-calculator-header">
+                        <h3><?php _e('Estimation du prix', 'restaurant-booking'); ?></h3>
                     </div>
-                    <div class="rb-progress-step" data-step="3">
-                        <span class="rb-step-number">4</span>
-                        <span class="rb-step-label"><?php _e('Boissons', 'restaurant-booking'); ?></span>
-                    </div>
-                    <div class="rb-progress-step" data-step="4">
-                        <span class="rb-step-number">5</span>
-                        <span class="rb-step-label"><?php _e('Contact', 'restaurant-booking'); ?></span>
+                    <div class="rb-calculator-content">
+                        <div class="rb-price-line">
+                            <span><?php _e('Forfait de base', 'restaurant-booking'); ?></span>
+                            <span class="rb-price-value" data-type="base">-</span>
+                        </div>
+                        <div class="rb-price-line">
+                            <span><?php _e('Suppléments', 'restaurant-booking'); ?></span>
+                            <span class="rb-price-value" data-type="supplements">-</span>
+                        </div>
+                        <div class="rb-price-line rb-total-line">
+                            <span><?php _e('Total estimé', 'restaurant-booking'); ?></span>
+                            <span class="rb-price-value rb-total-price">-</span>
+                        </div>
+                        <p class="rb-price-note">
+                            <?php _e('* Prix indicatif, devis personnalisé sur demande', 'restaurant-booking'); ?>
+                        </p>
                     </div>
                 </div>
-                <div class="rb-progress-line">
+                <?php endif; ?>
+
+            </div>
+
+            <!-- Indicateur de progression -->
+            <div class="rb-progress-indicator">
+                <div class="rb-progress-bar">
                     <div class="rb-progress-fill"></div>
                 </div>
-            </div>
-            <?php endif; ?>
-
-            <!-- Conteneur principal du formulaire -->
-            <div class="rb-form-wrapper">
-                
-                <!-- Étape 0: Sélection du service -->
-                <div class="rb-form-step active" data-step="0">
-                    <div class="rb-step-header">
-                        <h3 class="rb-step-title"><?php echo esc_html($config['service_selection_title']); ?></h3>
-                    </div>
-                    
-                    <div class="rb-service-cards">
-                        <!-- Card Restaurant -->
-                        <div class="rb-service-card" data-service="restaurant">
-                            <div class="rb-card-content">
-                                <h4 class="rb-card-title"><?php echo esc_html($config['restaurant_card']['title']); ?></h4>
-                                <p class="rb-card-subtitle"><?php echo esc_html($config['restaurant_card']['subtitle']); ?></p>
-                                <div class="rb-card-description">
-                                    <?php echo wp_kses_post($config['restaurant_card']['description']); ?>
-                                </div>
-                            </div>
-                            <div class="rb-card-footer">
-                                <button type="button" class="rb-btn rb-btn-primary rb-select-service" data-service="restaurant">
-                                    <?php _e('CHOISIR', 'restaurant-booking'); ?>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Card Remorque -->
-                        <div class="rb-service-card" data-service="remorque">
-                            <div class="rb-card-content">
-                                <h4 class="rb-card-title"><?php echo esc_html($config['remorque_card']['title']); ?></h4>
-                                <p class="rb-card-subtitle"><?php echo esc_html($config['remorque_card']['subtitle']); ?></p>
-                                <div class="rb-card-description">
-                                    <?php echo wp_kses_post($config['remorque_card']['description']); ?>
-                                </div>
-                            </div>
-                            <div class="rb-card-footer">
-                                <button type="button" class="rb-btn rb-btn-primary rb-select-service" data-service="remorque">
-                                    <?php _e('CHOISIR', 'restaurant-booking'); ?>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Les autres étapes seront chargées dynamiquement via AJAX -->
-                <div class="rb-dynamic-steps"></div>
-
-                <!-- Messages d'erreur et de succès -->
-                <div class="rb-messages">
-                    <div class="rb-message rb-message-error" style="display: none;"></div>
-                    <div class="rb-message rb-message-success" style="display: none;"></div>
-                    <div class="rb-message rb-message-loading" style="display: none;">
-                        <span class="rb-loading-spinner"></span>
-                        <?php echo esc_html($config['loading_message']); ?>
-                    </div>
-                </div>
-
-                <!-- Navigation -->
-                <div class="rb-form-navigation" style="display: none;">
-                    <button type="button" class="rb-btn rb-btn-secondary rb-btn-prev">
-                        <?php _e('Précédent', 'restaurant-booking'); ?>
-                    </button>
-                    <button type="button" class="rb-btn rb-btn-primary rb-btn-next">
-                        <?php _e('Suivant', 'restaurant-booking'); ?>
-                    </button>
-                    <button type="button" class="rb-btn rb-btn-accent rb-btn-submit" style="display: none;">
-                        <?php _e('OBTENIR MON DEVIS ESTIMATIF', 'restaurant-booking'); ?>
-                    </button>
+                <div class="rb-progress-steps">
+                    <span class="rb-progress-step active"><?php _e('Service', 'restaurant-booking'); ?></span>
+                    <span class="rb-progress-step"><?php _e('Informations', 'restaurant-booking'); ?></span>
+                    <span class="rb-progress-step"><?php _e('Options', 'restaurant-booking'); ?></span>
+                    <span class="rb-progress-step"><?php _e('Contact', 'restaurant-booking'); ?></span>
                 </div>
             </div>
-
-            <!-- Calculateur de prix -->
-            <?php if ($config['calculator_position'] !== 'hidden'): ?>
-            <div class="rb-price-calculator rb-calculator-<?php echo esc_attr($config['calculator_position']); ?>" style="display: none;">
-                <div class="rb-calculator-header">
-                    <h4><?php _e('Montant estimatif', 'restaurant-booking'); ?></h4>
-                </div>
-                <div class="rb-calculator-content">
-                    <div class="rb-price-breakdown">
-                        <div class="rb-price-line">
-                            <span class="rb-price-label"><?php _e('Forfait de base', 'restaurant-booking'); ?></span>
-                            <span class="rb-price-value" data-price="base">0,00 €</span>
-                        </div>
-                        <div class="rb-price-line">
-                            <span class="rb-price-label"><?php _e('Suppléments', 'restaurant-booking'); ?></span>
-                            <span class="rb-price-value" data-price="supplements">0,00 €</span>
-                        </div>
-                        <div class="rb-price-line">
-                            <span class="rb-price-label"><?php _e('Produits', 'restaurant-booking'); ?></span>
-                            <span class="rb-price-value" data-price="products">0,00 €</span>
-                        </div>
-                    </div>
-                    <div class="rb-price-total-line">
-                        <span class="rb-price-label"><?php _e('Total estimé', 'restaurant-booking'); ?></span>
-                        <span class="rb-price-total">0,00 €</span>
-                    </div>
-                    <div class="rb-price-disclaimer">
-                        <small><?php _e('Montant indiqué estimatif', 'restaurant-booking'); ?></small>
-                    </div>
-                </div>
-            </div>
-            <?php endif; ?>
 
         </div>
 
-        <!-- Données cachées pour JavaScript -->
-        <script type="application/json" id="<?php echo esc_attr($widget_id); ?>-data">
-        <?php echo json_encode(array(
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('restaurant_booking_quote_form'),
-            'config' => $config,
-            'texts' => array(
-                'error_required' => __('Ce champ est obligatoire', 'restaurant-booking'),
-                'error_invalid_date' => __('Date invalide', 'restaurant-booking'),
-                'error_min_guests' => __('Nombre minimum de convives non respecté', 'restaurant-booking'),
-                'error_max_guests' => __('Nombre maximum de convives dépassé', 'restaurant-booking'),
-                'error_network' => __('Erreur de connexion. Veuillez réessayer.', 'restaurant-booking'),
-                'loading' => __('Chargement...', 'restaurant-booking'),
-                'calculating' => __('Calcul en cours...', 'restaurant-booking'),
-            )
-        )); ?>
+        <!-- JavaScript de configuration -->
+        <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof RestaurantBookingUnifiedForm !== 'undefined') {
+                new RestaurantBookingUnifiedForm('rb-form-<?php echo esc_js($config['widget_id']); ?>', <?php echo json_encode($config); ?>);
+            }
+        });
         </script>
         <?php
     }
 
     /**
-     * Rendu du contenu dans l'éditeur
+     * Rendu pour l'éditeur Elementor
      */
     protected function content_template()
     {
         ?>
-        <#
-        var showProgressBar = settings.show_progress_bar === 'yes';
-        #>
-        
-        <div class="rb-quote-form-container">
-            <# if (settings.widget_title || settings.widget_subtitle) { #>
-            <div class="rb-widget-header">
-                <# if (settings.widget_title) { #>
-                    <h2 class="rb-widget-title">{{{ settings.widget_title }}}</h2>
+        <div class="rb-unified-form rb-editor-mode">
+            <div class="rb-form-header">
+                <# if (settings.form_title) { #>
+                    <h2 class="rb-form-title">{{{ settings.form_title }}}</h2>
                 <# } #>
-                
-                <# if (settings.widget_subtitle) { #>
-                    <p class="rb-widget-subtitle">{{{ settings.widget_subtitle }}}</p>
+                <# if (settings.form_subtitle) { #>
+                    <p class="rb-form-subtitle">{{{ settings.form_subtitle }}}</p>
                 <# } #>
             </div>
-            <# } #>
-
-            <# if (showProgressBar) { #>
-            <div class="rb-progress-bar">
-                <div class="rb-progress-steps">
-                    <div class="rb-progress-step active">
-                        <span class="rb-step-number">1</span>
-                        <span class="rb-step-label"><?php _e('Service', 'restaurant-booking'); ?></span>
-                    </div>
-                    <div class="rb-progress-step">
-                        <span class="rb-step-number">2</span>
-                        <span class="rb-step-label"><?php _e('Forfait', 'restaurant-booking'); ?></span>
-                    </div>
-                    <div class="rb-progress-step">
-                        <span class="rb-step-number">3</span>
-                        <span class="rb-step-label"><?php _e('Repas', 'restaurant-booking'); ?></span>
-                    </div>
-                    <div class="rb-progress-step">
-                        <span class="rb-step-number">4</span>
-                        <span class="rb-step-label"><?php _e('Boissons', 'restaurant-booking'); ?></span>
-                    </div>
-                    <div class="rb-progress-step">
-                        <span class="rb-step-number">5</span>
-                        <span class="rb-step-label"><?php _e('Contact', 'restaurant-booking'); ?></span>
-                    </div>
-                </div>
-                <div class="rb-progress-line">
-                    <div class="rb-progress-fill"></div>
-                </div>
-            </div>
-            <# } #>
-
-            <div class="rb-form-wrapper">
-                <div class="rb-form-step active">
-                    <div class="rb-step-header">
-                        <h3 class="rb-step-title">{{{ settings.service_selection_title }}}</h3>
-                    </div>
-                    
-                    <div class="rb-service-cards">
-                        <div class="rb-service-card">
-                            <div class="rb-card-content">
-                                <h4 class="rb-card-title">{{{ settings.restaurant_card_title }}}</h4>
-                                <p class="rb-card-subtitle">{{{ settings.restaurant_card_subtitle }}}</p>
-                                <div class="rb-card-description">
-                                    {{{ settings.restaurant_card_description }}}
-                                </div>
-                            </div>
-                            <div class="rb-card-footer">
-                                <button type="button" class="rb-btn rb-btn-primary">
-                                    <?php _e('CHOISIR', 'restaurant-booking'); ?>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="rb-service-card">
-                            <div class="rb-card-content">
-                                <h4 class="rb-card-title">{{{ settings.remorque_card_title }}}</h4>
-                                <p class="rb-card-subtitle">{{{ settings.remorque_card_subtitle }}}</p>
-                                <div class="rb-card-description">
-                                    {{{ settings.remorque_card_description }}}
-                                </div>
-                            </div>
-                            <div class="rb-card-footer">
-                                <button type="button" class="rb-btn rb-btn-primary">
-                                    <?php _e('CHOISIR', 'restaurant-booking'); ?>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px; text-align: center; color: #666;">
-                <div style="font-size: 48px; margin-bottom: 20px;">📝</div>
-                <h3 style="margin: 0 0 10px 0; color: #333;">
-                    <?php _e('Formulaire de devis unifié v2', 'restaurant-booking'); ?>
-                </h3>
-                <p style="margin: 0; font-size: 14px;">
-                    <?php _e('Le formulaire interactif sera affiché ici sur le site en direct', 'restaurant-booking'); ?>
-                </p>
+            
+            <div class="rb-editor-placeholder">
+                <div class="rb-placeholder-icon">📝</div>
+                <h3><?php _e('Formulaire de Devis Unifié v2', 'restaurant-booking'); ?></h3>
+                <p><?php _e('Le formulaire interactif sera affiché sur le front-end', 'restaurant-booking'); ?></p>
+                <p><strong><?php _e('Services disponibles:', 'restaurant-booking'); ?></strong></p>
+                <ul>
+                    <li>🏠 <?php _e('Privatisation du Restaurant', 'restaurant-booking'); ?></li>
+                    <li>🚚 <?php _e('Privatisation de la Remorque Block', 'restaurant-booking'); ?></li>
+                </ul>
             </div>
         </div>
+        
+        <style>
+        .rb-editor-placeholder {
+            text-align: center;
+            padding: 40px 20px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .rb-placeholder-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        .rb-editor-placeholder h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .rb-editor-placeholder p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .rb-editor-placeholder ul {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0 0 0;
+        }
+        .rb-editor-placeholder li {
+            margin: 5px 0;
+            color: #555;
+        }
+        </style>
         <?php
     }
 }
+?>

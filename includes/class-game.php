@@ -292,9 +292,10 @@ class RestaurantBooking_Game
         // Requête de comptage
         $count_sql = "SELECT COUNT(*) FROM {$wpdb->prefix}restaurant_games $where_clause";
         if (!empty($params)) {
-            $count_sql = $wpdb->prepare($count_sql, $params);
+            $total = $wpdb->get_var($wpdb->prepare($count_sql, $params));
+        } else {
+            $total = $wpdb->get_var($count_sql);
         }
-        $total = $wpdb->get_var($count_sql);
 
         // Requête principale
         $orderby = sanitize_sql_orderby($args['orderby'] . ' ' . $args['order']);

@@ -76,6 +76,9 @@ class RestaurantBooking_Migration_V2
             // Étape 4: Migrer les données existantes
             $this->migrate_existing_data();
 
+            // Étape 5: Nettoyer les données obsolètes
+            $this->cleanup_obsolete_data();
+
             // Valider la transaction
             $wpdb->query('COMMIT');
 
@@ -138,7 +141,6 @@ class RestaurantBooking_Migration_V2
             PRIMARY KEY (id),
             KEY product_id (product_id),
             KEY is_active (is_active),
-            FOREIGN KEY (product_id) REFERENCES {$wpdb->prefix}restaurant_products(id) ON DELETE CASCADE
         ) $charset_collate;";
 
         // Table des tailles de boissons
@@ -155,7 +157,6 @@ class RestaurantBooking_Migration_V2
             PRIMARY KEY (id),
             KEY product_id (product_id),
             KEY is_active (is_active),
-            FOREIGN KEY (product_id) REFERENCES {$wpdb->prefix}restaurant_products(id) ON DELETE CASCADE
         ) $charset_collate;";
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -179,25 +180,48 @@ class RestaurantBooking_Migration_V2
         $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_categories 
                      MODIFY COLUMN type enum('plat_signature', 'mini_boss', 'accompagnement', 'buffet_sale', 'buffet_sucre', 'soft', 'vin_blanc', 'vin_rouge', 'vin_rose', 'cremant', 'biere', 'fut', 'sauce', 'jeu', 'tireuse', 'option_restaurant', 'option_remorque') NOT NULL");
         
-        $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_categories 
-                     ADD COLUMN is_featured tinyint(1) NOT NULL DEFAULT 0 AFTER min_per_person");
+        // Vérifier si la colonne is_featured existe déjà dans categories
+        $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}restaurant_categories LIKE 'is_featured'");
+        if (empty($column_exists)) {
+            $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_categories 
+                         ADD COLUMN is_featured tinyint(1) NOT NULL DEFAULT 0 AFTER min_per_person");
+        }
 
-        // Modifications table products
-        $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_products 
-                     ADD COLUMN unit_per_person enum('gramme', 'piece') DEFAULT NULL AFTER unit_label");
+        // Modifications table products - vérifier chaque colonne
+        $unit_per_person_exists = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}restaurant_products LIKE 'unit_per_person'");
+        if (empty($unit_per_person_exists)) {
+            $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_products 
+                         ADD COLUMN unit_per_person enum('gramme', 'piece') DEFAULT NULL AFTER unit_label");
+        }
         
-        $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_products 
-                     ADD COLUMN is_featured tinyint(1) NOT NULL DEFAULT 0 AFTER has_supplement");
+        $is_featured_exists = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}restaurant_products LIKE 'is_featured'");
+        if (empty($is_featured_exists)) {
+            $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_products 
+                         ADD COLUMN is_featured tinyint(1) NOT NULL DEFAULT 0 AFTER has_supplement");
+        }
         
-        $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_products 
-                     ADD COLUMN keg_size_10l_price decimal(10,2) DEFAULT NULL AFTER volume_cl");
+        $keg_10l_exists = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}restaurant_products LIKE 'keg_size_10l_price'");
+        if (empty($keg_10l_exists)) {
+            $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_products 
+                         ADD COLUMN keg_size_10l_price decimal(10,2) DEFAULT NULL AFTER volume_cl");
+        }
         
-        $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_products 
-                     ADD COLUMN keg_size_20l_price decimal(10,2) DEFAULT NULL AFTER keg_size_10l_price");
+        $keg_20l_exists = $wpdb->get_results("SHOW COLUMNS FROM {$wpdb->prefix}restaurant_products LIKE 'keg_size_20l_price'");
+        if (empty($keg_20l_exists)) {
+            $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_products 
+                         ADD COLUMN keg_size_20l_price decimal(10,2) DEFAULT NULL AFTER keg_size_10l_price");
+        }
 
-        // Ajouter des index pour les nouveaux champs
-        $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_categories ADD KEY is_featured (is_featured)");
-        $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_products ADD KEY is_featured (is_featured)");
+        // Ajouter les index seulement s'ils n'existent pas
+        $index_cat_exists = $wpdb->get_results("SHOW INDEX FROM {$wpdb->prefix}restaurant_categories WHERE Key_name = 'is_featured'");
+        if (empty($index_cat_exists)) {
+            $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_categories ADD KEY is_featured (is_featured)");
+        }
+        
+        $index_prod_exists = $wpdb->get_results("SHOW INDEX FROM {$wpdb->prefix}restaurant_products WHERE Key_name = 'is_featured'");
+        if (empty($index_prod_exists)) {
+            $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_products ADD KEY is_featured (is_featured)");
+        }
 
         RestaurantBooking_Logger::info('Tables existantes modifiées pour v2');
     }
@@ -342,6 +366,30 @@ class RestaurantBooking_Migration_V2
         // Pour l'instant, on garde la compatibilité
 
         RestaurantBooking_Logger::info('Migration des données existantes terminée');
+    }
+
+    /**
+     * Nettoyer les données obsolètes
+     */
+    private function cleanup_obsolete_data()
+    {
+        global $wpdb;
+
+        // Charger la classe de nettoyage
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-cleanup-admin.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-cleanup-admin.php';
+            
+            // Supprimer les produits d'exemple
+            RestaurantBooking_Cleanup_Admin::remove_example_products();
+            
+            // Créer les catégories manquantes
+            RestaurantBooking_Cleanup_Admin::create_missing_categories();
+            
+            // Nettoyer les données obsolètes
+            RestaurantBooking_Cleanup_Admin::cleanup_obsolete_data();
+        }
+
+        RestaurantBooking_Logger::info('Nettoyage des données obsolètes terminé');
     }
 
     /**

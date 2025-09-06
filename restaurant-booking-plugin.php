@@ -133,6 +133,9 @@ class RestaurantBookingPlugin
         // Charger le logger EN PREMIER
         require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-logger.php';
         
+        // Charger les permissions
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-permissions.php';
+        
         // Classes principales
         require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-database.php';
         require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-settings.php';
@@ -161,6 +164,9 @@ class RestaurantBookingPlugin
         }
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler-v2.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler-v2.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-shortcodes-v2.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-shortcodes-v2.php';
         }
 
         // Classes optionnelles avec vérification
@@ -252,6 +258,9 @@ class RestaurantBookingPlugin
         if (class_exists('RestaurantBooking_Ajax_Handler_V2')) {
             RestaurantBooking_Ajax_Handler_V2::get_instance();
         }
+        if (class_exists('RestaurantBooking_Shortcodes_V2')) {
+            RestaurantBooking_Shortcodes_V2::get_instance();
+        }
     }
 
     /**
@@ -266,6 +275,10 @@ class RestaurantBookingPlugin
             // Charger les classes d'administration v2
             if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-games-admin.php')) {
                 require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-games-admin.php';
+            }
+            if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-migration-admin.php')) {
+                require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-migration-admin.php';
+                RestaurantBooking_Migration_Admin::get_instance();
             }
         }
 

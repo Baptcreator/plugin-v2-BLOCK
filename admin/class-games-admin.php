@@ -46,7 +46,7 @@ class RestaurantBooking_Games_Admin
             'restaurant-booking',
             __('Gestion des Jeux', 'restaurant-booking'),
             __('Jeux', 'restaurant-booking'),
-            'manage_options',
+            class_exists('RestaurantBooking_Permissions') ? RestaurantBooking_Permissions::get_required_capability('games') : 'manage_options',
             'restaurant-booking-games',
             array($this, 'render_games_page')
         );
@@ -88,6 +88,18 @@ class RestaurantBooking_Games_Admin
      */
     public function render_games_page()
     {
+        // Vérification des permissions
+        if (class_exists('RestaurantBooking_Permissions')) {
+            if (!RestaurantBooking_Permissions::can_access_page('games')) {
+                wp_die(__('Désolé, vous n\'avez pas l\'autorisation d\'accéder à cette page.', 'restaurant-booking'));
+            }
+        } else {
+            // Fallback si la classe n'est pas disponible
+            if (!current_user_can('manage_options')) {
+                wp_die(__('Désolé, vous n\'avez pas l\'autorisation d\'accéder à cette page.', 'restaurant-booking'));
+            }
+        }
+
         $action = $_GET['action'] ?? 'list';
         $game_id = $_GET['game_id'] ?? null;
 

@@ -211,9 +211,9 @@ class RestaurantBooking_Quote_Form_Restaurant_Widget extends \Elementor\Widget_B
             'require_postal_code' => false,
             'calculator_position' => $settings['calculator_position'],
             'theme_colors' => array(
-                'primary' => $settings['primary_color'],
-                'secondary' => $settings['secondary_color'],
-                'accent' => $settings['accent_color'],
+                'primary' => $settings['primary_color'] ?? '#243127',
+                'secondary' => $settings['secondary_color'] ?? '#FFB404',
+                'accent' => $settings['accent_color'] ?? '#EF3D1D',
             )
         );
 
