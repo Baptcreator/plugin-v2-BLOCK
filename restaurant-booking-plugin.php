@@ -143,10 +143,14 @@ class RestaurantBookingPlugin
         require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-product.php';
         require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-category.php';
         
+        // Helper pour les options unifiées
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-options-helper.php';
+        
         // Classes v2 (nouvelles fonctionnalités)
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-v2.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-v2.php';
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-v3.php';
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-v4-cleanup.php';
         }
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-game.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-game.php';
@@ -285,6 +289,11 @@ class RestaurantBookingPlugin
         // Exécuter la migration v3 si nécessaire
         if (class_exists('RestaurantBooking_Migration_V3') && RestaurantBooking_Migration_V3::needs_migration()) {
             RestaurantBooking_Migration_V3::migrate();
+        }
+        
+        // Exécuter la migration v4 de nettoyage si nécessaire
+        if (class_exists('RestaurantBooking_Migration_V4_Cleanup') && RestaurantBooking_Migration_V4_Cleanup::needs_migration()) {
+            RestaurantBooking_Migration_V4_Cleanup::run();
         }
         if (class_exists('RestaurantBooking_Game')) {
             RestaurantBooking_Game::get_instance();

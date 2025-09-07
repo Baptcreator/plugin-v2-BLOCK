@@ -218,20 +218,11 @@ class RestaurantBooking_Admin
 
         add_submenu_page(
             'restaurant-booking',
-            __('Options Restaurant', 'restaurant-booking'),
-            __('🔢 Options Restaurant', 'restaurant-booking'),
+            __('Options de Configuration', 'restaurant-booking'),
+            __('⚙️ Options de Configuration', 'restaurant-booking'),
             'manage_restaurant_products',
-            'restaurant-booking-options-restaurant',
-            array($this, 'options_restaurant_page')
-        );
-
-        add_submenu_page(
-            'restaurant-booking',
-            __('Options Remorque', 'restaurant-booking'),
-            __('🔢 Options Remorque', 'restaurant-booking'),
-            'manage_restaurant_products',
-            'restaurant-booking-options-remorque',
-            array($this, 'options_remorque_page')
+            'restaurant-booking-options-unified',
+            array($this, 'options_unified_page')
         );
 
         // Sous-menu pour créer les produits de test (temporaire)
@@ -1298,43 +1289,13 @@ class RestaurantBooking_Admin
     }
 
     /**
-     * Page Options Restaurant
+     * Page Options Unifiées
      */
-    public function options_restaurant_page()
+    public function options_unified_page()
     {
-        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-options-restaurant-admin.php';
-        $options_admin = new RestaurantBooking_Options_Restaurant_Admin();
-        
-        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
-        
-        switch ($action) {
-            case 'add':
-            case 'edit':
-                $options_admin->display_form();
-                break;
-            default:
-                $options_admin->display_list();
-        }
-    }
-
-    /**
-     * Page Options Remorque
-     */
-    public function options_remorque_page()
-    {
-        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-options-remorque-admin.php';
-        $options_admin = new RestaurantBooking_Options_Remorque_Admin();
-        
-        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
-        
-        switch ($action) {
-            case 'add':
-            case 'edit':
-                $options_admin->display_form();
-                break;
-            default:
-                $options_admin->display_list();
-        }
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-options-unified-admin.php';
+        $options_admin = new RestaurantBooking_Options_Unified_Admin();
+        $options_admin->display_page();
     }
 
     /**

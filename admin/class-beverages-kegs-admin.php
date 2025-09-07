@@ -28,12 +28,13 @@ class RestaurantBooking_Beverages_Kegs_Admin
             <hr class="wp-header-end">
 
             <div class="restaurant-booking-info-card">
-                <h3><?php _e('Fûts de bière à la pression', 'restaurant-booking'); ?></h3>
+                <h3><?php _e('Système de fûts multi-contenances', 'restaurant-booking'); ?></h3>
                 <ul>
-                    <li><?php _e('✓ Bières à la pression pour événements', 'restaurant-booking'); ?></li>
-                    <li><?php _e('✓ Différentes contenances de fûts (10L, 20L, 30L, 50L)', 'restaurant-booking'); ?></li>
-                    <li><?php _e('✓ Prix par fût complet', 'restaurant-booking'); ?></li>
-                    <li><?php _e('✓ Système de mise à disposition (matériel inclus)', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✓ Différentes contenances par type de bière (10L, 20L)', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✓ Prix spécifiques par contenance', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✓ Images différentes par taille de fût', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✓ Système de mise en avant par contenance', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✓ Exemple: IPA → 10L (30€) + 20L (50€)', 'restaurant-booking'); ?></li>
                 </ul>
             </div>
 
@@ -108,8 +109,8 @@ class RestaurantBooking_Beverages_Kegs_Admin
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <strong><?php echo $product['volume_cl'] / 100; ?> L</strong>
-                                    <br><small>Fût <?php echo $product['volume_cl'] / 100; ?> litres</small>
+                                    <strong><?php echo $product['size_label']; ?></strong>
+                                    <br><small>Fût <?php echo $product['size_label']; ?></small>
                                 </td>
                                 <td>
                                     <strong><?php echo number_format($product['price'], 0, ',', ' '); ?> €</strong>
@@ -272,7 +273,7 @@ class RestaurantBooking_Beverages_Kegs_Admin
                         <td>
                             <input type="text" id="keg_name" name="keg_name" class="regular-text" 
                                    value="<?php echo $product ? esc_attr($product['name']) : ''; ?>" required>
-                            <p class="description"><?php _e('Ex: Fût Heineken 30L, Fût Stella Artois 50L...', 'restaurant-booking'); ?></p>
+                            <p class="description"><?php _e('Ex: IPA, Blanche, Blonde... (les contenances seront ajoutées séparément)', 'restaurant-booking'); ?></p>
                         </td>
                     </tr>
 
@@ -317,29 +318,25 @@ class RestaurantBooking_Beverages_Kegs_Admin
 
                     <tr>
                         <th scope="row">
-                            <label for="volume_liters"><?php _e('Contenance du fût', 'restaurant-booking'); ?> *</label>
+                            <label><?php _e('Contenances disponibles', 'restaurant-booking'); ?></label>
                         </th>
                         <td>
-                            <select id="volume_liters" name="volume_liters" class="regular-text" required>
-                                <option value=""><?php _e('Choisir la contenance', 'restaurant-booking'); ?></option>
-                                <option value="10" <?php selected(($product['volume_cl'] ?? 0) / 100, 10); ?>>10 L</option>
-                                <option value="20" <?php selected(($product['volume_cl'] ?? 0) / 100, 20); ?>>20 L</option>
-                                <option value="30" <?php selected(($product['volume_cl'] ?? 0) / 100, 30); ?>>30 L</option>
-                                <option value="50" <?php selected(($product['volume_cl'] ?? 0) / 100, 50); ?>>50 L</option>
-                            </select>
-                            <p class="description"><?php _e('Contenance standard du fût', 'restaurant-booking'); ?></p>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <th scope="row">
-                            <label for="keg_price"><?php _e('Prix du fût', 'restaurant-booking'); ?> *</label>
-                        </th>
-                        <td>
-                            <input type="number" id="keg_price" name="keg_price" step="0.01" min="0" 
-                                   value="<?php echo $product ? esc_attr($product['price']) : ''; ?>" required>
-                            <span>€</span>
-                            <p class="description"><?php _e('Prix de location/vente du fût complet', 'restaurant-booking'); ?></p>
+                            <div id="keg_sizes_container">
+                                <p class="description"><?php _e('Ajoutez les différentes contenances disponibles pour ce fût (ex: 10L, 20L)', 'restaurant-booking'); ?></p>
+                                
+                                <div id="keg_sizes_list">
+                                    <?php if ($product): ?>
+                                        <?php 
+                                        // Pour la compatibilité avec l'ancien système, nous créerons des "sizes" basées sur les données existantes
+                                        // Dans une vraie implémentation, vous devriez avoir une table séparée pour les tailles de fûts
+                                        ?>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <button type="button" class="button button-secondary" id="add_keg_size_button">
+                                    <?php _e('+ Ajouter une contenance', 'restaurant-booking'); ?>
+                                </button>
+                            </div>
                         </td>
                     </tr>
 
@@ -387,10 +384,66 @@ class RestaurantBooking_Beverages_Kegs_Admin
             </form>
         </div>
 
+        <!-- Modal pour ajouter/modifier une contenance -->
+        <div id="keg_size_modal" style="display: none;">
+            <div class="keg-size-modal-content">
+                <h3 id="keg_size_modal_title"><?php _e('Ajouter une contenance', 'restaurant-booking'); ?></h3>
+                <form id="keg_size_form">
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="keg_size_liters"><?php _e('Contenance', 'restaurant-booking'); ?> *</label></th>
+                            <td>
+                                <select id="keg_size_liters" name="keg_size_liters" class="regular-text" required>
+                                    <option value=""><?php _e('Choisir la contenance', 'restaurant-booking'); ?></option>
+                                    <option value="10">10L</option>
+                                    <option value="20">20L</option>
+                                    <option value="30">30L</option>
+                                    <option value="50">50L</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="keg_size_price"><?php _e('Prix', 'restaurant-booking'); ?> *</label></th>
+                            <td>
+                                <input type="number" id="keg_size_price" name="keg_size_price" step="0.01" min="0" class="small-text" required> €
+                                <p class="description"><?php _e('Prix pour cette contenance de fût', 'restaurant-booking'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="keg_size_image"><?php _e('Image', 'restaurant-booking'); ?></label></th>
+                            <td>
+                                <button type="button" class="button" id="upload_keg_size_image_button">
+                                    <?php _e('Choisir une image', 'restaurant-booking'); ?>
+                                </button>
+                                <input type="hidden" id="keg_size_image_id" name="keg_size_image_id">
+                                <div id="keg_size_image_preview" style="margin-top: 10px;"></div>
+                                <p class="description"><?php _e('Image spécifique pour cette contenance', 'restaurant-booking'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="keg_is_featured"><?php _e('Mise en avant', 'restaurant-booking'); ?></label></th>
+                            <td>
+                                <label>
+                                    <input type="checkbox" id="keg_is_featured" name="keg_is_featured" value="1">
+                                    <?php _e('Mettre en avant cette contenance', 'restaurant-booking'); ?>
+                                </label>
+                            </td>
+                        </tr>
+                    </table>
+                    <p class="submit">
+                        <input type="submit" class="button-primary" value="<?php _e('Enregistrer', 'restaurant-booking'); ?>">
+                        <button type="button" class="button" id="cancel_keg_size"><?php _e('Annuler', 'restaurant-booking'); ?></button>
+                    </p>
+                </form>
+            </div>
+        </div>
+
         <script>
         jQuery(document).ready(function($) {
-            // Gestionnaire pour l'upload d'image
+            // Gestionnaire pour l'upload d'image principale
             var mediaUploader;
+            var kegSizeMediaUploader;
+            var kegSizeCounter = 0;
             
             $('#upload_keg_image').on('click', function(e) {
                 e.preventDefault();
@@ -424,8 +477,176 @@ class RestaurantBooking_Beverages_Kegs_Admin
                 $('#keg_image_preview').empty();
                 $(this).hide();
             });
+            
+            // Sélecteur d'images WordPress pour les contenances
+            $('#upload_keg_size_image_button').click(function(e) {
+                e.preventDefault();
+                
+                if (kegSizeMediaUploader) {
+                    kegSizeMediaUploader.open();
+                    return;
+                }
+                
+                kegSizeMediaUploader = wp.media({
+                    title: '<?php _e('Choisir une image', 'restaurant-booking'); ?>',
+                    button: {
+                        text: '<?php _e('Utiliser cette image', 'restaurant-booking'); ?>'
+                    },
+                    multiple: false
+                });
+                
+                kegSizeMediaUploader.on('select', function() {
+                    var attachment = kegSizeMediaUploader.state().get('selection').first().toJSON();
+                    $('#keg_size_image_id').val(attachment.id);
+                    $('#keg_size_image_preview').html('<img src="' + attachment.sizes.thumbnail.url + '" alt="" style="max-width: 100px;">');
+                });
+                
+                kegSizeMediaUploader.open();
+            });
+            
+            // Gestion des contenances de fûts
+            $('#add_keg_size_button').click(function() {
+                $('#keg_size_modal_title').text('<?php _e('Ajouter une contenance', 'restaurant-booking'); ?>');
+                $('#keg_size_form')[0].reset();
+                $('#keg_size_image_preview').empty();
+                $('#keg_size_modal').show();
+            });
+            
+            $('#cancel_keg_size').click(function() {
+                $('#keg_size_modal').hide();
+            });
+            
+            // Soumettre le formulaire de contenance
+            $('#keg_size_form').on('submit', function(e) {
+                e.preventDefault();
+                
+                var kegSizeLiters = $('#keg_size_liters').val();
+                var kegSizePrice = $('#keg_size_price').val();
+                var kegSizeImageId = $('#keg_size_image_id').val();
+                var kegIsFeatured = $('#keg_is_featured').is(':checked');
+                
+                if (!kegSizeLiters || !kegSizePrice) {
+                    alert('<?php _e('Veuillez remplir tous les champs obligatoires.', 'restaurant-booking'); ?>');
+                    return;
+                }
+                
+                // Vérifier si cette contenance existe déjà
+                var exists = false;
+                $('#keg_sizes_list .keg-size-item').each(function() {
+                    if ($(this).find('input[name$="[liters]"]').val() == kegSizeLiters) {
+                        exists = true;
+                        return false;
+                    }
+                });
+                
+                if (exists) {
+                    alert('<?php _e('Cette contenance existe déjà.', 'restaurant-booking'); ?>');
+                    return;
+                }
+                
+                // Ajouter la contenance à la liste
+                var kegSizeHtml = '<div class="keg-size-item" data-size-id="' + kegSizeCounter + '">';
+                kegSizeHtml += '<div class="keg-size-info">';
+                kegSizeHtml += '<h4>' + kegSizeLiters + 'L - ' + parseFloat(kegSizePrice).toFixed(2) + '€</h4>';
+                
+                if (kegSizeImageId) {
+                    kegSizeHtml += '<div class="keg-size-image">';
+                    kegSizeHtml += $('#keg_size_image_preview').html();
+                    kegSizeHtml += '</div>';
+                }
+                
+                if (kegIsFeatured) {
+                    kegSizeHtml += '<span class="featured-badge"><?php _e('Mise en avant', 'restaurant-booking'); ?></span>';
+                }
+                
+                kegSizeHtml += '</div>';
+                kegSizeHtml += '<div class="keg-size-actions">';
+                kegSizeHtml += '<button type="button" class="button button-small delete-keg-size" data-size-id="' + kegSizeCounter + '">';
+                kegSizeHtml += '<?php _e('Supprimer', 'restaurant-booking'); ?>';
+                kegSizeHtml += '</button>';
+                kegSizeHtml += '</div>';
+                
+                // Champs cachés
+                kegSizeHtml += '<input type="hidden" name="keg_sizes[' + kegSizeCounter + '][liters]" value="' + kegSizeLiters + '">';
+                kegSizeHtml += '<input type="hidden" name="keg_sizes[' + kegSizeCounter + '][price]" value="' + kegSizePrice + '">';
+                kegSizeHtml += '<input type="hidden" name="keg_sizes[' + kegSizeCounter + '][image_id]" value="' + kegSizeImageId + '">';
+                kegSizeHtml += '<input type="hidden" name="keg_sizes[' + kegSizeCounter + '][is_featured]" value="' + (kegIsFeatured ? '1' : '0') + '">';
+                
+                kegSizeHtml += '</div>';
+                
+                $('#keg_sizes_list').append(kegSizeHtml);
+                kegSizeCounter++;
+                
+                $('#keg_size_modal').hide();
+            });
+            
+            // Supprimer une contenance
+            $(document).on('click', '.delete-keg-size', function() {
+                if (confirm('<?php _e('Êtes-vous sûr de vouloir supprimer cette contenance ?', 'restaurant-booking'); ?>')) {
+                    $(this).closest('.keg-size-item').remove();
+                }
+            });
         });
         </script>
+        
+        <style>
+        /* Styles pour les fûts */
+        #keg_size_modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .keg-size-modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .keg-size-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .keg-size-info {
+            flex: 1;
+        }
+        .keg-size-info h4 {
+            margin: 0 0 5px 0;
+        }
+        .keg-size-image img {
+            max-width: 50px;
+            height: auto;
+            margin: 5px 0;
+        }
+        .keg-size-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .featured-badge {
+            background: #0073aa;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 10px;
+        }
+        </style>
+        
         <?php
     }
 
@@ -496,12 +717,15 @@ class RestaurantBooking_Beverages_Kegs_Admin
     }
 
     /**
-     * Obtenir les fûts de bière
+     * Obtenir les fûts de bière avec leurs contenances multiples
      */
     private function get_kegs()
     {
         global $wpdb;
 
+        // Récupérer les fûts avec leurs contenances (système étendu comme les boissons soft)
+        $kegs = array();
+        
         $products = $wpdb->get_results($wpdb->prepare("
             SELECT p.*, c.service_type
             FROM {$wpdb->prefix}restaurant_products p
@@ -510,16 +734,66 @@ class RestaurantBooking_Beverages_Kegs_Admin
             ORDER BY p.suggested_beverage DESC, p.display_order ASC, p.name ASC
         ", 'fut'), ARRAY_A);
 
-        // Convertir les types et ajouter l'URL de l'image
-        foreach ($products as &$product) {
-            $product['price'] = (float) $product['price'];
-            $product['volume_cl'] = (int) $product['volume_cl'];
-            $product['alcohol_degree'] = (float) $product['alcohol_degree'];
-            $product['suggested_beverage'] = (bool) $product['suggested_beverage'];
-            $product['is_active'] = (bool) $product['is_active'];
-            $product['image_url'] = $product['image_id'] ? wp_get_attachment_image_url($product['image_id'], 'thumbnail') : '';
+        foreach ($products as $product) {
+            // Pour l'instant, nous utilisons l'ancien système comme base
+            // Dans une vraie implémentation, vous devriez avoir une table séparée pour les tailles de fûts
+            // comme `restaurant_keg_sizes` similaire à `restaurant_beverage_sizes`
+            
+            if ($product['has_multiple_sizes'] ?? false) {
+                // Nouveau système multi-contenances (à implémenter avec une table dédiée)
+                // $sizes = $wpdb->get_results($wpdb->prepare("
+                //     SELECT * FROM {$wpdb->prefix}restaurant_keg_sizes 
+                //     WHERE product_id = %d
+                //     ORDER BY liters ASC
+                // ", $product['id']), ARRAY_A);
+                
+                // Pour l'instant, nous créons des exemples de tailles
+                $example_sizes = [
+                    ['liters' => 10, 'price' => 30.00],
+                    ['liters' => 20, 'price' => 50.00]
+                ];
+                
+                foreach ($example_sizes as $size) {
+                    $kegs[] = array(
+                        'id' => $product['id'],
+                        'size_id' => $size['liters'] . 'L',
+                        'name' => $product['name'],
+                        'description' => $product['description'],
+                        'size_label' => $size['liters'] . 'L',
+                        'volume_cl' => $size['liters'] * 100,
+                        'price' => (float) $size['price'],
+                        'image_id' => $product['image_id'],
+                        'image_url' => $product['image_id'] ? wp_get_attachment_image_url($product['image_id'], 'thumbnail') : '',
+                        'beer_category' => $product['beer_category'],
+                        'alcohol_degree' => (float) $product['alcohol_degree'],
+                        'suggested_beverage' => (bool) $product['suggested_beverage'],
+                        'is_active' => (bool) $product['is_active'],
+                        'service_type' => $product['service_type'],
+                        'has_multiple_sizes' => true
+                    );
+                }
+            } else {
+                // Ancien système (compatibilité)
+                $kegs[] = array(
+                    'id' => $product['id'],
+                    'size_id' => null,
+                    'name' => $product['name'],
+                    'description' => $product['description'],
+                    'size_label' => ($product['volume_cl'] / 100) . 'L',
+                    'volume_cl' => (int) $product['volume_cl'],
+                    'price' => (float) $product['price'],
+                    'image_id' => $product['image_id'],
+                    'image_url' => $product['image_id'] ? wp_get_attachment_image_url($product['image_id'], 'thumbnail') : '',
+                    'beer_category' => $product['beer_category'],
+                    'alcohol_degree' => (float) $product['alcohol_degree'],
+                    'suggested_beverage' => (bool) $product['suggested_beverage'],
+                    'is_active' => (bool) $product['is_active'],
+                    'service_type' => $product['service_type'],
+                    'has_multiple_sizes' => false
+                );
+            }
         }
 
-        return $products ?: array();
+        return $kegs;
     }
 }

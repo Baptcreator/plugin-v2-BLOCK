@@ -259,7 +259,20 @@ class RestaurantBooking_Products_Accompaniments_Admin
             }
         }
 
-        $sauce_options = $product ? json_decode($product['sauce_options'], true) : array();
+        // Charger les options existantes
+        $existing_options = array();
+        if ($product) {
+            $options = RestaurantBooking_Accompaniment_Option_Manager::get_product_options($product['id']);
+            foreach ($options as $option) {
+                $suboptions = RestaurantBooking_Accompaniment_Option_Manager::get_option_suboptions($option->id);
+                $existing_options[] = array(
+                    'id' => $option->id,
+                    'name' => $option->option_name,
+                    'price' => $option->option_price,
+                    'suboptions' => array_column($suboptions, 'suboption_name')
+                );
+            }
+        }
         
         ?>
         <div class="wrap">
@@ -523,6 +536,33 @@ class RestaurantBooking_Products_Accompaniments_Admin
                     $(this).closest('.option-item').remove();
                 }
             });
+            
+            // Charger les options existantes au chargement de la page
+            <?php if (!empty($existing_options)): ?>
+                <?php foreach ($existing_options as $index => $option): ?>
+                    var optionHtml = '<div class="option-item" data-option-id="<?php echo $index; ?>">';
+                    optionHtml += '<h4><?php echo esc_js($option['name']); ?> - <?php echo number_format($option['price'], 2); ?>€</h4>';
+                    optionHtml += '<input type="hidden" name="options[<?php echo $index; ?>][name]" value="<?php echo esc_attr($option['name']); ?>">';
+                    optionHtml += '<input type="hidden" name="options[<?php echo $index; ?>][price]" value="<?php echo esc_attr($option['price']); ?>">';
+                    
+                    <?php if (!empty($option['suboptions'])): ?>
+                        optionHtml += '<div class="suboptions">';
+                        <?php foreach ($option['suboptions'] as $subindex => $suboption): ?>
+                            optionHtml += '<span class="suboption-tag"><?php echo esc_js($suboption); ?></span>';
+                            optionHtml += '<input type="hidden" name="options[<?php echo $index; ?>][suboptions][<?php echo $subindex; ?>]" value="<?php echo esc_attr($suboption); ?>">';
+                        <?php endforeach; ?>
+                        optionHtml += '</div>';
+                    <?php endif; ?>
+                    
+                    optionHtml += '<button type="button" class="button button-small delete-option" data-option-id="<?php echo $index; ?>">';
+                    optionHtml += '<?php _e('Supprimer', 'restaurant-booking'); ?>';
+                    optionHtml += '</button>';
+                    optionHtml += '</div>';
+                    
+                    $('#options_list').append(optionHtml);
+                    optionCounter = <?php echo $index + 1; ?>;
+                <?php endforeach; ?>
+            <?php endif; ?>
         });
         </script>
 
@@ -629,11 +669,66 @@ class RestaurantBooking_Products_Accompaniments_Admin
         }
         
         if ($result) {
+            // Traiter les options d'accompagnement
+            $this->save_accompaniment_options($product_id);
+            
             wp_redirect(admin_url('admin.php?page=restaurant-booking-products-accompaniments&message=' . urlencode($message)));
         } else {
             wp_redirect(admin_url('admin.php?page=restaurant-booking-products-accompaniments&error=' . urlencode($message)));
         }
         exit;
+    }
+    
+    /**
+     * Sauvegarder les options d'accompagnement
+     */
+    private function save_accompaniment_options($product_id)
+    {
+        if (!isset($_POST['options']) || !is_array($_POST['options'])) {
+            return;
+        }
+        
+        // Supprimer les anciennes options
+        $this->delete_product_options($product_id);
+        
+        // Ajouter les nouvelles options
+        foreach ($_POST['options'] as $option_data) {
+            if (empty($option_data['name']) || !isset($option_data['price'])) {
+                continue;
+            }
+            
+            $option_id = RestaurantBooking_Accompaniment_Option_Manager::create_option(array(
+                'product_id' => $product_id,
+                'option_name' => sanitize_text_field($option_data['name']),
+                'option_price' => floatval($option_data['price'])
+            ));
+            
+            // Ajouter les sous-options si présentes
+            if (is_wp_error($option_id) || !isset($option_data['suboptions']) || !is_array($option_data['suboptions'])) {
+                continue;
+            }
+            
+            foreach ($option_data['suboptions'] as $suboption_name) {
+                if (!empty($suboption_name)) {
+                    RestaurantBooking_Accompaniment_Option_Manager::create_suboption(array(
+                        'option_id' => $option_id,
+                        'suboption_name' => sanitize_text_field($suboption_name)
+                    ));
+                }
+            }
+        }
+    }
+    
+    /**
+     * Supprimer toutes les options d'un produit
+     */
+    private function delete_product_options($product_id)
+    {
+        $options = RestaurantBooking_Accompaniment_Option_Manager::get_product_options($product_id);
+        
+        foreach ($options as $option) {
+            RestaurantBooking_Accompaniment_Option_Manager::delete_option($option->id);
+        }
     }
     
     /**
