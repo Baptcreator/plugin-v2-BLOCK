@@ -29,6 +29,14 @@ class RestaurantBooking_Elementor_Widgets
             $migration_completed = $migration_status['migration_completed'];
         }
         
+        // Toujours charger le nouveau widget Block Unifié V2 (indépendant de la migration)
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'elementor/widgets/quote-form-block-unified-widget.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'elementor/widgets/quote-form-block-unified-widget.php';
+            if (class_exists('RestaurantBooking_Quote_Form_Block_Unified_Widget')) {
+                $widgets_manager->register(new \RestaurantBooking_Quote_Form_Block_Unified_Widget());
+            }
+        }
+        
         if ($migration_completed) {
             // Migration v2 terminée : utiliser UNIQUEMENT le nouveau widget unifié
             if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'elementor/widgets/quote-form-unified-widget.php')) {

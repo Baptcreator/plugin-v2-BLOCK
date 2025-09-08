@@ -55,7 +55,12 @@ class RestaurantBooking_Public
             RestaurantBooking_Quote_Form::get_instance();
         }
         
-        // Enregistrer les shortcodes
+        // Initialiser les shortcodes V2
+        if (class_exists('RestaurantBooking_Shortcodes_V2')) {
+            RestaurantBooking_Shortcodes_V2::get_instance();
+        }
+        
+        // Enregistrer les shortcodes (compatibilité)
         add_shortcode('restaurant_booking_form', array($this, 'render_shortcode_form'));
     }
 

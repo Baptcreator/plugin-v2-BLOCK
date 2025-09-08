@@ -714,6 +714,333 @@
     outline-offset: 2px;
 }
 
+/* Styles pour les produits et sélections */
+.rb-products-section {
+    margin: 20px 0;
+}
+
+.rb-product-category {
+    margin-bottom: 40px;
+    padding: 20px;
+    border: 2px solid var(--rb-border-color);
+    border-radius: var(--rb-border-radius);
+    transition: var(--rb-transition);
+}
+
+.rb-product-category.rb-validation-success {
+    border-color: var(--rb-success-color);
+    background: rgba(40, 167, 69, 0.05);
+}
+
+.rb-product-category.rb-validation-error {
+    border-color: var(--rb-error-color);
+    background: rgba(220, 53, 69, 0.05);
+}
+
+.rb-category-title {
+    color: var(--rb-primary-color);
+    margin-bottom: 10px;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.rb-category-description {
+    color: #666;
+    margin-bottom: 20px;
+    font-style: italic;
+}
+
+.rb-info-banner {
+    background: #e8f4fd;
+    border: 1px solid #bee5eb;
+    padding: 15px;
+    border-radius: var(--rb-border-radius);
+    margin-bottom: 25px;
+}
+
+.rb-signature-type-selector {
+    margin-bottom: 20px;
+}
+
+.rb-radio-group {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.rb-radio-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px 15px;
+    border: 2px solid var(--rb-border-color);
+    border-radius: var(--rb-border-radius);
+    transition: var(--rb-transition);
+}
+
+.rb-radio-option:hover {
+    border-color: var(--rb-primary-color);
+}
+
+.rb-radio-option input[type="radio"] {
+    margin-right: 10px;
+}
+
+.rb-radio-option input[type="radio"]:checked + span {
+    color: var(--rb-primary-color);
+    font-weight: 600;
+}
+
+.rb-loading-placeholder {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-style: italic;
+}
+
+.rb-help-text {
+    margin-top: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    font-size: 0.9rem;
+}
+
+.rb-product-supplements {
+    margin-top: 15px;
+    padding: 10px;
+    background: var(--rb-light-color);
+    border-radius: 5px;
+}
+
+.rb-product-supplements h6 {
+    margin: 0 0 10px 0;
+    color: var(--rb-primary-color);
+    font-size: 0.9rem;
+}
+
+.rb-supplement-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.rb-supplement-option label {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.rb-supplement-quantity {
+    width: 60px;
+    padding: 5px;
+    border: 1px solid var(--rb-border-color);
+    border-radius: 4px;
+    text-align: center;
+}
+
+/* Responsive pour les produits */
+@media (max-width: 768px) {
+    .rb-radio-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .rb-product-category {
+        padding: 15px;
+    }
+    
+    .rb-supplement-option {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+}
+
+/* Styles pour les buffets */
+.rb-buffet-section {
+    margin: 20px 0;
+}
+
+.rb-buffet-category {
+    margin-bottom: 30px;
+}
+
+.rb-buffet-level-selector {
+    margin-top: 20px;
+}
+
+.rb-level-description {
+    color: #666;
+    font-style: italic;
+    margin-bottom: 20px;
+}
+
+.rb-buffet-level {
+    border: 2px solid var(--rb-border-color);
+    border-radius: var(--rb-border-radius);
+    margin-bottom: 15px;
+    overflow: hidden;
+    transition: var(--rb-transition);
+}
+
+.rb-buffet-level:hover {
+    border-color: var(--rb-primary-color);
+}
+
+.rb-level-header {
+    padding: 15px 20px;
+    background: var(--rb-light-color);
+    cursor: pointer;
+}
+
+.rb-level-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin: 0;
+}
+
+.rb-level-option input[type="radio"] {
+    margin-right: 15px;
+    transform: scale(1.2);
+}
+
+.rb-level-title {
+    font-weight: 600;
+    color: var(--rb-primary-color);
+    font-size: 1.1rem;
+}
+
+.rb-level-content {
+    padding: 20px;
+    background: white;
+    border-top: 1px solid var(--rb-border-color);
+}
+
+.rb-level-products {
+    margin-bottom: 15px;
+}
+
+.rb-buffet-product {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.rb-buffet-product:last-child {
+    border-bottom: none;
+}
+
+.rb-product-name {
+    color: var(--rb-dark-color);
+}
+
+.rb-product-included {
+    color: var(--rb-success-color);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.rb-level-total {
+    font-weight: 700;
+    color: var(--rb-primary-color);
+    font-size: 1.1rem;
+    text-align: right;
+    padding: 10px 0;
+    border-top: 2px solid var(--rb-border-color);
+}
+
+/* Styles pour les boissons */
+.rb-beverages-section {
+    margin: 20px 0;
+}
+
+.rb-beverage-category {
+    border: 2px solid var(--rb-border-color);
+    border-radius: var(--rb-border-radius);
+    margin-bottom: 15px;
+    overflow: hidden;
+    transition: var(--rb-transition);
+}
+
+.rb-beverage-category:hover {
+    border-color: var(--rb-primary-color);
+}
+
+.rb-category-header {
+    padding: 15px 20px;
+    background: var(--rb-light-color);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: var(--rb-transition);
+}
+
+.rb-category-header:hover {
+    background: rgba(36, 49, 39, 0.05);
+}
+
+.rb-category-header .rb-category-title {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.rb-category-header .rb-category-description {
+    margin: 5px 0 0 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.rb-category-toggle {
+    font-size: 1.5rem;
+    color: var(--rb-primary-color);
+    font-weight: bold;
+    transition: var(--rb-transition);
+}
+
+.rb-category-content {
+    padding: 20px;
+    background: white;
+    border-top: 1px solid var(--rb-border-color);
+}
+
+/* Responsive pour buffets et boissons */
+@media (max-width: 768px) {
+    .rb-buffet-level,
+    .rb-beverage-category {
+        margin-bottom: 10px;
+    }
+    
+    .rb-level-header,
+    .rb-category-header {
+        padding: 12px 15px;
+    }
+    
+    .rb-level-content,
+    .rb-category-content {
+        padding: 15px;
+    }
+    
+    .rb-level-title {
+        font-size: 1rem;
+    }
+    
+    .rb-category-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .rb-category-toggle {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+    }
+}
+
 /* Styles pour l'impression */
 @media print {
     .rb-form-navigation,

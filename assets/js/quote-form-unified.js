@@ -21,8 +21,9 @@
             this.formData = {};
             this.priceCalculator = null;
             
-            // Récupérer les données JSON
+            // Récupérer les données JSON et les données WordPress localisées
             this.data = this.getWidgetData();
+            this.wpData = window.rbUnifiedForm || {};
             
             this.init();
         }
@@ -122,14 +123,14 @@
             
             const data = {
                 action: 'load_quote_form_step',
-                nonce: this.data.nonce,
+                nonce: this.wpData.nonce || this.data.nonce,
                 service_type: service,
                 step: stepNumber,
                 form_data: this.formData
             };
 
             $.ajax({
-                url: this.data.ajax_url,
+                url: this.wpData.ajax_url || this.data.ajax_url,
                 type: 'POST',
                 data: data,
                 success: (response) => {
@@ -144,7 +145,7 @@
                 },
                 error: () => {
                     this.hideLoading();
-                    this.showError(this.data.texts.error_network);
+                    this.showError(this.wpData.texts?.error_network || this.data.texts?.error_network || 'Erreur réseau');
                 }
             });
         }
@@ -266,6 +267,15 @@
             if (this.currentStep === 2) {
                 // Validation des sélections de produits
                 isValid = this.validateProductSelections() && isValid;
+            } else if (this.currentStep === 3) {
+                // Validation des quantités minimales pour l'étape 3
+                if (this.step3Validator) {
+                    const step3Valid = this.step3Validator();
+                    if (!step3Valid) {
+                        this.showError('Veuillez respecter les quantités minimales requises pour chaque catégorie.');
+                        isValid = false;
+                    }
+                }
             }
             
             return isValid;
@@ -287,7 +297,7 @@
             // Validation des champs obligatoires
             if ($field.attr('required') && !value) {
                 isValid = false;
-                errorMessage = this.data.texts.error_required;
+                errorMessage = this.wpData.texts?.error_required || this.data.texts?.error_required || 'Ce champ est obligatoire';
             }
             
             // Validations spécifiques
@@ -295,7 +305,7 @@
                 case 'event_date':
                     if (value && !this.isValidDate(value)) {
                         isValid = false;
-                        errorMessage = this.data.texts.error_invalid_date;
+                        errorMessage = this.wpData.texts?.error_invalid_date || this.data.texts?.error_invalid_date || 'Date invalide';
                     }
                     break;
                     
@@ -306,10 +316,10 @@
                     
                     if (guestCount < minGuests) {
                         isValid = false;
-                        errorMessage = this.data.texts.error_min_guests + ` (${minGuests})`;
+                        errorMessage = (this.wpData.texts?.error_min_guests || this.data.texts?.error_min_guests || 'Nombre minimum de convives non respecté') + ` (${minGuests})`;
                     } else if (guestCount > maxGuests) {
                         isValid = false;
-                        errorMessage = this.data.texts.error_max_guests + ` (${maxGuests})`;
+                        errorMessage = (this.wpData.texts?.error_max_guests || this.data.texts?.error_max_guests || 'Nombre maximum de convives dépassé') + ` (${maxGuests})`;
                     }
                     break;
                     
@@ -411,13 +421,13 @@
             
             const data = {
                 action: 'calculate_quote_price_realtime',
-                nonce: this.data.nonce,
+                nonce: this.wpData.nonce || this.data.nonce,
                 service_type: this.selectedService,
                 form_data: this.formData
             };
 
             $.ajax({
-                url: this.data.ajax_url,
+                url: this.wpData.ajax_url || this.data.ajax_url,
                 type: 'POST',
                 data: data,
                 success: (response) => {
@@ -434,16 +444,79 @@
         updatePriceDisplay(priceData) {
             const calculator = this.container.find('.rb-price-calculator');
             
-            calculator.find('[data-price="base"]').text(this.formatPrice(priceData.base_price));
-            calculator.find('[data-price="supplements"]').text(this.formatPrice(priceData.supplements_total));
-            calculator.find('[data-price="products"]').text(this.formatPrice(priceData.products_total));
-            calculator.find('.rb-price-total').text(this.formatPrice(priceData.total_price));
+            if (calculator.length === 0) {
+                return;
+            }
+            
+            // Mettre à jour les valeurs individuelles
+            calculator.find('[data-price="base"]').text(this.formatPrice(priceData.base_price || 0));
+            calculator.find('[data-price="supplements"]').text(this.formatPrice(priceData.supplements_total || 0));
+            calculator.find('[data-price="products"]').text(this.formatPrice(priceData.products_total || 0));
+            
+            // Mettre à jour le prix total
+            const totalPrice = priceData.total_price || 0;
+            calculator.find('.rb-price-total').text(this.formatPrice(totalPrice));
             
             // Animation du prix total
             calculator.find('.rb-price-total').addClass('updated');
             setTimeout(() => {
                 calculator.find('.rb-price-total').removeClass('updated');
             }, 300);
+            
+            // Mettre à jour le détail si disponible
+            if (priceData.breakdown && priceData.breakdown.length > 0) {
+                this.updatePriceBreakdown(priceData.breakdown);
+            }
+            
+            // Sauvegarder les données de prix pour référence
+            this.priceCalculator = {
+                basePrice: priceData.base_price || 0,
+                supplements: priceData.supplements_total || 0,
+                products: priceData.products_total || 0,
+                total: totalPrice
+            };
+        }
+        
+        /**
+         * Mettre à jour le détail des prix
+         */
+        updatePriceBreakdown(breakdown) {
+            const calculator = this.container.find('.rb-price-calculator');
+            let breakdownContainer = calculator.find('.rb-price-breakdown-detail');
+            
+            if (breakdownContainer.length === 0) {
+                calculator.append('<div class="rb-price-breakdown-detail" style="margin-top: 15px; font-size: 12px; display: none;"></div>');
+                breakdownContainer = calculator.find('.rb-price-breakdown-detail');
+            }
+            
+            let html = '<h5 style="margin: 0 0 10px 0; color: var(--rb-primary-color);">Détail du calcul :</h5>';
+            
+            breakdown.forEach(item => {
+                html += `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">`;
+                html += `<span>${item.label}</span>`;
+                html += `<span>${this.formatPrice(item.amount)}</span>`;
+                html += `</div>`;
+            });
+            
+            breakdownContainer.html(html);
+            
+            // Ajouter un bouton pour afficher/masquer le détail
+            if (calculator.find('.rb-toggle-breakdown').length === 0) {
+                calculator.append('<button type="button" class="rb-toggle-breakdown" style="background: none; border: none; color: var(--rb-primary-color); font-size: 12px; cursor: pointer; margin-top: 10px;">Voir le détail ▼</button>');
+                
+                calculator.find('.rb-toggle-breakdown').on('click', function() {
+                    const detail = calculator.find('.rb-price-breakdown-detail');
+                    const button = $(this);
+                    
+                    if (detail.is(':visible')) {
+                        detail.slideUp();
+                        button.text('Voir le détail ▼');
+                    } else {
+                        detail.slideDown();
+                        button.text('Masquer le détail ▲');
+                    }
+                });
+            }
         }
 
         /**
@@ -528,13 +601,13 @@
             
             const data = {
                 action: 'submit_unified_quote_form',
-                nonce: this.data.nonce,
+                nonce: this.wpData.nonce || this.data.nonce,
                 service_type: this.selectedService,
                 form_data: this.formData
             };
 
             $.ajax({
-                url: this.data.ajax_url,
+                url: this.wpData.ajax_url || this.data.ajax_url,
                 type: 'POST',
                 data: data,
                 success: (response) => {
@@ -549,7 +622,7 @@
                 },
                 error: () => {
                     this.hideLoading();
-                    this.showError(this.data.texts.error_network);
+                    this.showError(this.wpData.texts?.error_network || this.data.texts?.error_network || 'Erreur réseau');
                 }
             });
         }
@@ -569,6 +642,11 @@
             stepElement.find('.rb-quantity-selector').each((index, element) => {
                 this.initializeQuantitySelector($(element));
             });
+            
+            // Initialiser la gestion des produits pour l'étape 3
+            if (stepData.step_number === 3) {
+                this.initializeProductsStep3(stepElement);
+            }
         }
 
         /**
@@ -605,14 +683,203 @@
         }
 
         /**
+         * Initialiser la gestion des produits pour l'étape 3
+         */
+        initializeProductsStep3($stepElement) {
+            const guestCount = parseInt(this.formData.guest_count) || 10;
+            
+            // Gérer la sélection du type de signature
+            $stepElement.find('input[name="signature_type"]').on('change', (e) => {
+                const signatureType = e.target.value;
+                this.loadSignatureProducts(signatureType);
+            });
+            
+            // Initialiser les sélecteurs de quantité existants
+            this.initializeQuantitySelectors($stepElement);
+            
+            // Valider les quantités minimales
+            this.setupMinimumQuantityValidation($stepElement, guestCount);
+        }
+
+        /**
+         * Charger les produits signature selon le type sélectionné
+         */
+        loadSignatureProducts(signatureType) {
+            const signatureContainer = this.container.find('#signature-products');
+            signatureContainer.show().html('<div class="rb-loading-placeholder">Chargement des produits ' + signatureType + '...</div>');
+            
+            const data = {
+                action: 'get_products_by_category_v2',
+                nonce: this.wpData.nonce || this.data.nonce,
+                category_type: 'signature',
+                signature_type: signatureType,
+                service_type: this.selectedService
+            };
+
+            $.ajax({
+                url: this.wpData.ajax_url || this.data.ajax_url,
+                type: 'POST',
+                data: data,
+                success: (response) => {
+                    if (response.success && response.data.products) {
+                        this.renderSignatureProducts(response.data.products, signatureType);
+                    } else {
+                        signatureContainer.html('<p>Aucun produit disponible pour cette sélection.</p>');
+                    }
+                },
+                error: () => {
+                    signatureContainer.html('<p>Erreur lors du chargement des produits.</p>');
+                }
+            });
+        }
+
+        /**
+         * Rendre les produits signature
+         */
+        renderSignatureProducts(products, signatureType) {
+            const signatureContainer = this.container.find('#signature-products');
+            const guestCount = parseInt(this.formData.guest_count) || 10;
+            
+            let html = '<div class="rb-products-grid">';
+            
+            products.forEach(product => {
+                html += '<div class="rb-product-card" data-product-id="' + product.id + '">';
+                html += '<div class="rb-product-content">';
+                html += '<h5 class="rb-product-title">' + product.name + '</h5>';
+                
+                if (product.description) {
+                    html += '<p class="rb-product-description">' + product.description + '</p>';
+                }
+                
+                html += '<div class="rb-product-price">' + this.formatPrice(product.price) + '</div>';
+                html += '</div>';
+                
+                html += '<div class="rb-product-footer">';
+                html += '<div class="rb-quantity-selector">';
+                html += '<button type="button" class="rb-qty-btn rb-qty-minus" data-target="signature_' + product.id + '">-</button>';
+                html += '<input type="number" class="rb-qty-input rb-product-quantity" id="signature_' + product.id + '" ';
+                html += 'name="products[signature][' + product.id + ']" value="0" min="0" max="' + (guestCount * 2) + '" ';
+                html += 'data-product-id="' + product.id + '" data-category="signature" data-min-required="' + guestCount + '">';
+                html += '<button type="button" class="rb-qty-btn rb-qty-plus" data-target="signature_' + product.id + '">+</button>';
+                html += '</div>';
+                
+                // Ajouter les suppléments si disponibles
+                if (product.supplements && product.supplements.length > 0) {
+                    html += '<div class="rb-product-supplements" style="margin-top: 10px;">';
+                    html += '<h6>Suppléments :</h6>';
+                    product.supplements.forEach(supplement => {
+                        html += '<div class="rb-supplement-option">';
+                        html += '<label>' + supplement.name + ' (+' + this.formatPrice(supplement.price) + ')</label>';
+                        html += '<input type="number" class="rb-supplement-quantity" ';
+                        html += 'name="supplements[' + product.id + '][' + supplement.id + ']" ';
+                        html += 'value="0" min="0" max="' + guestCount + '" ';
+                        html += 'data-product-id="' + product.id + '" data-supplement-id="' + supplement.id + '">';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                }
+                
+                html += '</div>';
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            
+            // Ajouter un message d'aide
+            html += '<div class="rb-help-text" style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">';
+            html += '<small><strong>💡 Aide :</strong> Minimum ' + guestCount + ' plats requis (1 par convive). ';
+            html += 'Vous pouvez mélanger les différents produits.</small>';
+            html += '</div>';
+            
+            signatureContainer.html(html);
+            
+            // Initialiser les sélecteurs de quantité pour les nouveaux éléments
+            this.initializeQuantitySelectors(signatureContainer);
+            
+            // Sauvegarder le type de signature sélectionné
+            this.formData.signature_type = signatureType;
+        }
+
+        /**
+         * Initialiser tous les sélecteurs de quantité dans un conteneur
+         */
+        initializeQuantitySelectors($container) {
+            $container.find('.rb-quantity-selector').each((index, element) => {
+                this.initializeQuantitySelector($(element));
+            });
+        }
+
+        /**
+         * Configurer la validation des quantités minimales
+         */
+        setupMinimumQuantityValidation($stepElement, guestCount) {
+            const validateMinimums = () => {
+                // Validation des plats signature
+                const signatureTotal = this.getTotalQuantityByCategory('signature');
+                const signatureValid = signatureTotal >= guestCount;
+                
+                // Validation des accompagnements
+                const accompanimentsTotal = this.getTotalQuantityByCategory('accompaniments');
+                const accompanimentsValid = accompanimentsTotal >= guestCount;
+                
+                // Mettre à jour les indicateurs visuels
+                this.updateValidationIndicators($stepElement, {
+                    signature: signatureValid,
+                    accompaniments: accompanimentsValid
+                });
+                
+                return signatureValid && accompanimentsValid;
+            };
+            
+            // Valider lors des changements de quantité
+            $stepElement.find('.rb-product-quantity').on('change input', validateMinimums);
+            
+            // Sauvegarder la fonction de validation pour l'étape
+            this.step3Validator = validateMinimums;
+        }
+
+        /**
+         * Obtenir le total des quantités pour une catégorie
+         */
+        getTotalQuantityByCategory(category) {
+            let total = 0;
+            this.container.find(`[data-category="${category}"]`).each((index, element) => {
+                total += parseInt($(element).val()) || 0;
+            });
+            return total;
+        }
+
+        /**
+         * Mettre à jour les indicateurs de validation
+         */
+        updateValidationIndicators($stepElement, validations) {
+            Object.keys(validations).forEach(category => {
+                const categoryElement = $stepElement.find(`[data-category="${category}"]`).closest('.rb-product-category');
+                const isValid = validations[category];
+                
+                if (isValid) {
+                    categoryElement.removeClass('rb-validation-error').addClass('rb-validation-success');
+                } else {
+                    categoryElement.removeClass('rb-validation-success').addClass('rb-validation-error');
+                }
+            });
+        }
+
+        /**
          * Utilitaires
          */
         getMinGuests() {
-            return this.selectedService === 'restaurant' ? 10 : 20;
+            if (this.selectedService === 'restaurant') {
+                return this.wpData.config?.min_guests_restaurant || 10;
+            }
+            return this.wpData.config?.min_guests_remorque || 20;
         }
 
         getMaxGuests() {
-            return this.selectedService === 'restaurant' ? 30 : 100;
+            if (this.selectedService === 'restaurant') {
+                return this.wpData.config?.max_guests_restaurant || 30;
+            }
+            return this.wpData.config?.max_guests_remorque || 100;
         }
 
         isValidDate(dateString) {

@@ -85,21 +85,21 @@ class RestaurantBooking_Shortcodes_V2
             'show_progress_bar' => ($atts['show_progress'] === 'yes'),
             'calculator_position' => $atts['calculator_position'],
             
-            // Textes service selection
-            'service_selection_title' => RestaurantBooking_Settings::get('widget_service_selection_title', 'Choisissez votre service'),
+            // Textes service selection - récupération depuis les paramètres
+            'service_selection_title' => $this->get_setting('widget_service_selection_title', 'Choisissez votre service'),
             'restaurant_card' => array(
-                'title' => RestaurantBooking_Settings::get('widget_restaurant_card_title', 'PRIVATISATION DU RESTAURANT'),
-                'subtitle' => RestaurantBooking_Settings::get('widget_restaurant_card_subtitle', 'De 10 à 30 personnes'),
-                'description' => RestaurantBooking_Settings::get('widget_restaurant_card_description', 'Privatisez notre restaurant pour vos événements intimes et profitez d\'un service personnalisé dans un cadre chaleureux.')
+                'title' => $this->get_setting('widget_restaurant_card_title', 'PRIVATISATION DU RESTAURANT'),
+                'subtitle' => $this->get_setting('widget_restaurant_card_subtitle', 'De 10 à 30 personnes'),
+                'description' => $this->get_setting('widget_restaurant_card_description', 'Privatisez notre restaurant pour vos événements intimes et profitez d\'un service personnalisé dans un cadre chaleureux.')
             ),
             'remorque_card' => array(
-                'title' => RestaurantBooking_Settings::get('widget_remorque_card_title', 'Privatisation de la remorque Block'),
-                'subtitle' => RestaurantBooking_Settings::get('widget_remorque_card_subtitle', 'À partir de 20 personnes'),
-                'description' => RestaurantBooking_Settings::get('widget_remorque_card_description', 'Notre remorque mobile se déplace pour vos événements extérieurs et grandes réceptions.')
+                'title' => $this->get_setting('widget_remorque_card_title', 'Privatisation de la remorque Block'),
+                'subtitle' => $this->get_setting('widget_remorque_card_subtitle', 'À partir de 20 personnes'),
+                'description' => $this->get_setting('widget_remorque_card_description', 'Notre remorque mobile se déplace pour vos événements extérieurs et grandes réceptions.')
             ),
             
             // Messages
-            'success_message' => RestaurantBooking_Settings::get('quote_success_message', 'Votre devis est d\'ores et déjà disponible dans votre boîte mail'),
+            'success_message' => $this->get_setting('quote_success_message', 'Votre devis est d\'ores et déjà disponible dans votre boîte mail'),
             'loading_message' => 'Génération de votre devis en cours...',
             
             // Couleurs
@@ -110,14 +110,64 @@ class RestaurantBooking_Shortcodes_V2
             )
         );
 
-        // Enqueue des styles et scripts
-        wp_enqueue_style('restaurant-booking-quote-form-unified');
-        wp_enqueue_script('restaurant-booking-quote-form-unified');
+        // Enqueue des styles et scripts V2
+        $this->enqueue_unified_form_assets();
 
         // Rendu du formulaire
         ob_start();
         $this->render_unified_form_html($config);
         return ob_get_clean();
+    }
+
+    /**
+     * Enregistrer et charger les assets du formulaire unifié
+     */
+    private function enqueue_unified_form_assets()
+    {
+        // Vérifier si les assets ne sont pas déjà chargés
+        if (!wp_style_is('restaurant-booking-quote-form-unified', 'enqueued')) {
+            // Enregistrer et charger le CSS unifié
+            wp_enqueue_style(
+                'restaurant-booking-quote-form-unified',
+                RESTAURANT_BOOKING_PLUGIN_URL . 'assets/css/quote-form-unified.css',
+                array(),
+                RESTAURANT_BOOKING_VERSION
+            );
+        }
+
+        if (!wp_script_is('restaurant-booking-quote-form-unified', 'enqueued')) {
+            // Enregistrer et charger le JS unifié
+            wp_enqueue_script(
+                'restaurant-booking-quote-form-unified',
+                RESTAURANT_BOOKING_PLUGIN_URL . 'assets/js/quote-form-unified.js',
+                array('jquery'),
+                RESTAURANT_BOOKING_VERSION,
+                true
+            );
+
+            // Localisation pour le formulaire unifié
+            wp_localize_script('restaurant-booking-quote-form-unified', 'rbUnifiedForm', array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('restaurant_booking_quote_form'),
+                'texts' => array(
+                    'loading' => __('Chargement...', 'restaurant-booking'),
+                    'error_network' => __('Erreur de connexion. Veuillez réessayer.', 'restaurant-booking'),
+                    'error_required' => __('Ce champ est obligatoire', 'restaurant-booking'),
+                    'error_invalid_date' => __('Date invalide', 'restaurant-booking'),
+                    'error_min_guests' => __('Nombre minimum de convives non respecté', 'restaurant-booking'),
+                    'error_max_guests' => __('Nombre maximum de convives dépassé', 'restaurant-booking'),
+                    'calculating' => __('Calcul en cours...', 'restaurant-booking'),
+                    'success_quote' => __('Devis envoyé avec succès !', 'restaurant-booking'),
+                ),
+                'config' => array(
+                    'min_guests_restaurant' => 10,
+                    'max_guests_restaurant' => 30,
+                    'min_guests_remorque' => 20,
+                    'max_guests_remorque' => 100,
+                    'max_distance_remorque' => 150,
+                )
+            ));
+        }
     }
 
     /**
@@ -305,6 +355,20 @@ class RestaurantBooking_Shortcodes_V2
         }
         </style>
         <?php
+    }
+
+    /**
+     * Récupérer un paramètre depuis la base de données
+     */
+    private function get_setting($key, $default = '')
+    {
+        if (class_exists('RestaurantBooking_Settings')) {
+            $settings_manager = RestaurantBooking_Settings::get_instance();
+            return $settings_manager->get($key, $default);
+        }
+        
+        // Fallback : récupérer directement depuis wp_options
+        return get_option('restaurant_booking_' . $key, $default);
     }
 
     /**

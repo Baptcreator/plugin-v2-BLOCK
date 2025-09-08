@@ -257,6 +257,24 @@ class RestaurantBookingPlugin
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-quote-form-remorque.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-quote-form-remorque.php';
         }
+        
+        // Système unifié V2
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-shortcodes-v2.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-shortcodes-v2.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler-v2.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler-v2.php';
+        }
+        
+        // Gestionnaire AJAX Block Unifié V2
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler-block-unified.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler-block-unified.php';
+        }
+        
+        // Initialiser les gestionnaires après inclusion de toutes les classes
+        if (class_exists('RestaurantBooking_Ajax_Handler_V2')) {
+            RestaurantBooking_Ajax_Handler_V2::get_instance();
+        }
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler.php';
         }
