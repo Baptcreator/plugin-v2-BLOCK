@@ -1,11 +1,11 @@
 # Restaurant Booking & Quote System - Plugin WordPress/Elementor
 
-Plugin complet de gestion de devis de privatisation pour restaurant avec interface Elementor intégrée.
+Plugin complet de gestion de devis de privatisation pour restaurant avec shortcode intégré.
 
 ## 🎯 Vue d'ensemble
 
 Ce plugin WordPress permet la gestion complète de devis de privatisation avec :
-- **Interface publique** : Formulaires multi-étapes avec widgets Elementor
+- **Interface publique** : Formulaires multi-étapes avec shortcode simple
 - **Administration backend** : Gestion complète des produits, catégories, devis et paramètres
 - **Calculs automatiques** : Tarification dynamique selon les règles métier
 - **Intégrations** : Google Calendar, emails automatiques, génération PDF

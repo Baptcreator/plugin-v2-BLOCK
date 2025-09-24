@@ -250,12 +250,17 @@
                 success: (response) => {
                     if (response.success) {
                         const data = response.data;
+                        // Vérifier que les données de zone existent avant de les utiliser
+                        const zoneName = data.zone && data.zone.zone_name ? data.zone.zone_name : 'Zone inconnue';
+                        const deliveryPrice = data.delivery_price ? data.delivery_price.toFixed(2) : '0.00';
+                        
                         $distanceInfo.removeClass('loading').addClass('success')
-                            .html(`✅ Distance : ${data.distance} km<br>Zone : ${data.zone.zone_name}<br>Frais de livraison : ${data.delivery_price.toFixed(2)} €`);
+                            .html(`✅ Distance : ${data.distance} km<br>Zone : ${zoneName}<br>Frais de livraison : ${deliveryPrice} €`);
                         
                         // Mettre à jour les champs cachés
                         $('#calculated_distance').val(data.distance);
-                        $('#delivery_zone_id').val(data.zone.id);
+                        const zoneId = data.zone && data.zone.id ? data.zone.id : '';
+                        $('#delivery_zone_id').val(zoneId);
                         
                         // Recalculer le prix
                         this.calculatePrice();
@@ -557,12 +562,12 @@
                 }
             });
             
-            sessionStorage.setItem('restaurant_booking_form_data', JSON.stringify(formData));
+            sessionStorage.setItem('restaurant_plugin_form_data', JSON.stringify(formData));
         },
 
         // Restaurer les données du formulaire depuis la session
         restoreFormData: function() {
-            const savedData = sessionStorage.getItem('restaurant_booking_form_data');
+            const savedData = sessionStorage.getItem('restaurant_plugin_form_data');
             if (savedData) {
                 try {
                     const formData = JSON.parse(savedData);
@@ -580,7 +585,7 @@
 
         // Effacer les données du formulaire de la session
         clearFormData: function() {
-            sessionStorage.removeItem('restaurant_booking_form_data');
+            sessionStorage.removeItem('restaurant_plugin_form_data');
         },
 
         // Initialiser la validation des dates

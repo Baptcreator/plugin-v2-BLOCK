@@ -1,0 +1,2233 @@
+/**
+ * CSS Formulaire Block V3 - Design moderne inspiré du site
+ * Isolation complète avec namespace .rbf-v3-
+ * Charte graphique Block: #F6F2E7, #243127, #FFB404, #EF3D1D, #FFFFFF
+ * 
+ * @package RestaurantBooking
+ * @version 3.0.0
+ */
+
+/* ========================================
+   POLICES ET VARIABLES CSS
+   ======================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* Couleurs Block */
+    --rbf-v3-beige: #F6F2E7;
+    --rbf-v3-green: #243127;
+    --rbf-v3-orange: #FFB404;
+    --rbf-v3-red: #EF3D1D;
+    --rbf-v3-white: #FFFFFF;
+    
+    /* Couleurs dérivées */
+    --rbf-v3-green-light: rgba(36, 49, 39, 0.1);
+    --rbf-v3-green-hover: rgba(36, 49, 39, 0.9);
+    --rbf-v3-orange-light: rgba(255, 180, 4, 0.1);
+    --rbf-v3-red-light: rgba(239, 61, 29, 0.1);
+    
+    /* Typographie */
+    --rbf-v3-font-primary: 'Roboto', sans-serif;
+    --rbf-v3-font-title: 'FatKat', 'Roboto', sans-serif;
+    
+    /* Espacements */
+    --rbf-v3-spacing-xs: 8px;
+    --rbf-v3-spacing-sm: 16px;
+    --rbf-v3-spacing-md: 24px;
+    --rbf-v3-spacing-lg: 32px;
+    --rbf-v3-spacing-xl: 48px;
+    
+    /* Border radius */
+    --rbf-v3-radius: 12px;
+    --rbf-v3-radius-sm: 8px;
+    --rbf-v3-radius-lg: 16px;
+    
+    /* Ombres */
+    --rbf-v3-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --rbf-v3-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
+    --rbf-v3-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.2);
+    
+    /* Transitions */
+    --rbf-v3-transition: all 0.3s ease;
+}
+
+/* ========================================
+   RESET ET BASE
+   ======================================== */
+
+.rbf-v3-container {
+    font-family: var(--rbf-v3-font-primary);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--rbf-v3-green);
+    background: var(--rbf-v3-white);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--rbf-v3-spacing-lg);
+    border-radius: var(--rbf-v3-radius-lg);
+    box-shadow: var(--rbf-v3-shadow-md);
+}
+
+.rbf-v3-container * {
+    box-sizing: border-box;
+}
+
+.rbf-v3-container *:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px var(--rbf-v3-orange-light) !important;
+}
+
+/* ========================================
+   EN-TÊTE DU FORMULAIRE
+   ======================================== */
+
+.rbf-v3-header {
+    text-align: center;
+    margin-bottom: var(--rbf-v3-spacing-xl);
+    padding-bottom: var(--rbf-v3-spacing-lg);
+    border-bottom: 2px solid var(--rbf-v3-beige);
+}
+
+.rbf-v3-title {
+    font-family: var(--rbf-v3-font-title);
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--rbf-v3-green);
+    margin: 0 0 var(--rbf-v3-spacing-sm) 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.rbf-v3-subtitle {
+    font-size: 1.125rem;
+    color: var(--rbf-v3-green);
+    margin: 0;
+    opacity: 0.8;
+    font-weight: 400;
+}
+
+/* ========================================
+   BARRE DE PROGRESSION
+   ======================================== */
+
+.rbf-v3-progress-container {
+    margin-bottom: var(--rbf-v3-spacing-xl);
+}
+
+.rbf-v3-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--rbf-v3-beige);
+    border-radius: 2px;
+    margin-bottom: var(--rbf-v3-spacing-md);
+    overflow: hidden;
+}
+
+.rbf-v3-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--rbf-v3-orange), var(--rbf-v3-red));
+    width: 16.66%; /* 1/6 par défaut */
+    transition: width 0.5s ease;
+    border-radius: 2px;
+}
+
+.rbf-v3-progress-steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rbf-v3-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+}
+
+.rbf-v3-step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--rbf-v3-beige);
+    color: var(--rbf-v3-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: 2px solid var(--rbf-v3-beige);
+    transition: var(--rbf-v3-transition);
+    margin-bottom: var(--rbf-v3-spacing-xs);
+}
+
+.rbf-v3-step-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--rbf-v3-green);
+    opacity: 0.6;
+    transition: var(--rbf-v3-transition);
+    text-align: center;
+}
+
+/* États des étapes */
+.rbf-v3-step.active .rbf-v3-step-number {
+    background: var(--rbf-v3-orange);
+    border-color: var(--rbf-v3-orange);
+    color: var(--rbf-v3-white);
+    transform: scale(1.1);
+}
+
+.rbf-v3-step.active .rbf-v3-step-label {
+    opacity: 1;
+    font-weight: 600;
+    color: var(--rbf-v3-orange);
+}
+
+.rbf-v3-step.completed .rbf-v3-step-number {
+    background: var(--rbf-v3-green);
+    border-color: var(--rbf-v3-green);
+    color: var(--rbf-v3-white);
+}
+
+.rbf-v3-step.completed .rbf-v3-step-label {
+    opacity: 1;
+    color: var(--rbf-v3-green);
+}
+
+/* ========================================
+   MESSAGES
+   ======================================== */
+
+.rbf-v3-messages {
+    margin-bottom: var(--rbf-v3-spacing-lg);
+}
+
+.rbf-v3-message {
+    padding: var(--rbf-v3-spacing-sm) var(--rbf-v3-spacing-md);
+    border-radius: var(--rbf-v3-radius);
+    margin-bottom: var(--rbf-v3-spacing-sm);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--rbf-v3-spacing-xs);
+}
+
+.rbf-v3-message.success {
+    background: rgba(34, 197, 94, 0.1);
+    color: rgb(21, 128, 61);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.rbf-v3-message.error {
+    background: var(--rbf-v3-red-light);
+    color: var(--rbf-v3-red);
+    border: 1px solid rgba(239, 61, 29, 0.2);
+}
+
+.rbf-v3-message.info {
+    background: var(--rbf-v3-orange-light);
+    color: var(--rbf-v3-green);
+    border: 1px solid rgba(255, 180, 4, 0.2);
+}
+
+/* Correction pour l'étape des boissons - message info avec la même largeur que les buffets */
+.rbf-v3-step-content[data-step="5"] .rbf-v3-product-section .rbf-v3-message.info {
+    margin: calc(-1 * var(--rbf-v3-spacing-lg));
+    margin-bottom: var(--rbf-v3-spacing-lg);
+    width: calc(100% + 2 * var(--rbf-v3-spacing-lg));
+}
+
+.rbf-v3-message-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--rbf-v3-spacing-xs);
+}
+
+/* ========================================
+   CONTENU DES ÉTAPES
+   ======================================== */
+
+.rbf-v3-content {
+    min-height: 400px;
+    margin-bottom: var(--rbf-v3-spacing-xl);
+}
+
+.rbf-v3-step-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.rbf-v3-step-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.rbf-v3-step-title {
+    font-family: var(--rbf-v3-font-title);
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--rbf-v3-green);
+    text-align: center;
+    margin: 0 0 var(--rbf-v3-spacing-lg) 0;
+    text-transform: uppercase;
+}
+
+/* ========================================
+   CARDS DE SERVICE
+   ======================================== */
+
+.rbf-v3-service-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: var(--rbf-v3-spacing-lg);
+    margin-top: var(--rbf-v3-spacing-lg);
+}
+
+.rbf-v3-service-card {
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius-lg);
+    padding: var(--rbf-v3-spacing-lg);
+    transition: var(--rbf-v3-transition);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.rbf-v3-service-card:hover {
+    border-color: var(--rbf-v3-orange);
+    box-shadow: var(--rbf-v3-shadow-lg);
+    transform: translateY(-4px);
+}
+
+.rbf-v3-service-card.selected {
+    border-color: var(--rbf-v3-green);
+    background: var(--rbf-v3-green-light);
+}
+
+/* Carte remorque normale - pas d'opacité réduite */
+.rbf-v3-service-card[data-service="remorque"] {
+    opacity: 1;
+    cursor: pointer;
+}
+
+.rbf-v3-service-card[data-service="remorque"]:hover {
+    border-color: var(--rbf-v3-orange);
+    box-shadow: var(--rbf-v3-shadow-lg);
+    transform: translateY(-4px);
+}
+
+.rbf-v3-card-header h3 {
+    font-family: var(--rbf-v3-font-title);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--rbf-v3-green);
+    margin: 0 0 var(--rbf-v3-spacing-xs) 0;
+    text-transform: uppercase;
+}
+
+.rbf-v3-card-subtitle {
+    font-size: 1rem;
+    color: var(--rbf-v3-orange);
+    font-weight: 600;
+    margin: 0 0 var(--rbf-v3-spacing-md) 0;
+}
+
+.rbf-v3-card-body p {
+    color: var(--rbf-v3-green);
+    margin: 0 0 var(--rbf-v3-spacing-lg) 0;
+    line-height: 1.6;
+}
+
+.rbf-v3-card-footer {
+    margin-top: auto;
+}
+
+/* ========================================
+   BOUTONS
+   ======================================== */
+
+.rbf-v3-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--rbf-v3-spacing-xs);
+    padding: var(--rbf-v3-spacing-sm) var(--rbf-v3-spacing-lg);
+    border: none;
+    border-radius: var(--rbf-v3-radius);
+    font-family: var(--rbf-v3-font-title);
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: var(--rbf-v3-transition);
+    text-decoration: none;
+    min-height: 48px; /* Touch-friendly */
+    position: relative;
+    overflow: hidden;
+}
+
+.rbf-v3-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Bouton primaire (vert) */
+.rbf-v3-btn-primary {
+    background: var(--rbf-v3-green) !important;
+    color: var(--rbf-v3-white) !important;
+    box-shadow: var(--rbf-v3-shadow-sm) !important;
+    border: 2px solid var(--rbf-v3-green) !important;
+}
+
+.rbf-v3-btn-primary:hover:not(:disabled) {
+    background: var(--rbf-v3-orange) !important;
+    border-color: var(--rbf-v3-orange) !important;
+    transform: translateY(-2px);
+    box-shadow: var(--rbf-v3-shadow-md);
+}
+
+/* Bouton secondaire (rouge) */
+.rbf-v3-btn-secondary {
+    background: var(--rbf-v3-red);
+    color: var(--rbf-v3-white);
+    box-shadow: var(--rbf-v3-shadow-sm);
+}
+
+.rbf-v3-btn-secondary:hover:not(:disabled) {
+    background: var(--rbf-v3-green);
+    transform: translateY(-2px);
+    box-shadow: var(--rbf-v3-shadow-md);
+}
+
+/* Bouton outline */
+.rbf-v3-btn-outline {
+    background: transparent;
+    color: var(--rbf-v3-green);
+    border: 2px solid var(--rbf-v3-green);
+}
+
+.rbf-v3-btn-outline:hover:not(:disabled) {
+    background: var(--rbf-v3-green);
+    color: var(--rbf-v3-white);
+    transform: translateY(-2px);
+}
+
+/* Style spécifique pour le bouton précédent */
+#rbf-v3-prev {
+    background: transparent !important;
+    color: var(--rbf-v3-green) !important;
+    border: 2px solid var(--rbf-v3-green) !important;
+}
+
+#rbf-v3-prev:hover:not(:disabled) {
+    background: var(--rbf-v3-green) !important;
+    color: var(--rbf-v3-white) !important;
+}
+
+/* Bouton pleine largeur */
+.rbf-v3-btn-full {
+    width: 100%;
+}
+
+/* ========================================
+   NAVIGATION
+   ======================================== */
+
+.rbf-v3-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--rbf-v3-spacing-md);
+    margin-top: var(--rbf-v3-spacing-xl);
+    padding-top: var(--rbf-v3-spacing-lg);
+    border-top: 2px solid var(--rbf-v3-beige);
+}
+
+/* ========================================
+   CALCULATEUR DE PRIX
+   ======================================== */
+
+.rbf-v3-price-calculator {
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius-lg);
+    padding: var(--rbf-v3-spacing-lg);
+    margin-top: var(--rbf-v3-spacing-xl);
+    box-shadow: var(--rbf-v3-shadow-md);
+}
+
+.rbf-v3-price-calculator.sticky {
+    position: sticky;
+    top: 20px;
+    z-index: 100;
+}
+
+.rbf-v3-calculator-header {
+    background: var(--rbf-v3-green);
+    color: var(--rbf-v3-white);
+    padding: var(--rbf-v3-spacing-md);
+    margin: calc(-1 * var(--rbf-v3-spacing-lg)) calc(-1 * var(--rbf-v3-spacing-lg)) var(--rbf-v3-spacing-md);
+    border-radius: var(--rbf-v3-radius-lg) var(--rbf-v3-radius-lg) 0 0;
+    text-align: center;
+}
+
+.rbf-v3-calculator-header h4 {
+    font-family: var(--rbf-v3-font-title);
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.rbf-v3-calculator-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--rbf-v3-spacing-sm);
+}
+
+.rbf-v3-price-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--rbf-v3-spacing-xs) 0;
+}
+
+.rbf-v3-price-line.rbf-v3-price-total {
+    border-top: 2px solid var(--rbf-v3-beige);
+    margin-top: var(--rbf-v3-spacing-sm);
+    padding-top: var(--rbf-v3-spacing-md);
+    font-size: 1.125rem;
+}
+
+.rbf-v3-price {
+    color: var(--rbf-v3-green);
+    font-weight: 600;
+}
+
+/* Animation prix mis à jour */
+.rbf-v3-price-updated {
+    animation: rbf-v3-price-pulse 0.3s ease-in-out;
+}
+
+@keyframes rbf-v3-price-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); box-shadow: var(--rbf-v3-shadow-lg); }
+    100% { transform: scale(1); }
+}
+
+/* Styles d'erreur de validation */
+.rbf-v3-error {
+    border-color: var(--rbf-v3-red) !important;
+    box-shadow: 0 0 0 2px rgba(239, 61, 29, 0.2) !important;
+}
+
+.rbf-v3-error:focus {
+    box-shadow: 0 0 0 3px rgba(239, 61, 29, 0.3) !important;
+}
+
+/* ========================================
+   ÉTAPE BOISSONS - ONGLETS ET CARDS
+   ======================================== */
+
+/* Onglets boissons */
+.rbf-v3-drinks-tabs {
+    display: flex;
+    gap: var(--rbf-v3-spacing-sm);
+    margin-bottom: var(--rbf-v3-spacing-lg);
+    flex-wrap: wrap;
+}
+
+.rbf-v3-tab-btn {
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-green);
+    color: var(--rbf-v3-green);
+    padding: var(--rbf-v3-spacing-sm) var(--rbf-v3-spacing-md);
+    border-radius: var(--rbf-v3-radius);
+    font-family: var(--rbf-v3-font-title);
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: var(--rbf-v3-spacing-xs);
+}
+
+.rbf-v3-tab-btn:hover {
+    border-color: var(--rbf-v3-orange);
+    background: var(--rbf-v3-orange-light);
+    color: var(--rbf-v3-orange);
+}
+
+.rbf-v3-tab-btn.active {
+    background: var(--rbf-v3-green);
+    border-color: var(--rbf-v3-green);
+    color: var(--rbf-v3-white);
+    box-shadow: var(--rbf-v3-shadow-sm);
+}
+
+/* Contenu des onglets */
+.rbf-v3-drinks-content {
+    margin-top: var(--rbf-v3-spacing-lg);
+    background: var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius-lg);
+    padding: var(--rbf-v3-spacing-lg);
+}
+
+.rbf-v3-tab-content {
+    display: none;
+}
+
+.rbf-v3-tab-content.active {
+    display: block;
+}
+
+/* Sections boissons */
+.rbf-v3-beverages-section h3 {
+    color: var(--rbf-v3-green);
+    font-family: var(--rbf-v3-font-title);
+    font-size: 20px;
+    font-weight: 600;
+    margin: var(--rbf-v3-spacing-lg) 0 var(--rbf-v3-spacing-md) 0;
+    padding-bottom: var(--rbf-v3-spacing-sm);
+    border-bottom: 2px solid var(--rbf-v3-beige);
+}
+
+.rbf-v3-beverages-section h3:first-child {
+    margin-top: 0;
+}
+
+/* Grille des boissons */
+.rbf-v3-beverages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--rbf-v3-spacing-md);
+    margin-bottom: var(--rbf-v3-spacing-lg);
+}
+
+/* Cards boissons */
+.rbf-v3-beverage-card {
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius);
+    padding: var(--rbf-v3-spacing-md);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.rbf-v3-beverage-card:hover {
+    border-color: var(--rbf-v3-orange);
+    transform: translateY(-4px);
+    box-shadow: var(--rbf-v3-shadow-lg);
+}
+
+.rbf-v3-beverage-card.featured {
+    border-color: var(--rbf-v3-orange);
+    background: linear-gradient(135deg, var(--rbf-v3-white) 0%, var(--rbf-v3-orange-light) 100%);
+}
+
+.rbf-v3-beverage-card.featured::before {
+    content: "⭐";
+    position: absolute;
+    top: var(--rbf-v3-spacing-sm);
+    right: var(--rbf-v3-spacing-sm);
+    font-size: 20px;
+}
+
+/* Image boisson */
+.rbf-v3-beverage-image {
+    width: 100%;
+    height: 200px;
+    margin-bottom: var(--rbf-v3-spacing-md);
+    border-radius: var(--rbf-v3-radius-sm);
+    overflow: hidden;
+    background: var(--rbf-v3-beige);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rbf-v3-beverage-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.rbf-v3-placeholder-image {
+    font-size: 48px;
+    color: var(--rbf-v3-green);
+    opacity: 0.5;
+}
+
+/* Informations boisson */
+.rbf-v3-beverage-info h4 {
+    color: var(--rbf-v3-green);
+    font-family: var(--rbf-v3-font-title);
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 var(--rbf-v3-spacing-xs) 0;
+}
+
+.rbf-v3-beverage-description {
+    color: var(--rbf-v3-green);
+    font-size: 14px;
+    line-height: 1.4;
+    margin: 0 0 var(--rbf-v3-spacing-sm) 0;
+    opacity: 0.8;
+}
+
+.rbf-v3-alcohol-degree {
+    color: var(--rbf-v3-orange);
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 var(--rbf-v3-spacing-sm) 0;
+}
+
+/* Tailles et prix */
+.rbf-v3-beverage-sizes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--rbf-v3-spacing-sm);
+}
+
+.rbf-v3-size-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--rbf-v3-spacing-sm);
+    background: var(--rbf-v3-white);
+    border: 1px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius-sm);
+    gap: var(--rbf-v3-spacing-sm);
+    box-shadow: var(--rbf-v3-shadow-xs);
+    min-height: 50px;
+}
+
+/* Améliorer les sélecteurs dans les boissons */
+.rbf-v3-beverage-card .rbf-v3-quantity-selector {
+    justify-content: flex-end;
+    margin-left: auto;
+    width: auto;
+    max-width: 140px;
+    gap: 6px;
+}
+
+.rbf-v3-size-label {
+    color: var(--rbf-v3-green);
+    font-weight: 600;
+    font-size: 14px;
+    min-width: 50px;
+}
+
+.rbf-v3-size-price {
+    color: var(--rbf-v3-orange);
+    font-weight: 700;
+    font-size: 16px;
+    min-width: 60px;
+    text-align: right;
+}
+
+/* Sélecteur de quantité */
+.rbf-v3-quantity-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--rbf-v3-spacing-xs);
+    width: auto;
+    max-width: 150px;
+}
+
+.rbf-v3-qty-btn {
+    background: var(--rbf-v3-green);
+    border: 2px solid var(--rbf-v3-green);
+    color: var(--rbf-v3-white);
+    width: 32px;
+    height: 32px;
+    border-radius: var(--rbf-v3-radius-sm);
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.rbf-v3-qty-btn:hover {
+    background: var(--rbf-v3-orange);
+    border-color: var(--rbf-v3-orange);
+    transform: scale(1.05);
+    box-shadow: var(--rbf-v3-shadow-sm);
+}
+
+.rbf-v3-qty-btn:active {
+    transform: scale(0.95);
+}
+
+.rbf-v3-qty-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.rbf-v3-qty-input {
+    width: 50px;
+    height: 32px;
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius-sm);
+    text-align: center;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--rbf-v3-green);
+    background: var(--rbf-v3-white);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    /* Masquer les flèches natives des inputs number */
+    -moz-appearance: textfield;
+}
+
+.rbf-v3-qty-input:focus {
+    outline: none;
+    border-color: var(--rbf-v3-orange);
+    box-shadow: 0 0 0 3px var(--rbf-v3-orange-light);
+}
+
+/* Masquer les flèches natives sur Chrome, Safari, Edge */
+.rbf-v3-qty-input::-webkit-outer-spin-button,
+.rbf-v3-qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Message aucun produit */
+.rbf-v3-no-products {
+    text-align: center;
+    color: var(--rbf-v3-green);
+    font-style: italic;
+    padding: var(--rbf-v3-spacing-xl);
+    background: var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius);
+    margin: var(--rbf-v3-spacing-lg) 0;
+}
+
+/* Navigation étape boissons */
+.rbf-v3-step-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--rbf-v3-spacing-xl);
+    padding-top: var(--rbf-v3-spacing-lg);
+    border-top: 2px solid var(--rbf-v3-beige);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+/* Tablettes */
+@media (max-width: 1024px) {
+    .rbf-v3-container {
+        padding: var(--rbf-v3-spacing-md);
+    }
+    
+    /* Boissons - Tablettes */
+    .rbf-v3-beverages-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--rbf-v3-spacing-sm);
+    }
+    
+    .rbf-v3-drinks-tabs {
+        gap: var(--rbf-v3-spacing-xs);
+    }
+    
+    .rbf-v3-tab-btn {
+        padding: var(--rbf-v3-spacing-xs) var(--rbf-v3-spacing-sm);
+        font-size: 14px;
+        min-height: 44px;
+    }
+    
+    .rbf-v3-title {
+        font-size: 2rem;
+    }
+    
+    .rbf-v3-service-cards {
+        grid-template-columns: 1fr;
+        gap: var(--rbf-v3-spacing-md);
+    }
+    
+    .rbf-v3-price-calculator.sticky {
+        position: relative;
+        top: auto;
+    }
+}
+
+/* Mobiles */
+@media (max-width: 768px) {
+    .rbf-v3-container {
+        padding: var(--rbf-v3-spacing-sm);
+        margin: var(--rbf-v3-spacing-sm);
+    }
+    
+    /* Boissons - Mobile */
+    .rbf-v3-beverages-grid {
+        grid-template-columns: 1fr;
+        gap: var(--rbf-v3-spacing-sm);
+    }
+    
+    .rbf-v3-drinks-tabs {
+        flex-direction: column;
+        gap: var(--rbf-v3-spacing-xs);
+    }
+    
+    .rbf-v3-tab-btn {
+        width: 100%;
+        justify-content: center;
+        padding: var(--rbf-v3-spacing-sm);
+        font-size: 16px;
+    }
+    
+    .rbf-v3-beverage-card {
+        padding: var(--rbf-v3-spacing-sm);
+    }
+    
+    .rbf-v3-beverage-image {
+        height: 100px;
+    }
+    
+    .rbf-v3-size-option {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--rbf-v3-spacing-xs);
+    }
+    
+    .rbf-v3-quantity-selector {
+        justify-content: center;
+        width: 100%;
+        max-width: 160px;
+        margin: 0 auto;
+        gap: 6px;
+    }
+    
+    /* Améliorer la visibilité des boutons sur mobile */
+    .rbf-v3-qty-btn {
+        min-width: 36px;
+        min-height: 36px;
+        font-size: 18px;
+    }
+    
+    .rbf-v3-step-navigation {
+        flex-direction: column;
+        gap: var(--rbf-v3-spacing-sm);
+    }
+    
+    .rbf-v3-step-navigation .rbf-v3-btn {
+        width: 100%;
+    }
+    
+    .rbf-v3-title {
+        font-size: 1.75rem;
+    }
+    
+    .rbf-v3-subtitle {
+        font-size: 1rem;
+    }
+    
+    .rbf-v3-step-title {
+        font-size: 1.5rem;
+    }
+    
+    .rbf-v3-progress-steps {
+        gap: var(--rbf-v3-spacing-xs);
+    }
+    
+    .rbf-v3-step-number {
+        width: 32px;
+        height: 32px;
+        font-size: 0.75rem;
+    }
+    
+    .rbf-v3-step-label {
+        font-size: 0.625rem;
+    }
+    
+    .rbf-v3-service-cards {
+        gap: var(--rbf-v3-spacing-sm);
+    }
+    
+    .rbf-v3-service-card {
+        padding: var(--rbf-v3-spacing-md);
+    }
+    
+    .rbf-v3-card-header h3 {
+        font-size: 1.25rem;
+    }
+    
+    .rbf-v3-navigation {
+        flex-direction: column;
+        gap: var(--rbf-v3-spacing-sm);
+    }
+    
+    .rbf-v3-btn {
+        width: 100%;
+        min-height: 52px; /* Plus grand sur mobile */
+    }
+}
+
+/* Très petits écrans */
+@media (max-width: 480px) {
+    .rbf-v3-container {
+        margin: 0;
+        border-radius: 0;
+    }
+    
+    .rbf-v3-title {
+        font-size: 1.5rem;
+    }
+    
+    .rbf-v3-progress-steps {
+        overflow-x: auto;
+        padding-bottom: var(--rbf-v3-spacing-xs);
+    }
+    
+    .rbf-v3-step {
+        min-width: 60px;
+    }
+}
+
+/* ========================================
+   ANIMATIONS ET TRANSITIONS
+   ======================================== */
+
+.rbf-v3-loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.rbf-v3-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* États de focus améliorés */
+.rbf-v3-service-card:focus-within {
+    border-color: var(--rbf-v3-orange);
+    box-shadow: 0 0 0 3px var(--rbf-v3-orange-light);
+}
+
+/* Animations d'entrée */
+.rbf-v3-container {
+    animation: slideInUp 0.5s ease;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========================================
+   FORMULAIRES
+   ======================================== */
+
+.rbf-v3-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--rbf-v3-spacing-md);
+    margin-bottom: var(--rbf-v3-spacing-lg);
+}
+
+.rbf-v3-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--rbf-v3-spacing-xs);
+}
+
+.rbf-v3-form-full {
+    grid-column: 1 / -1;
+}
+
+.rbf-v3-label {
+    font-weight: 600;
+    color: var(--rbf-v3-green);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: var(--rbf-v3-spacing-xs);
+}
+
+.rbf-v3-label.required::after {
+    content: '*';
+    color: var(--rbf-v3-red);
+    font-weight: bold;
+}
+
+.rbf-v3-input,
+.rbf-v3-select,
+.rbf-v3-textarea {
+    padding: var(--rbf-v3-spacing-sm);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius);
+    font-family: var(--rbf-v3-font-primary);
+    font-size: 1rem;
+    color: var(--rbf-v3-green);
+    background: var(--rbf-v3-white);
+    transition: var(--rbf-v3-transition);
+    min-height: 48px; /* Touch-friendly */
+}
+
+.rbf-v3-input:focus,
+.rbf-v3-select:focus,
+.rbf-v3-textarea:focus {
+    border-color: var(--rbf-v3-orange);
+    box-shadow: 0 0 0 3px var(--rbf-v3-orange-light);
+    outline: none;
+}
+
+.rbf-v3-input.rbf-v3-field-error,
+.rbf-v3-select.rbf-v3-field-error,
+.rbf-v3-textarea.rbf-v3-field-error {
+    border-color: var(--rbf-v3-red);
+    box-shadow: 0 0 0 3px var(--rbf-v3-red-light);
+}
+
+.rbf-v3-input.rbf-v3-field-valid,
+.rbf-v3-select.rbf-v3-field-valid,
+.rbf-v3-textarea.rbf-v3-field-valid {
+    border-color: var(--rbf-v3-green);
+}
+
+.rbf-v3-textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.rbf-v3-help-text {
+    font-size: 0.75rem;
+    color: var(--rbf-v3-green);
+    opacity: 0.7;
+    font-style: italic;
+}
+
+/* ========================================
+   CARD EXPLICATIVE ÉTAPE 1
+   ======================================== */
+
+.rbf-v3-explanation-card {
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--rbf-v3-shadow-md);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.rbf-v3-explanation-card .rbf-v3-card-header {
+    background: var(--rbf-v3-green);
+    color: var(--rbf-v3-white);
+    padding: var(--rbf-v3-spacing-lg);
+    text-align: center;
+}
+
+.rbf-v3-explanation-card .rbf-v3-card-header h3 {
+    font-family: var(--rbf-v3-font-title);
+    font-size: 1.5rem;
+    margin: 0;
+    text-transform: uppercase;
+    color: var(--rbf-v3-white);
+}
+
+.rbf-v3-steps-list {
+    padding: var(--rbf-v3-spacing-lg);
+}
+
+.rbf-v3-step-item {
+    display: flex;
+    align-items: center;
+    gap: var(--rbf-v3-spacing-md);
+    padding: var(--rbf-v3-spacing-sm) 0;
+    border-bottom: 1px solid var(--rbf-v3-beige);
+}
+
+.rbf-v3-step-item:last-child {
+    border-bottom: none;
+}
+
+.rbf-v3-step-number {
+    width: 32px;
+    height: 32px;
+    background: var(--rbf-v3-orange);
+    color: var(--rbf-v3-white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.rbf-v3-step-text {
+    color: var(--rbf-v3-green);
+    font-weight: 500;
+}
+
+.rbf-v3-explanation-card .rbf-v3-card-footer {
+    padding: var(--rbf-v3-spacing-lg);
+    background: var(--rbf-v3-beige);
+}
+
+/* ========================================
+   SÉLECTEURS DE QUANTITÉ
+   ======================================== */
+
+.rbf-v3-quantity-selector {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: none;
+    border-radius: var(--rbf-v3-radius);
+    overflow: hidden;
+    background: transparent;
+    width: auto;
+    max-width: 150px;
+}
+
+.rbf-v3-qty-btn {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--rbf-v3-green);
+    background: var(--rbf-v3-green);
+    color: var(--rbf-v3-white);
+    font-size: 1.125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--rbf-v3-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--rbf-v3-radius-sm);
+    flex-shrink: 0;
+}
+
+.rbf-v3-qty-btn:hover:not(:disabled) {
+    background: var(--rbf-v3-orange);
+    color: var(--rbf-v3-white);
+}
+
+.rbf-v3-qty-btn:active:not(:disabled) {
+    background: var(--rbf-v3-orange) !important;
+    color: var(--rbf-v3-white) !important;
+    transform: scale(0.95);
+}
+
+.rbf-v3-qty-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Forcer les styles des boutons pour éviter les conflits avec le thème */
+.rbf-v3-container button,
+.rbf-v3-container [type="button"],
+.rbf-v3-container [type="submit"] {
+    background-color: var(--rbf-v3-beige) !important;
+    border: 2px solid var(--rbf-v3-beige) !important;
+    color: var(--rbf-v3-green) !important;
+    border-radius: var(--rbf-v3-radius) !important;
+    font-family: var(--rbf-v3-font-primary) !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    padding: var(--rbf-v3-spacing-sm) var(--rbf-v3-spacing-md) !important;
+    text-align: center !important;
+    transition: var(--rbf-v3-transition) !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Reset complet des styles de boutons du thème */
+.rbf-v3-container *[type="button"],
+.rbf-v3-container *[type="submit"],
+.rbf-v3-container *button {
+    background-color: var(--rbf-v3-beige) !important;
+    border: 2px solid var(--rbf-v3-beige) !important;
+    color: var(--rbf-v3-green) !important;
+    border-radius: var(--rbf-v3-radius) !important;
+    font-family: var(--rbf-v3-font-primary) !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    padding: var(--rbf-v3-spacing-sm) var(--rbf-v3-spacing-md) !important;
+    text-align: center !important;
+    transition: var(--rbf-v3-transition) !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Forcer les styles des boutons de quantité */
+.rbf-v3-container .rbf-v3-qty-btn,
+.rbf-v3-container .rbf-v3-qty-minus,
+.rbf-v3-container .rbf-v3-qty-plus {
+    background: var(--rbf-v3-beige) !important;
+    border: 2px solid var(--rbf-v3-beige) !important;
+    color: var(--rbf-v3-green) !important;
+    border-radius: var(--rbf-v3-radius) !important;
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: var(--rbf-v3-transition) !important;
+    user-select: none !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.rbf-v3-container .rbf-v3-qty-btn:hover:not(:disabled) {
+    background: var(--rbf-v3-orange) !important;
+    border-color: var(--rbf-v3-orange) !important;
+    color: var(--rbf-v3-white) !important;
+}
+
+.rbf-v3-container .rbf-v3-qty-btn:active:not(:disabled) {
+    background: var(--rbf-v3-orange) !important;
+    border-color: var(--rbf-v3-orange) !important;
+    color: var(--rbf-v3-white) !important;
+    transform: scale(0.95) !important;
+}
+
+.rbf-v3-qty-input {
+    width: 50px;
+    height: 36px;
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius-sm);
+    text-align: center;
+    font-weight: 600;
+    color: var(--rbf-v3-green);
+    background: var(--rbf-v3-white);
+    font-size: 1rem;
+    flex-shrink: 0;
+    /* Masquer les flèches natives des inputs number */
+    -moz-appearance: textfield;
+}
+
+.rbf-v3-qty-input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Masquer les flèches natives sur Chrome, Safari, Edge */
+.rbf-v3-qty-input::-webkit-outer-spin-button,
+.rbf-v3-qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* ========================================
+   ACCOMPAGNEMENTS AVANCÉS
+   ======================================== */
+
+.rbf-v3-accompaniment-item {
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius);
+    padding: var(--rbf-v3-spacing-md);
+    margin-bottom: var(--rbf-v3-spacing-md);
+    transition: var(--rbf-v3-transition);
+}
+
+.rbf-v3-accompaniment-item:hover {
+    border-color: var(--rbf-v3-orange);
+    box-shadow: var(--rbf-v3-shadow-sm);
+}
+
+.rbf-v3-accompaniment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--rbf-v3-spacing-sm);
+}
+
+.rbf-v3-accompaniment-label {
+    display: flex;
+    align-items: center;
+    gap: var(--rbf-v3-spacing-sm);
+    cursor: pointer;
+    flex: 1;
+}
+
+.rbf-v3-accompaniment-checkbox {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--rbf-v3-orange);
+}
+
+.rbf-v3-accompaniment-name {
+    font-weight: 600;
+    color: var(--rbf-v3-green);
+    flex: 1;
+}
+
+.rbf-v3-accompaniment-price {
+    color: var(--rbf-v3-orange);
+    font-weight: 600;
+    margin-right: var(--rbf-v3-spacing-md);
+}
+
+.rbf-v3-frites-options {
+    margin-top: var(--rbf-v3-spacing-md);
+    padding-top: var(--rbf-v3-spacing-md);
+    border-top: 1px solid var(--rbf-v3-beige);
+}
+
+.rbf-v3-option-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--rbf-v3-spacing-xs) 0;
+}
+
+.rbf-v3-option-label {
+    display: flex;
+    align-items: center;
+    gap: var(--rbf-v3-spacing-xs);
+    cursor: pointer;
+    flex: 1;
+}
+
+.rbf-v3-option-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--rbf-v3-orange);
+}
+
+.rbf-v3-option-label span {
+    font-size: 0.875rem;
+    color: var(--rbf-v3-green);
+}
+
+/* ========================================
+   PRODUITS AVEC IMAGES
+   ======================================== */
+
+.rbf-v3-product-card-full {
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius);
+    overflow: hidden;
+    transition: var(--rbf-v3-transition);
+    margin-bottom: var(--rbf-v3-spacing-md);
+}
+
+.rbf-v3-product-card-full:hover {
+    border-color: var(--rbf-v3-orange);
+    box-shadow: var(--rbf-v3-shadow-md);
+    transform: translateY(-2px);
+}
+
+.rbf-v3-product-image {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+}
+
+.rbf-v3-product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: var(--rbf-v3-transition);
+}
+
+.rbf-v3-product-card-full:hover .rbf-v3-product-image img {
+    transform: scale(1.05);
+}
+
+.rbf-v3-product-info {
+    padding: var(--rbf-v3-spacing-md);
+}
+
+.rbf-v3-product-title {
+    font-family: var(--rbf-v3-font-title);
+    font-size: 1.25rem;
+    color: var(--rbf-v3-green);
+    margin: 0 0 var(--rbf-v3-spacing-sm) 0;
+    text-transform: uppercase;
+}
+
+.rbf-v3-product-description {
+    color: var(--rbf-v3-green);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin: 0 0 var(--rbf-v3-spacing-md) 0;
+    opacity: 0.8;
+}
+
+.rbf-v3-product-price-qty {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rbf-v3-product-price {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--rbf-v3-orange);
+}
+
+.rbf-v3-mini-boss-grid,
+.rbf-v3-signature-products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--rbf-v3-spacing-md);
+    margin-top: var(--rbf-v3-spacing-md);
+}
+
+/* ========================================
+   CARDS PRODUITS ET SÉLECTIONS
+   ======================================== */
+
+.rbf-v3-product-section {
+    margin-bottom: var(--rbf-v3-spacing-xl);
+    padding: var(--rbf-v3-spacing-lg);
+    border-radius: var(--rbf-v3-radius-lg);
+}
+
+.rbf-v3-product-section h3 {
+    font-family: var(--rbf-v3-font-title);
+    font-size: 1.5rem;
+    color: var(--rbf-v3-green);
+    margin: 0 0 var(--rbf-v3-spacing-sm) 0;
+    text-transform: uppercase;
+}
+
+.rbf-v3-signature-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--rbf-v3-spacing-md);
+    margin-bottom: var(--rbf-v3-spacing-lg);
+}
+
+.rbf-v3-radio-card {
+    display: block;
+    cursor: pointer;
+    position: relative;
+}
+
+.rbf-v3-radio-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.rbf-v3-radio-content {
+    display: flex;
+    flex-direction: column;
+    padding: var(--rbf-v3-spacing-md);
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius);
+    transition: var(--rbf-v3-transition);
+    min-height: 80px;
+    justify-content: center;
+}
+
+.rbf-v3-radio-card:hover .rbf-v3-radio-content {
+    border-color: var(--rbf-v3-orange);
+    transform: translateY(-2px);
+    box-shadow: var(--rbf-v3-shadow-md);
+}
+
+.rbf-v3-radio-card input:checked + .rbf-v3-radio-content {
+    border-color: var(--rbf-v3-green);
+    background: var(--rbf-v3-green-light);
+}
+
+.rbf-v3-radio-title {
+    font-family: var(--rbf-v3-font-title);
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--rbf-v3-green);
+    margin-bottom: var(--rbf-v3-spacing-xs);
+}
+
+.rbf-v3-radio-subtitle {
+    font-size: 0.875rem;
+    color: var(--rbf-v3-green);
+    opacity: 0.8;
+}
+
+/* Checkbox cards */
+.rbf-v3-checkbox-card {
+    display: block;
+    cursor: pointer;
+    position: relative;
+}
+
+.rbf-v3-checkbox-card input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.rbf-v3-checkbox-content {
+    display: flex;
+    flex-direction: column;
+    padding: var(--rbf-v3-spacing-md);
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius);
+    transition: var(--rbf-v3-transition);
+}
+
+.rbf-v3-checkbox-card:hover .rbf-v3-checkbox-content {
+    border-color: var(--rbf-v3-orange);
+    transform: translateY(-2px);
+    box-shadow: var(--rbf-v3-shadow-md);
+}
+
+.rbf-v3-checkbox-card input:checked + .rbf-v3-checkbox-content {
+    border-color: var(--rbf-v3-green);
+    background: var(--rbf-v3-green-light);
+}
+
+.rbf-v3-checkbox-title {
+    font-weight: 600;
+    color: var(--rbf-v3-green);
+    margin-bottom: var(--rbf-v3-spacing-xs);
+}
+
+.rbf-v3-checkbox-subtitle {
+    font-size: 0.875rem;
+    color: var(--rbf-v3-green);
+    opacity: 0.8;
+}
+
+/* Grille d'accompagnements */
+.rbf-v3-accompaniments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--rbf-v3-spacing-md);
+    margin-top: var(--rbf-v3-spacing-md);
+}
+
+.rbf-v3-accompaniment-card {
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius);
+    padding: var(--rbf-v3-spacing-md);
+    transition: var(--rbf-v3-transition);
+}
+
+.rbf-v3-accompaniment-card:hover {
+    border-color: var(--rbf-v3-orange);
+    box-shadow: var(--rbf-v3-shadow-sm);
+}
+
+.rbf-v3-accompaniment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--rbf-v3-spacing-md);
+}
+
+.rbf-v3-accompaniment-header h4 {
+    font-family: var(--rbf-v3-font-title);
+    font-size: 1.125rem;
+    color: var(--rbf-v3-green);
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.rbf-v3-option-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--rbf-v3-spacing-xs) 0;
+    border-bottom: 1px solid var(--rbf-v3-beige);
+}
+
+.rbf-v3-option-row:last-child {
+    border-bottom: none;
+}
+
+.rbf-v3-option-row label {
+    font-size: 0.875rem;
+    color: var(--rbf-v3-green);
+    margin: 0;
+}
+
+.rbf-v3-qty-small {
+    transform: scale(0.8);
+}
+
+/* Options des frites */
+.rbf-v3-checkbox-option {
+    display: flex;
+    align-items: center;
+    gap: var(--rbf-v3-spacing-xs);
+    cursor: pointer;
+    margin: 0;
+}
+
+.rbf-v3-option-checkbox,
+.rbf-v3-sauce-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--rbf-v3-green);
+}
+
+.rbf-v3-checkbox-text {
+    font-size: 0.875rem;
+    color: var(--rbf-v3-green);
+}
+
+.rbf-v3-sauce-section {
+    margin-top: var(--rbf-v3-spacing-md);
+    padding-top: var(--rbf-v3-spacing-sm);
+    border-top: 1px solid var(--rbf-v3-beige);
+}
+
+.rbf-v3-sauce-section h5 {
+    font-family: var(--rbf-v3-font-title);
+    font-size: 1rem;
+    color: var(--rbf-v3-green);
+    margin: 0 0 var(--rbf-v3-spacing-sm) 0;
+    text-transform: uppercase;
+}
+
+/* Grille Mini Boss */
+.rbf-v3-mini-boss-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--rbf-v3-spacing-md);
+    margin-top: var(--rbf-v3-spacing-md);
+}
+
+.rbf-v3-mini-boss-products {
+    margin-top: var(--rbf-v3-spacing-md);
+    padding: var(--rbf-v3-spacing-md);
+    background: var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius);
+}
+
+.rbf-v3-product-card {
+    display: block;
+    cursor: pointer;
+    position: relative;
+}
+
+.rbf-v3-product-card input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.rbf-v3-product-content {
+    display: flex;
+    flex-direction: column;
+    padding: var(--rbf-v3-spacing-sm);
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius);
+    transition: var(--rbf-v3-transition);
+    text-align: center;
+}
+
+.rbf-v3-product-card:hover .rbf-v3-product-content {
+    border-color: var(--rbf-v3-orange);
+    transform: translateY(-2px);
+    box-shadow: var(--rbf-v3-shadow-sm);
+}
+
+.rbf-v3-product-card input:checked + .rbf-v3-product-content {
+    border-color: var(--rbf-v3-green);
+    background: var(--rbf-v3-green-light);
+}
+
+.rbf-v3-product-name {
+    font-weight: 600;
+    color: var(--rbf-v3-green);
+    margin-bottom: var(--rbf-v3-spacing-xs);
+    font-size: 0.875rem;
+}
+
+.rbf-v3-product-price {
+    color: var(--rbf-v3-orange);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* ========================================
+   CARDS SPÉCIALES
+   ======================================== */
+
+.rbf-v3-forfait-card {
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-green);
+    border-radius: var(--rbf-v3-radius-lg);
+    margin-top: var(--rbf-v3-spacing-lg);
+    overflow: hidden;
+}
+
+.rbf-v3-forfait-card .rbf-v3-card-header {
+    background: var(--rbf-v3-green);
+    color: var(--rbf-v3-white);
+    padding: var(--rbf-v3-spacing-md);
+    text-align: center;
+}
+
+.rbf-v3-forfait-card .rbf-v3-card-header h3 {
+    font-family: var(--rbf-v3-font-title);
+    font-size: 1.25rem;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.rbf-v3-forfait-description {
+    padding: var(--rbf-v3-spacing-md);
+}
+
+.rbf-v3-forfait-item {
+    padding: var(--rbf-v3-spacing-xs) 0;
+    color: var(--rbf-v3-green);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--rbf-v3-spacing-xs);
+}
+
+.rbf-v3-recap-card {
+    background: var(--rbf-v3-beige);
+    border: 2px solid var(--rbf-v3-orange);
+    border-radius: var(--rbf-v3-radius-lg);
+    padding: var(--rbf-v3-spacing-lg);
+    margin-top: var(--rbf-v3-spacing-lg);
+}
+
+.rbf-v3-recap-card h3 {
+    font-family: var(--rbf-v3-font-title);
+    color: var(--rbf-v3-green);
+    margin: 0 0 var(--rbf-v3-spacing-md) 0;
+    text-transform: uppercase;
+}
+
+.rbf-v3-recap-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--rbf-v3-spacing-sm);
+}
+
+.rbf-v3-recap-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--rbf-v3-spacing-xs) 0;
+    border-bottom: 1px solid rgba(36, 49, 39, 0.1);
+}
+
+.rbf-v3-recap-line:last-child {
+    border-bottom: none;
+}
+
+/* ========================================
+   SUCCESS MESSAGE
+   ======================================== */
+
+.rbf-v3-success-message {
+    text-align: center;
+    padding: var(--rbf-v3-spacing-xl);
+    background: var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius-lg);
+    border: 2px solid var(--rbf-v3-green);
+}
+
+.rbf-v3-success-message h2 {
+    font-family: var(--rbf-v3-font-title);
+    color: var(--rbf-v3-green);
+    margin: 0 0 var(--rbf-v3-spacing-md) 0;
+    font-size: 2rem;
+}
+
+.rbf-v3-success-message p {
+    color: var(--rbf-v3-green);
+    font-size: 1.125rem;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ========================================
+   ANIMATIONS PRIX
+   ======================================== */
+
+.rbf-v3-price-updated {
+    animation: priceUpdate 0.3s ease;
+}
+
+@keyframes priceUpdate {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); background-color: var(--rbf-v3-orange-light); }
+    100% { transform: scale(1); }
+}
+
+/* ========================================
+   UTILITAIRES
+   ======================================== */
+
+.rbf-v3-text-center { text-align: center; }
+.rbf-v3-text-left { text-align: left; }
+.rbf-v3-text-right { text-align: right; }
+
+.rbf-v3-mb-0 { margin-bottom: 0; }
+.rbf-v3-mb-sm { margin-bottom: var(--rbf-v3-spacing-sm); }
+.rbf-v3-mb-md { margin-bottom: var(--rbf-v3-spacing-md); }
+.rbf-v3-mb-lg { margin-bottom: var(--rbf-v3-spacing-lg); }
+
+.rbf-v3-mt-0 { margin-top: 0; }
+.rbf-v3-mt-sm { margin-top: var(--rbf-v3-spacing-sm); }
+.rbf-v3-mt-md { margin-top: var(--rbf-v3-spacing-md); }
+.rbf-v3-mt-lg { margin-top: var(--rbf-v3-spacing-lg); }
+
+.rbf-v3-hidden { display: none !important; }
+.rbf-v3-visible { display: block !important; }
+
+/* ========================================
+   GRILLE DE PRODUITS BUFFET
+   ======================================== */
+
+.rbf-v3-products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--rbf-v3-spacing-md);
+    margin-top: var(--rbf-v3-spacing-md);
+}
+
+@media (min-width: 768px) {
+    .rbf-v3-products-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--rbf-v3-spacing-lg);
+    }
+}
+
+@media (max-width: 767px) {
+    .rbf-v3-products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--rbf-v3-spacing-sm);
+    }
+}
+
+@media (max-width: 480px) {
+    .rbf-v3-products-grid {
+        grid-template-columns: 1fr;
+        gap: var(--rbf-v3-spacing-sm);
+    }
+}
+
+/* Card produit buffet */
+.rbf-v3-product-card {
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: var(--rbf-v3-shadow-sm);
+}
+
+.rbf-v3-product-card:hover {
+    border-color: var(--rbf-v3-orange);
+    box-shadow: var(--rbf-v3-shadow-md);
+    transform: translateY(-2px);
+}
+
+/* Image produit */
+.rbf-v3-product-image {
+    width: 100%;
+    height: 200px;
+    background: var(--rbf-v3-beige);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.rbf-v3-product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.rbf-v3-product-card:hover .rbf-v3-product-image img {
+    transform: scale(1.05);
+}
+
+.rbf-v3-placeholder-image {
+    font-size: 48px;
+    color: var(--rbf-v3-green);
+    opacity: 0.6;
+}
+
+/* Informations produit */
+.rbf-v3-product-info {
+    padding: var(--rbf-v3-spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--rbf-v3-spacing-sm);
+}
+
+.rbf-v3-product-name {
+    font-family: var(--rbf-v3-font-title);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--rbf-v3-green);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.rbf-v3-product-description {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+    line-height: 1.4;
+    flex-grow: 1;
+}
+
+.rbf-v3-product-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: var(--rbf-v3-spacing-sm) 0;
+}
+
+.rbf-v3-product-servings {
+    font-size: 12px;
+    color: #888;
+    font-weight: 500;
+}
+
+.rbf-v3-product-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--rbf-v3-orange);
+}
+
+.rbf-v3-product-footer {
+    margin-top: auto;
+}
+
+/* Sélecteur de quantité */
+.rbf-v3-quantity-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--rbf-v3-spacing-xs);
+    margin-top: var(--rbf-v3-spacing-sm);
+    width: auto;
+    max-width: 150px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.rbf-v3-qty-btn {
+    width: 32px;
+    height: 32px;
+    border: 2px solid var(--rbf-v3-green);
+    background: var(--rbf-v3-green);
+    color: var(--rbf-v3-white);
+    border-radius: var(--rbf-v3-radius-sm);
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.rbf-v3-qty-btn:hover {
+    border-color: var(--rbf-v3-orange);
+    background: var(--rbf-v3-orange);
+    color: var(--rbf-v3-white);
+}
+
+.rbf-v3-qty-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.rbf-v3-qty-input {
+    width: 50px;
+    height: 32px;
+    text-align: center;
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius-sm);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--rbf-v3-green);
+    background: var(--rbf-v3-white);
+    flex-shrink: 0;
+    /* Masquer les flèches natives des inputs number */
+    -moz-appearance: textfield;
+}
+
+.rbf-v3-qty-input:focus {
+    outline: none;
+    border-color: var(--rbf-v3-orange);
+}
+
+/* Masquer les flèches natives sur Chrome, Safari, Edge */
+.rbf-v3-qty-input::-webkit-outer-spin-button,
+.rbf-v3-qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Message aucun produit */
+.rbf-v3-no-products {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: var(--rbf-v3-spacing-xl);
+    color: #888;
+    font-style: italic;
+    background: var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius);
+    margin: var(--rbf-v3-spacing-md) 0;
+}
+
+/* ========================================
+   BOUTON "PASSER CETTE ÉTAPE"
+   ======================================== */
+.rbf-v3-step-skip-section {
+    margin-top: var(--rbf-v3-spacing-lg);
+    padding: var(--rbf-v3-spacing-md);
+    background: var(--rbf-v3-beige);
+    border: 2px dashed var(--rbf-v3-orange);
+    border-radius: var(--rbf-v3-radius);
+    text-align: center;
+}
+
+.rbf-v3-skip-info {
+    margin-bottom: var(--rbf-v3-spacing-md);
+}
+
+.rbf-v3-skip-text {
+    color: #666;
+    margin: 0;
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
+.rbf-v3-skip-actions {
+    margin-top: var(--rbf-v3-spacing-sm);
+}
+
+/* ========================================
+   OPTIONS GRID (ÉTAPE 6 REMORQUE)
+   ======================================== */
+.rbf-v3-options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--rbf-v3-spacing-md);
+    margin-top: var(--rbf-v3-spacing-md);
+}
+
+.rbf-v3-option-card {
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius);
+    padding: var(--rbf-v3-spacing-md);
+    transition: all 0.3s ease;
+}
+
+.rbf-v3-option-card:hover {
+    border-color: var(--rbf-v3-orange);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.rbf-v3-option-card h3 {
+    margin: 0 0 var(--rbf-v3-spacing-sm) 0;
+    color: var(--rbf-v3-green);
+    font-size: 1.1em;
+    font-family: var(--rbf-v3-font-title);
+}
+
+.rbf-v3-option-card p {
+    margin: 0 0 var(--rbf-v3-spacing-sm) 0;
+    color: #666;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.rbf-v3-option-price {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--rbf-v3-orange);
+    margin-bottom: var(--rbf-v3-spacing-md);
+}
+
+.rbf-v3-checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--rbf-v3-green);
+}
+
+.rbf-v3-checkbox-label input[type="checkbox"] {
+    margin-right: var(--rbf-v3-spacing-sm);
+    transform: scale(1.2);
+}
+
+.rbf-v3-checkmark {
+    margin-left: var(--rbf-v3-spacing-xs);
+}

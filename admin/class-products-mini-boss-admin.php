@@ -220,6 +220,9 @@ class RestaurantBooking_Products_MiniBoss_Admin
      */
     public function display_form()
     {
+        // Charger les scripts de la médiathèque WordPress
+        wp_enqueue_media();
+        
         $product_id = isset($_GET['product_id']) ? (int) $_GET['product_id'] : 0;
         $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'add';
         $product = null;

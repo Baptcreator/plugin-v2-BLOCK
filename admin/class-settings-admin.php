@@ -24,7 +24,7 @@ class RestaurantBooking_Settings_Admin
             'email' => __('Email', 'restaurant-booking'),
             'pdf' => __('PDF', 'restaurant-booking'),
             'calendar' => __('Calendrier', 'restaurant-booking'),
-            'integration' => __('Widgets & Intégration', 'restaurant-booking'),
+            'integration' => __('Shortcode & Intégration', 'restaurant-booking'),
             'advanced' => __('Avancé', 'restaurant-booking')
         );
 
@@ -322,39 +322,70 @@ class RestaurantBooking_Settings_Admin
         
         ?>
         <div class="wrap">
-            <h1><?php _e('Widgets & Intégration', 'restaurant-booking'); ?></h1>
+            <h1><?php _e('Shortcode & Intégration', 'restaurant-booking'); ?></h1>
+            
             <!-- Carte d'information principale -->
             <div class="restaurant-booking-info-card">
-                <h3><?php _e('Widget Formulaire Unifié Block & Co', 'restaurant-booking'); ?></h3>
-                <p><?php _e('Un seul widget Elementor intelligent qui s\'adapte automatiquement selon le service choisi par le client.', 'restaurant-booking'); ?></p>
+                <h3>🚀 <?php _e('Shortcode Formulaire V3 - Version Active', 'restaurant-booking'); ?></h3>
+                <p><?php _e('Le nouveau shortcode V3 avec design moderne et fonctionnalités améliorées.', 'restaurant-booking'); ?></p>
                 <ul>
-                    <li><?php _e('✅ Sélection automatique Restaurant ou Remorque', 'restaurant-booking'); ?></li>
-                    <li><?php _e('✅ Formulaire adaptatif selon le choix', 'restaurant-booking'); ?></li>
-                    <li><?php _e('✅ Toutes les étapes du cahier des charges', 'restaurant-booking'); ?></li>
-                    <li><?php _e('✅ Design responsive et moderne', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✅ Design moderne et responsive', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✅ Formulaire multi-étapes fluide', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✅ Calculateur de prix en temps réel', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✅ Configuration centralisée dans l\'admin', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✅ Utilisable partout (pages, articles, widgets)', 'restaurant-booking'); ?></li>
                 </ul>
             </div>
 
-            <!-- Instructions d'utilisation -->
+            <!-- Avertissement sur l'ancien shortcode -->
+            <div class="restaurant-booking-warning-card" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 20px 0; border-radius: 5px;">
+                <h4>⚠️ <?php _e('Important : Shortcode obsolète', 'restaurant-booking'); ?></h4>
+                <p><?php _e('L\'ancien shortcode [restaurant_booking_form] ne fonctionne plus. Utilisez uniquement [restaurant_booking_form_v3] pour les nouvelles intégrations.', 'restaurant-booking'); ?></p>
+            </div>
+
+            <!-- Instructions d'utilisation du shortcode -->
+            <div class="restaurant-booking-shortcode-usage">
+                <h3>📝 <?php _e('Comment utiliser le shortcode', 'restaurant-booking'); ?></h3>
+                
+                <div class="shortcode-examples">
+                    <div class="shortcode-example">
+                        <h4><?php _e('Utilisation de base (V3)', 'restaurant-booking'); ?></h4>
+                        <div class="code-block">
+                            <code>[restaurant_booking_form_v3]</code>
+                            <button class="copy-btn" onclick="navigator.clipboard.writeText('[restaurant_booking_form_v3]')"><?php _e('Copier', 'restaurant-booking'); ?></button>
+                        </div>
+                        <p><?php _e('Copiez ce shortcode et collez-le dans n\'importe quelle page ou article.', 'restaurant-booking'); ?></p>
+                    </div>
+                    
+                    <div class="shortcode-example">
+                        <h4><?php _e('Avec options personnalisées (V3)', 'restaurant-booking'); ?></h4>
+                        <div class="code-block">
+                            <code>[restaurant_booking_form_v3 show_progress="yes" calculator_position="sticky"]</code>
+                            <button class="copy-btn" onclick="navigator.clipboard.writeText('[restaurant_booking_form_v3 show_progress=\"yes\" calculator_position=\"sticky\"]')"><?php _e('Copier', 'restaurant-booking'); ?></button>
+                        </div>
+                        <p><?php _e('Personnalisez l\'affichage avec les paramètres disponibles.', 'restaurant-booking'); ?></p>
+                    </div>
+                </div>
+            </div>
             <div class="restaurant-booking-steps">
-                <h3><?php _e('Comment intégrer le widget', 'restaurant-booking'); ?></h3>
+                <h3><?php _e('Étapes d\'intégration', 'restaurant-booking'); ?></h3>
                 <div class="steps-grid">
                     <div class="step-card">
                         <div class="step-number">1</div>
-                        <h4><?php _e('Ouvrir Elementor', 'restaurant-booking'); ?></h4>
-                        <p><?php _e('Éditez votre page avec Elementor', 'restaurant-booking'); ?></p>
+                        <h4><?php _e('Ouvrir l\'éditeur', 'restaurant-booking'); ?></h4>
+                        <p><?php _e('Éditez votre page/article WordPress', 'restaurant-booking'); ?></p>
                     </div>
                     
                     <div class="step-card">
                         <div class="step-number">2</div>
-                        <h4><?php _e('Rechercher "Block"', 'restaurant-booking'); ?></h4>
-                        <p><?php _e('Tapez "Block" dans la recherche de widgets', 'restaurant-booking'); ?></p>
+                        <h4><?php _e('Coller le shortcode', 'restaurant-booking'); ?></h4>
+                        <p><?php _e('Ajoutez [restaurant_booking_form_v3] où vous voulez', 'restaurant-booking'); ?></p>
                     </div>
                     
                     <div class="step-card">
                         <div class="step-number">3</div>
-                        <h4><?php _e('Glisser-déposer', 'restaurant-booking'); ?></h4>
-                        <p><?php _e('Ajoutez le widget "Formulaire Unifié" à votre page', 'restaurant-booking'); ?></p>
+                        <h4><?php _e('Configurer les textes', 'restaurant-booking'); ?></h4>
+                        <p><?php _e('Modifiez les textes dans', 'restaurant-booking'); ?> <a href="<?php echo admin_url('admin.php?page=restaurant-booking-options-unified'); ?>"><?php _e('Options de Configuration', 'restaurant-booking'); ?></a></p>
                     </div>
                     
                     <div class="step-card">
@@ -365,34 +396,86 @@ class RestaurantBooking_Settings_Admin
                 </div>
             </div>
 
-            <!-- Avantages -->
+            <!-- Paramètres disponibles -->
+            <div class="restaurant-booking-parameters">
+                <h3>⚙️ <?php _e('Paramètres du shortcode', 'restaurant-booking'); ?></h3>
+                <div class="parameters-table">
+                    <table class="wp-list-table widefat">
+                        <thead>
+                            <tr>
+                                <th><?php _e('Paramètre', 'restaurant-booking'); ?></th>
+                                <th><?php _e('Valeurs', 'restaurant-booking'); ?></th>
+                                <th><?php _e('Défaut', 'restaurant-booking'); ?></th>
+                                <th><?php _e('Description', 'restaurant-booking'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>show_progress</code></td>
+                                <td>yes / no</td>
+                                <td>yes</td>
+                                <td><?php _e('Affiche la barre de progression', 'restaurant-booking'); ?></td>
+                            </tr>
+                            <tr>
+                                <td><code>calculator_position</code></td>
+                                <td>sticky / bottom / hidden</td>
+                                <td>sticky</td>
+                                <td><?php _e('Position du calculateur de prix', 'restaurant-booking'); ?></td>
+                            </tr>
+                            <tr>
+                                <td><code>theme</code></td>
+                                <td>block</td>
+                                <td>block</td>
+                                <td><?php _e('Thème du formulaire', 'restaurant-booking'); ?></td>
+                            </tr>
+                            <tr>
+                                <td><code>custom_class</code></td>
+                                <td><?php _e('Texte libre', 'restaurant-booking'); ?></td>
+                                <td><?php _e('Aucune', 'restaurant-booking'); ?></td>
+                                <td><?php _e('Classe CSS personnalisée', 'restaurant-booking'); ?></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Avantages du shortcode -->
             <div class="restaurant-booking-features">
-                <h3><?php _e('Avantages du widget unifié', 'restaurant-booking'); ?></h3>
+                <h3><?php _e('Avantages du shortcode', 'restaurant-booking'); ?></h3>
                 <div class="features-grid">
                     <div class="feature-card">
-                        <div class="feature-icon">🎯</div>
-                        <h4><?php _e('Simplicité', 'restaurant-booking'); ?></h4>
-                        <p><?php _e('Un seul widget pour tous vos besoins', 'restaurant-booking'); ?></p>
+                        <div class="feature-icon">🚀</div>
+                        <h4><?php _e('Plus simple', 'restaurant-booking'); ?></h4>
+                        <p><?php _e('Un seul shortcode à placer, pas de widget complexe', 'restaurant-booking'); ?></p>
                     </div>
                     
                     <div class="feature-card">
-                        <div class="feature-icon">⚡</div>
-                        <h4><?php _e('Performance', 'restaurant-booking'); ?></h4>
-                        <p><?php _e('Chargement rapide et optimisé', 'restaurant-booking'); ?></p>
+                        <div class="feature-icon">🛠️</div>
+                        <h4><?php _e('Plus stable', 'restaurant-booking'); ?></h4>
+                        <p><?php _e('Pas de problèmes avec l\'éditeur Elementor', 'restaurant-booking'); ?></p>
                     </div>
                     
                     <div class="feature-card">
-                        <div class="feature-icon">📱</div>
-                        <h4><?php _e('Responsive', 'restaurant-booking'); ?></h4>
-                        <p><?php _e('Parfait sur tous les écrans', 'restaurant-booking'); ?></p>
+                        <div class="feature-icon">⚙️</div>
+                        <h4><?php _e('Configuration centralisée', 'restaurant-booking'); ?></h4>
+                        <p><?php _e('Tous les textes modifiables depuis l\'admin WordPress', 'restaurant-booking'); ?></p>
                     </div>
                     
                     <div class="feature-card">
-                        <div class="feature-icon">🔒</div>
-                        <h4><?php _e('Sécurisé', 'restaurant-booking'); ?></h4>
-                        <p><?php _e('Protection complète des données', 'restaurant-booking'); ?></p>
+                        <div class="feature-icon">🎨</div>
+                        <h4><?php _e('Même design', 'restaurant-booking'); ?></h4>
+                        <p><?php _e('Style identique au widget original', 'restaurant-booking'); ?></p>
                     </div>
                 </div>
+            </div>
+
+            <!-- Lien vers la configuration -->
+            <div class="restaurant-booking-config-link">
+                <h3>🔗 <?php _e('Configuration des textes', 'restaurant-booking'); ?></h3>
+                <p><?php _e('Tous les textes du formulaire sont modifiables depuis la page d\'options :', 'restaurant-booking'); ?></p>
+                <a href="<?php echo admin_url('admin.php?page=restaurant-booking-options-unified'); ?>" class="button button-primary button-large">
+                    <?php _e('📝 Configurer les textes du formulaire', 'restaurant-booking'); ?>
+                </a>
             </div>
         </div>
 
@@ -411,6 +494,71 @@ class RestaurantBooking_Settings_Admin
         .restaurant-booking-info-card ul {
             margin-bottom: 0;
         }
+        
+        .restaurant-booking-shortcode-usage {
+            margin: 30px 0;
+            background: #fff;
+            border: 1px solid #c3c4c7;
+            border-radius: 4px;
+            padding: 20px;
+        }
+        .shortcode-examples {
+            display: grid;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .shortcode-example {
+            background: #f6f7f7;
+            border-radius: 4px;
+            padding: 15px;
+        }
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+            position: relative;
+        }
+        .code-block code {
+            background: none;
+            color: #d4d4d4;
+            padding: 0;
+        }
+        .copy-btn {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: #0073aa;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .copy-btn:hover {
+            background: #005a87;
+        }
+        
+        .restaurant-booking-parameters {
+            margin: 30px 0;
+            background: #fff;
+            border: 1px solid #c3c4c7;
+            border-radius: 4px;
+            padding: 20px;
+        }
+        .parameters-table table {
+            margin-top: 15px;
+        }
+        .parameters-table code {
+            background: #f1f1f1;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        
         .restaurant-booking-steps {
             margin: 30px 0;
         }
@@ -476,71 +624,20 @@ class RestaurantBooking_Settings_Admin
             margin: 0;
             color: #646970;
         }
+        
+        .restaurant-booking-config-link {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .restaurant-booking-config-link h3 {
+            color: #0c5460;
+            margin-top: 0;
+        }
         </style>
-
-        <script>
-        // JavaScript pour les widgets Elementor (si nécessaire dans le futur)
-        console.log('Block & Co - Widgets Elementor disponibles');
-        </script>
-        <?php
-    }
-
-    /**
-                        <div class="tip-content">
-                            <h5><?php _e('Responsive', 'restaurant-booking'); ?></h5>
-                            <p><?php _e('Les formulaires s\'adaptent automatiquement à tous les écrans', 'restaurant-booking'); ?></p>
-                        </div>
-                    </div>
-                    <div class="tip-item">
-                        <div class="tip-icon">⚡</div>
-                        <div class="tip-content">
-                            <h5><?php _e('AJAX natif', 'restaurant-booking'); ?></h5>
-                            <p><?php _e('Soumission sans rechargement et calculs en temps réel', 'restaurant-booking'); ?></p>
-                        </div>
-                    </div>
-                    <div class="tip-item">
-                        <div class="tip-icon">🔒</div>
-                        <div class="tip-content">
-                            <h5><?php _e('Sécurisé', 'restaurant-booking'); ?></h5>
-                            <p><?php _e('Protection CSRF, validation serveur et sanitisation des données', 'restaurant-booking'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="integration-demo">
-                <h4>🎯 <?php _e('Pages d\'exemple', 'restaurant-booking'); ?></h4>
-                <p><?php _e('Voici des exemples de pages que vous pouvez créer :', 'restaurant-booking'); ?></p>
-                
-                <div class="demo-pages">
-                    <div class="demo-page">
-                        <h5>📄 <?php _e('Page "Devis Restaurant"', 'restaurant-booking'); ?></h5>
-                        <div class="demo-structure">
-                            <div class="demo-section">
-                                <div class="demo-element">Header + Hero</div>
-                                <div class="demo-element">Texte d'introduction</div>
-                                <div class="demo-element highlighted">Widget "Devis Restaurant"</div>
-                                <div class="demo-element">Témoignages</div>
-                                <div class="demo-element">Footer</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="demo-page">
-                        <h5>📄 <?php _e('Page "Devis Remorque"', 'restaurant-booking'); ?></h5>
-                        <div class="demo-structure">
-                            <div class="demo-section">
-                                <div class="demo-element">Header + Hero</div>
-                                <div class="demo-element">Galerie photos</div>
-                                <div class="demo-element highlighted">Widget "Devis Remorque"</div>
-                                <div class="demo-element">FAQ</div>
-                                <div class="demo-element">Footer</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div> <!-- Fermeture du container restaurant-booking-integration -->
         <?php
     }
 

@@ -111,9 +111,29 @@ class RestaurantBooking_Options_Helper
     {
         if ($this->options === null) {
             $saved_options = get_option('restaurant_booking_unified_options', array());
+            
+            // Nettoyer les échappements multiples dans les options sauvegardées
+            foreach ($saved_options as $key => $value) {
+                if (is_string($value)) {
+                    $saved_options[$key] = $this->clean_escaped_quotes($value);
+                }
+            }
+            
             $this->options = array_merge($this->default_options, $saved_options);
         }
         return $this->options;
+    }
+    
+    /**
+     * Nettoyer les échappements multiples d'apostrophes
+     */
+    private function clean_escaped_quotes($text)
+    {
+        // Remplacer les multiples échappements par une seule apostrophe
+        $text = preg_replace('/\\\\+\'/', "'", $text);
+        $text = preg_replace('/\\\\+\"/', '"', $text);
+        
+        return $text;
     }
 
     /**

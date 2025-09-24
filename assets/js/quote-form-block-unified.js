@@ -92,6 +92,13 @@
             this.container.find('.restaurant-plugin-service-card').removeClass('selected');
             this.container.find(`.restaurant-plugin-service-card[data-service="${service}"]`).addClass('selected');
             
+            // Nettoyer TOUTES les étapes précédentes pour éviter les doublons
+            this.container.find('.restaurant-plugin-form-step[data-step]').not('[data-step="0"]').remove();
+            this.dynamicSteps.empty();
+            
+            // Réinitialiser l'état
+            this.currentStep = 0;
+            
             // Charger la première étape du service
             this.loadStep(1);
             
@@ -104,6 +111,13 @@
         loadStep(stepNumber) {
             if (!this.selectedService) {
                 this.showError('Veuillez d\'abord sélectionner un service');
+                return;
+            }
+
+            // Vérifier si l'étape existe déjà pour éviter les doublons
+            const existingStep = this.container.find(`[data-step="${stepNumber}"]`);
+            if (existingStep.length > 0) {
+                this.goToStep(stepNumber);
                 return;
             }
 
@@ -210,10 +224,8 @@
          * Étape 1: Pourquoi privatiser (selon cahier des charges)
          */
         initializeStep1(stepElement) {
-            // Bouton "COMMENCER MON DEVIS"
-            stepElement.find('.start-quote-button').on('click', () => {
-                this.goToNextStep();
-            });
+            // Étape d'information seulement
+            // La navigation se fait avec les boutons standard "Suivant"
         }
 
         /**
@@ -253,6 +265,229 @@
         }
 
         /**
+         * Initialiser le sélecteur Mini Boss
+         */
+        initializeMiniBossSelector(stepElement) {
+            const miniBossContainer = stepElement.find('.mini-boss-container');
+            if (miniBossContainer.length === 0) {
+                return; // Pas de section Mini Boss dans cette étape
+            }
+            
+            const miniBossCheckbox = stepElement.find('input[name="include_mini_boss"]');
+            const miniBossProducts = stepElement.find('.mini-boss-products');
+            
+            // Gérer l'affichage/masquage des produits Mini Boss
+            miniBossCheckbox.on('change', (e) => {
+                if (e.target.checked) {
+                    miniBossProducts.show();
+                    this.loadMiniBossProducts();
+                } else {
+                    miniBossProducts.hide();
+                    // Réinitialiser les quantités
+                    miniBossProducts.find('input[type="number"]').val(0).trigger('change');
+                }
+            });
+            
+            // Initialiser les sélecteurs de quantité pour Mini Boss
+            this.initializeQuantitySelectors(miniBossContainer);
+        }
+
+        /**
+         * Charger les produits Mini Boss
+         */
+        loadMiniBossProducts() {
+            const container = this.container.find('.mini-boss-products-list');
+            if (container.length === 0) {
+                this.log('Conteneur Mini Boss non trouvé');
+                return;
+            }
+            
+            container.html('<div class="restaurant-plugin-loading">Chargement des produits Mini Boss...</div>');
+            
+            const data = {
+                action: 'restaurant_plugin_get_mini_boss_products',
+                nonce: restaurantPluginAjax.nonce,
+                service_type: this.selectedService
+            };
+
+            $.ajax({
+                url: restaurantPluginAjax.ajax_url,
+                type: 'POST',
+                data: data,
+                timeout: 10000,
+                success: (response) => {
+                    if (response.success && response.data.products && response.data.products.length > 0) {
+                        this.renderMiniBossProducts(response.data.products);
+                        this.log('Produits Mini Boss chargés avec succès', response.data.products);
+                    } else {
+                        container.html('<div class="restaurant-plugin-message restaurant-plugin-message-info"><p>👶 Aucun menu enfant disponible actuellement.</p><p><small>Les menus Mini Boss sont optionnels et peuvent être configurés dans l\'administration.</small></p></div>');
+                        this.log('Aucun produit Mini Boss trouvé', response);
+                    }
+                },
+                error: (xhr, status, error) => {
+                    let errorMessage = '<div class="restaurant-plugin-message restaurant-plugin-message-error">';
+                    errorMessage += '<p>❌ Erreur lors du chargement des menus Mini Boss.</p>';
+                    
+                    if (status === 'timeout') {
+                        errorMessage += '<p><small>Délai d\'attente dépassé.</small></p>';
+                    } else {
+                        errorMessage += '<p><small>Erreur de connexion.</small></p>';
+                    }
+                    
+                    errorMessage += '<button type="button" class="restaurant-plugin-btn-secondary" onclick="this.closest(\'.mini-boss-container\').style.display=\'none\'">Ignorer cette section</button>';
+                    errorMessage += '</div>';
+                    
+                    container.html(errorMessage);
+                    this.log('Erreur AJAX Mini Boss:', {xhr, status, error});
+                }
+            });
+        }
+
+        /**
+         * Rendre les produits Mini Boss
+         */
+        renderMiniBossProducts(products) {
+            const container = this.container.find('.mini-boss-products-list');
+            const guestCount = parseInt(this.formData.guest_count) || 10;
+            
+            let html = '<div class="restaurant-plugin-products-grid mini-boss-grid">';
+            
+            products.forEach(product => {
+                html += `
+                    <div class="restaurant-plugin-product-card mini-boss-card" data-product-id="${product.id}">
+                        <div class="product-image">
+                            ${product.image ? `<img src="${product.image}" alt="${product.name}">` : '<div class="product-placeholder">🍔</div>'}
+                        </div>
+                        <div class="product-content">
+                            <h4 class="product-title">${product.name}</h4>
+                            <p class="product-description">${product.description || ''}</p>
+                            <div class="product-price">${this.formatPrice(product.price)}</div>
+                        </div>
+                        <div class="product-quantity-selector">
+                            <button type="button" class="qty-btn qty-minus" data-target="mini_boss_${product.id}">-</button>
+                            <input type="number" 
+                                   class="qty-input" 
+                                   id="mini_boss_${product.id}" 
+                                   name="products[mini_boss][${product.id}]" 
+                                   value="0" 
+                                   min="0" 
+                                   max="${guestCount}" 
+                                   data-product-id="${product.id}"
+                                   data-category="mini_boss">
+                            <button type="button" class="qty-btn qty-plus" data-target="mini_boss_${product.id}">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            container.html(html);
+            
+            // Initialiser les sélecteurs de quantité
+            this.initializeQuantitySelectors(container);
+        }
+
+        /**
+         * Initialiser le sélecteur d'accompagnements
+         */
+        initializeAccompanimentSelector(stepElement) {
+            const accompanimentContainer = stepElement.find('.accompaniment-products-container');
+            if (accompanimentContainer.length === 0) {
+                return; // Pas de section accompagnements
+            }
+            
+            // Les accompagnements sont déjà chargés côté serveur
+            // Il suffit d'initialiser les sélecteurs de quantité et la validation
+            this.initializeQuantitySelectors(accompanimentContainer);
+            this.initializeAccompanimentValidation();
+            this.initializeAccompanimentSuboptions(stepElement);
+        }
+
+        /**
+         * Initialiser la validation des accompagnements
+         */
+        initializeAccompanimentValidation() {
+            const guestCount = parseInt(this.formData.guest_count) || 10;
+            const minRequired = this.options.accompaniment_min_per_person || 1;
+            const totalMinRequired = guestCount * minRequired;
+            
+            // Mettre à jour le minimum requis dans l'affichage
+            this.container.find('.min-required').text(totalMinRequired);
+            
+            this.container.on('change input', 'input[data-category="accompaniments"]', () => {
+                let total = 0;
+                this.container.find('input[data-category="accompaniments"]').each(function() {
+                    total += parseInt($(this).val()) || 0;
+                });
+                
+                const counter = this.container.find('.accompaniments-count');
+                const validationInfo = this.container.find('.accompaniments-validation-info');
+                
+                if (counter.length) {
+                    counter.text(total);
+                }
+                
+                if (validationInfo.length) {
+                    if (total >= totalMinRequired) {
+                        validationInfo.removeClass('error').addClass('success');
+                    } else {
+                        validationInfo.removeClass('success').addClass('error');
+                    }
+                }
+                
+                this.formData.accompaniments_valid = (total >= totalMinRequired);
+                this.log('Validation accompagnements:', {total, required: totalMinRequired, valid: this.formData.accompaniments_valid});
+            });
+        }
+        
+        /**
+         * Initialiser les sous-options des accompagnements (frites, etc.)
+         */
+        initializeAccompanimentSuboptions(stepElement) {
+            // Gérer l'affichage des sous-options quand on sélectionne des frites
+            stepElement.on('change input', 'input[data-category="accompaniments"]', (e) => {
+                const input = $(e.target);
+                const productId = input.data('product-id');
+                const quantity = parseInt(input.val()) || 0;
+                const suboptionsContainer = stepElement.find(`#frites_options_${productId}`);
+                
+                if (suboptionsContainer.length > 0) {
+                    if (quantity > 0) {
+                        // Afficher les sous-options pour les frites
+                        suboptionsContainer.show();
+                        this.log(`Affichage des sous-options pour le produit ${productId}`);
+                    } else {
+                        // Masquer et réinitialiser les sous-options
+                        suboptionsContainer.hide();
+                        suboptionsContainer.find('input[type="number"]').val(0).trigger('change');
+                        suboptionsContainer.find('input[type="checkbox"]').prop('checked', false).trigger('change');
+                        this.log(`Masquage des sous-options pour le produit ${productId}`);
+                    }
+                }
+            });
+            
+            // Validation des quantités de sous-options
+            stepElement.on('change input', 'input[name*="frites_options"]', (e) => {
+                const input = $(e.target);
+                const productId = input.attr('name').match(/\[(\d+)\]/)[1];
+                const mainQuantity = parseInt(stepElement.find(`#accompaniment_${productId}`).val()) || 0;
+                const subQuantity = parseInt(input.val()) || 0;
+                
+                // Vérifier que la quantité de sous-option ne dépasse pas la quantité principale
+                if (subQuantity > mainQuantity) {
+                    input.val(mainQuantity);
+                    this.showWarning(`La quantité d'option ne peut pas dépasser la quantité de frites sélectionnées (${mainQuantity})`);
+                }
+                
+                this.updatePrice();
+            });
+            
+            // Initialiser les sélecteurs de quantité pour les sous-options
+            this.initializeQuantitySelectors(stepElement.find('.accompaniment-suboptions'));
+        }
+
+        /**
          * Étape 4: Buffets (selon cahier des charges)
          */
         initializeStep4(stepElement) {
@@ -261,16 +496,277 @@
         }
 
         /**
-         * Étape 5: Boissons (selon cahier des charges)
+         * Initialiser le sélecteur de buffets
+         */
+        initializeBuffetSelector(stepElement) {
+            const buffetRadios = stepElement.find('input[name="buffet_type"]');
+            const buffetSaleContainer = stepElement.find('.buffet-sale-container');
+            const buffetSucreContainer = stepElement.find('.buffet-sucre-container');
+            
+            buffetRadios.on('change', (e) => {
+                const selectedType = e.target.value;
+                
+                // Masquer tous les conteneurs
+                buffetSaleContainer.hide();
+                buffetSucreContainer.hide();
+                
+                // Afficher selon la sélection
+                switch (selectedType) {
+                    case 'sale':
+                        buffetSaleContainer.show();
+                        this.loadBuffetProducts('sale');
+                        break;
+                    case 'sucre':
+                        buffetSucreContainer.show();
+                        this.loadBuffetProducts('sucre');
+                        break;
+                    case 'both':
+                        buffetSaleContainer.show();
+                        buffetSucreContainer.show();
+                        this.loadBuffetProducts('sale');
+                        this.loadBuffetProducts('sucre');
+                        break;
+                    case 'none':
+                    default:
+                        // Réinitialiser les quantités
+                        stepElement.find('input[data-category="buffet-sale"], input[data-category="buffet-sucre"]').val(0).trigger('change');
+                        break;
+                }
+                
+                this.updatePrice();
+            });
+        }
+
+        /**
+         * Charger les produits de buffet
+         */
+        loadBuffetProducts(buffetType) {
+            const container = this.container.find(`.buffet-${buffetType}-products`);
+            if (container.length === 0) {
+                return;
+            }
+            
+            container.html('<div class="restaurant-plugin-loading">Chargement des produits...</div>');
+            
+            const data = {
+                action: 'restaurant_plugin_get_buffet_products',
+                nonce: restaurantPluginAjax.nonce,
+                buffet_type: buffetType,
+                service_type: this.selectedService
+            };
+
+            $.ajax({
+                url: restaurantPluginAjax.ajax_url,
+                type: 'POST',
+                data: data,
+                success: (response) => {
+                    if (response.success && response.data.products && response.data.products.length > 0) {
+                        this.renderBuffetProducts(response.data.products, buffetType);
+                    } else {
+                        container.html(`<div class="restaurant-plugin-message restaurant-plugin-message-info"><p>Aucun produit disponible pour le buffet ${buffetType}.</p></div>`);
+                    }
+                },
+                error: () => {
+                    container.html(`<div class="restaurant-plugin-message restaurant-plugin-message-error"><p>Erreur lors du chargement des produits buffet ${buffetType}.</p></div>`);
+                }
+            });
+        }
+
+        /**
+         * Rendre les produits de buffet
+         */
+        renderBuffetProducts(products, buffetType) {
+            const container = this.container.find(`.buffet-${buffetType}-products`);
+            const guestCount = parseInt(this.formData.guest_count) || 10;
+            
+            let html = '<div class="restaurant-plugin-products-grid buffet-grid">';
+            
+            products.forEach(product => {
+                html += `
+                    <div class="restaurant-plugin-product-card buffet-card" data-product-id="${product.id}">
+                        <div class="product-content">
+                            <h4 class="product-title">${product.name}</h4>
+                            <p class="product-description">${product.description || ''}</p>
+                            <div class="product-price">${this.formatPrice(product.price)}</div>
+                        </div>
+                        <div class="product-quantity-selector">
+                            <button type="button" class="qty-btn qty-minus" data-target="buffet_${buffetType}_${product.id}">-</button>
+                            <input type="number" 
+                                   class="qty-input" 
+                                   id="buffet_${buffetType}_${product.id}" 
+                                   name="products[buffet-${buffetType}][${product.id}]" 
+                                   value="0" 
+                                   min="0" 
+                                   max="${guestCount * 3}" 
+                                   data-product-id="${product.id}"
+                                   data-category="buffet-${buffetType}">
+                            <button type="button" class="qty-btn qty-plus" data-target="buffet_${buffetType}_${product.id}">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            container.html(html);
+            
+            // Initialiser les sélecteurs de quantité
+            this.initializeQuantitySelectors(container);
+        }
+
+        /**
+         * Étape 5: Boissons (selon cahier des charges) - RÉEL
          */
         initializeStep5(stepElement) {
-            // Sections dépliables par catégorie
-            this.initializeBeverageCategories(stepElement);
+            // Vérifier que la méthode existe avant de l'appeler
+            if (typeof this.initializeBeverageCategories === 'function') {
+                this.initializeBeverageCategories(stepElement);
+            } else {
+                // Créer la méthode si elle n'existe pas
+                this.createBeverageCategoriesMethod();
+                this.initializeBeverageCategories(stepElement);
+            }
             
             // Fûts uniquement pour restaurant
             if (this.selectedService === 'restaurant') {
                 this.initializeKegsSelection(stepElement);
             }
+            
+            // Initialiser les sélecteurs de quantité pour les boissons
+            this.initializeQuantitySelectors(stepElement);
+        }
+
+        /**
+         * Créer la méthode initializeBeverageCategories si elle n'existe pas
+         */
+        createBeverageCategoriesMethod() {
+            this.initializeBeverageCategories = function(stepElement) {
+                const tabsContainer = stepElement.find('.beverage-tabs');
+                const contentContainer = stepElement.find('.beverage-content');
+                
+                // Si pas d'onglets, créer la structure
+                if (!tabsContainer.length) {
+                    const beverageHTML = `
+                        <div class="beverage-tabs">
+                            <button class="beverage-tab active" data-category="softs">🥤 SOFTS</button>
+                            <button class="beverage-tab" data-category="wines">🍷 VINS</button>
+                            <button class="beverage-tab" data-category="beers">🍺 BIÈRES</button>
+                            <button class="beverage-tab" data-category="kegs">🍻 FÛTS</button>
+                        </div>
+                        <div class="beverage-content">
+                            <div class="beverage-category active" data-category="softs">
+                                <p>Chargement des boissons soft...</p>
+                            </div>
+                            <div class="beverage-category" data-category="wines">
+                                <p>Chargement des vins...</p>
+                            </div>
+                            <div class="beverage-category" data-category="beers">
+                                <p>Chargement des bières...</p>
+                            </div>
+                            <div class="beverage-category" data-category="kegs">
+                                <p>Chargement des fûts...</p>
+                            </div>
+                        </div>
+                    `;
+                    stepElement.append(beverageHTML);
+                }
+                
+                // Gérer les clics sur les onglets
+                stepElement.find('.beverage-tab').off('click').on('click', (e) => {
+                    e.preventDefault();
+                    const tab = $(e.currentTarget);
+                    const category = tab.data('category');
+                    
+                    // Activer l'onglet
+                    stepElement.find('.beverage-tab').removeClass('active');
+                    tab.addClass('active');
+                    
+                    // Afficher le contenu correspondant
+                    stepElement.find('.beverage-category').removeClass('active');
+                    stepElement.find(`[data-category="${category}"]`).addClass('active');
+                    
+                    // Charger les boissons si pas encore fait
+                    const categoryContainer = stepElement.find(`[data-category="${category}"]`);
+                    if (!categoryContainer.hasClass('loaded')) {
+                        this.loadBeveragesByCategory(category, categoryContainer);
+                    }
+                });
+                
+                // Charger la première catégorie
+                this.loadBeveragesByCategory('softs', stepElement.find('[data-category="softs"]'));
+                
+                this.log('Catégories boissons initialisées');
+            };
+        }
+
+        /**
+         * Initialiser les catégories de boissons avec onglets
+         */
+        initializeBeverageCategories(stepElement) {
+            const tabsContainer = stepElement.find('.beverage-tabs');
+            const contentContainer = stepElement.find('.beverage-content');
+            
+            // Gérer les onglets
+            tabsContainer.find('.beverage-tab').on('click', (e) => {
+                e.preventDefault();
+                const tab = $(e.currentTarget);
+                const category = tab.data('category');
+                
+                // Activer l'onglet
+                tabsContainer.find('.beverage-tab').removeClass('active');
+                tab.addClass('active');
+                
+                // Afficher le contenu correspondant
+                contentContainer.find('.beverage-category').hide();
+                contentContainer.find(`[data-category="${category}"]`).show();
+                
+                // Charger les boissons si pas encore fait
+                if (!contentContainer.find(`[data-category="${category}"]`).hasClass('loaded')) {
+                    this.loadBeveragesByCategory(category, contentContainer.find(`[data-category="${category}"]`));
+                }
+            });
+            
+            // Activer le premier onglet par défaut
+            const firstTab = tabsContainer.find('.beverage-tab').first();
+            if (firstTab.length) {
+                firstTab.trigger('click');
+            }
+            
+            // Initialiser les sélecteurs de quantité
+            this.initializeQuantitySelectors(stepElement);
+        }
+
+        /**
+         * Charger les boissons par catégorie
+         */
+        loadBeveragesByCategory(category, container) {
+            const data = {
+                action: 'restaurant_plugin_get_beverages',
+                nonce: restaurantPluginAjax.nonce,
+                category: category,
+                service_type: this.selectedService
+            };
+
+            $.ajax({
+                url: restaurantPluginAjax.ajax_url,
+                type: 'POST',
+                data: data,
+                success: (response) => {
+                    if (response.success) {
+                        container.html(response.data.html);
+                        container.addClass('loaded');
+                        this.initializeQuantitySelectors(container);
+                        this.log(`Boissons ${category} chargées`);
+                    } else {
+                        container.html('<p>Aucune boisson disponible dans cette catégorie.</p>');
+                        this.log('Erreur chargement boissons:', response.data);
+                    }
+                },
+                error: (xhr, status, error) => {
+                    container.html('<p>Erreur de chargement des boissons.</p>');
+                    this.log('Erreur AJAX boissons:', {xhr, status, error});
+                }
+            });
         }
 
         /**
@@ -387,9 +883,84 @@
                     supplementText.hide();
                 }
                 
+                // Mettre à jour le texte dynamique de durée dans le forfait
+                this.updateDynamicDuration(selectedHours);
+                
                 this.formData.duration_supplement = supplement;
+                this.formData.event_duration = selectedHours;
                 this.updatePrice();
             });
+            
+            // Initialiser avec la valeur par défaut
+            if (durationSelect.val()) {
+                this.updateDynamicDuration(parseInt(durationSelect.val()));
+            }
+        }
+
+        /**
+         * Mettre à jour l'affichage dynamique de la durée - RÉELLE ET VISIBLE
+         */
+        updateDynamicDuration(hours) {
+            // Mettre à jour TOUS les éléments qui affichent la durée
+            const selectors = [
+                '.dynamic-duration',
+                '[data-dynamic="duration"]',
+                '.duration-display',
+                '.forfait-duration'
+            ];
+            
+            selectors.forEach(selector => {
+                $(selector).text(hours);
+            });
+            
+            // Mettre à jour aussi dans les étapes déjà chargées ET dans le DOM global
+            $('body').find(selectors.join(', ')).text(hours);
+            
+            // CORRECTION RÉELLE - Remplacer dans TOUS les textes
+            setTimeout(() => {
+                $(selectors.join(', ')).text(hours);
+                
+                // Mise à jour spécifique dans les textes de forfait - PLUS AGRESSIVE
+                $('.restaurant-plugin-card, .restaurant-plugin-form-step, .restaurant-plugin-container').each(function() {
+                    const element = $(this);
+                    let text = element.html();
+                    if (text && text.includes('H de privatisation')) {
+                        // Remplacer TOUTES les occurrences de durée
+                        const patterns = [
+                            /\b\d+H de privatisation/g,
+                            /\b\d+h de privatisation/g,
+                            /\b\d+ H de privatisation/g,
+                            /\b\d+ h de privatisation/g
+                        ];
+                        
+                        patterns.forEach(pattern => {
+                            text = text.replace(pattern, `${hours}H de privatisation`);
+                        });
+                        
+                        element.html(text);
+                    }
+                });
+                
+                // Mise à jour FORCÉE pour tous les éléments contenant "privatisation"
+                $('*:contains("privatisation")').each(function() {
+                    const element = $(this);
+                    if (element.children().length === 0) { // Seulement les éléments avec du texte
+                        let text = element.text();
+                        if (text.includes('H de privatisation')) {
+                            text = text.replace(/\d+H de privatisation/g, `${hours}H de privatisation`);
+                            element.text(text);
+                        }
+                    }
+                });
+                
+            }, 100);
+            
+            // Deuxième passage après 500ms pour être sûr
+            setTimeout(() => {
+                this.updateDynamicDuration(hours);
+            }, 500);
+            
+            this.log(`Durée mise à jour RÉELLEMENT: ${hours}H`);
         }
 
         /**
@@ -464,7 +1035,7 @@
          */
         loadSignatureProducts(signatureType) {
             const container = this.container.find('.signature-products-container');
-            container.html('<div class="restaurant-plugin-loading">Chargement des produits...</div>');
+            container.html('<div class="restaurant-plugin-loading">Chargement des produits...</div>').show();
             
             const data = {
                 action: 'restaurant_plugin_get_signature_products',
@@ -477,15 +1048,33 @@
                 url: restaurantPluginAjax.ajax_url,
                 type: 'POST',
                 data: data,
+                timeout: 10000, // 10 secondes
                 success: (response) => {
-                    if (response.success) {
+                    if (response.success && response.data.products && response.data.products.length > 0) {
                         this.renderSignatureProducts(response.data.products, signatureType);
+                        this.log(`Produits ${signatureType} chargés avec succès`, response.data.products);
                     } else {
-                        container.html('<p>Aucun produit disponible pour cette sélection.</p>');
+                        container.html('<div class="restaurant-plugin-message restaurant-plugin-message-warning"><p>🔍 Aucun produit disponible pour cette sélection.</p><p><small>Vérifiez que les produits sont bien configurés dans l\'administration.</small></p></div>');
+                        this.log(`Aucun produit trouvé pour ${signatureType}`, response);
                     }
                 },
-                error: () => {
-                    container.html('<p>Erreur lors du chargement des produits.</p>');
+                error: (xhr, status, error) => {
+                    let errorMessage = '<div class="restaurant-plugin-message restaurant-plugin-message-error">';
+                    errorMessage += '<p>❌ Erreur lors du chargement des produits.</p>';
+                    
+                    if (status === 'timeout') {
+                        errorMessage += '<p><small>Délai d\'attente dépassé. Veuillez réessayer.</small></p>';
+                    } else if (status === 'error') {
+                        errorMessage += '<p><small>Erreur de connexion. Vérifiez votre connexion internet.</small></p>';
+                    } else {
+                        errorMessage += '<p><small>Une erreur inattendue s\'est produite.</small></p>';
+                    }
+                    
+                    errorMessage += '<button type="button" class="restaurant-plugin-btn-secondary" onclick="location.reload()">Recharger la page</button>';
+                    errorMessage += '</div>';
+                    
+                    container.html(errorMessage);
+                    this.log(`Erreur AJAX signature ${signatureType}:`, {xhr, status, error});
                 }
             });
         }
@@ -576,26 +1165,174 @@
         }
 
         /**
-         * Initialiser les sélecteurs de quantité
+         * Initialiser les sélecteurs de quantité - VERSION CORRIGÉE UNIVERSELLE
          */
         initializeQuantitySelectors(container) {
+            // Retirer les anciens event listeners pour éviter les doublons
+            container.find('.qty-minus, .qty-plus').off('click');
+            container.find('input[type="number"]').off('input change');
+            
+            // Boutons MOINS
             container.find('.qty-minus').on('click', (e) => {
-                const target = $(e.target).data('target');
-                const input = $(`#${target}`);
-                const currentVal = parseInt(input.val()) || 0;
-                if (currentVal > 0) {
-                    input.val(currentVal - 1).trigger('change');
+                e.preventDefault();
+                const button = $(e.currentTarget);
+                let input;
+                
+                // Méthodes de ciblage multiples
+                const target = button.data('target');
+                if (target) {
+                    input = $(`#${target}`);
+                } else {
+                    // Recherche par proximité
+                    input = button.siblings('input[type="number"]').first();
+                    if (!input.length) {
+                        input = button.parent().find('input[type="number"]').first();
+                    }
+                    if (!input.length) {
+                        input = button.closest('.product-quantity-selector, .beverage-quantity-selector, .sauce-quantity-selector, .qty-selector').find('input[type="number"]').first();
+                    }
+                }
+                
+                if (input.length) {
+                    const currentVal = parseInt(input.val()) || 0;
+                    const minVal = parseInt(input.attr('min')) || 0;
+                    if (currentVal > minVal) {
+                        input.val(currentVal - 1).trigger('change');
+                        this.log(`Quantité diminuée: ${input.attr('name')} = ${currentVal - 1}`);
+                    }
                 }
             });
             
+            // Boutons PLUS
             container.find('.qty-plus').on('click', (e) => {
-                const target = $(e.target).data('target');
-                const input = $(`#${target}`);
-                const currentVal = parseInt(input.val()) || 0;
-                const maxVal = parseInt(input.attr('max')) || 999;
-                if (currentVal < maxVal) {
-                    input.val(currentVal + 1).trigger('change');
+                e.preventDefault();
+                const button = $(e.currentTarget);
+                let input;
+                
+                // Méthodes de ciblage multiples
+                const target = button.data('target');
+                if (target) {
+                    input = $(`#${target}`);
+                } else {
+                    // Recherche par proximité
+                    input = button.siblings('input[type="number"]').first();
+                    if (!input.length) {
+                        input = button.parent().find('input[type="number"]').first();
+                    }
+                    if (!input.length) {
+                        input = button.closest('.product-quantity-selector, .beverage-quantity-selector, .sauce-quantity-selector, .qty-selector').find('input[type="number"]').first();
+                    }
                 }
+                
+                if (input.length) {
+                    const currentVal = parseInt(input.val()) || 0;
+                    const maxVal = parseInt(input.attr('max')) || 999;
+                    if (currentVal < maxVal) {
+                        input.val(currentVal + 1).trigger('change');
+                        this.log(`Quantité augmentée: ${input.attr('name')} = ${currentVal + 1}`);
+                    }
+                }
+            });
+            
+            // Gérer les changements directs dans les inputs
+            container.find('input[type="number"]').on('input change', (e) => {
+                const input = $(e.target);
+                const currentVal = parseInt(input.val()) || 0;
+                const minVal = parseInt(input.attr('min')) || 0;
+                const maxVal = parseInt(input.attr('max')) || 999;
+                
+                // Validation des limites
+                if (currentVal < minVal) {
+                    input.val(minVal);
+                } else if (currentVal > maxVal) {
+                    input.val(maxVal);
+                }
+                
+                // Mettre à jour les compteurs et prix
+                this.updateQuantityCounters();
+                this.updateFormData();
+                this.updatePrice();
+                
+                this.log(`Input modifié: ${input.attr('name')} = ${input.val()}`);
+            });
+            
+            this.log('Sélecteurs de quantité initialisés pour', container.length, 'éléments');
+        }
+
+        /**
+         * Mettre à jour les compteurs de quantité - VERSION SYNCHRONISÉE
+         */
+        updateQuantityCounters() {
+            // Compteur plats signature - RECHERCHE ÉLARGIE
+            let signatureTotal = 0;
+            this.container.find('input[data-category="signature"], input[name*="signature"], input[name*="products[signature]"]').each(function() {
+                const val = parseInt($(this).val()) || 0;
+                signatureTotal += val;
+            });
+            
+            // Mettre à jour les affichages
+            this.container.find('.signature-count').text(signatureTotal);
+            const signatureCounter = this.container.find('.signature-counter');
+            if (signatureCounter.length) {
+                const minRequired = parseInt(signatureCounter.data('min-required')) || parseInt(this.container.find('#guest_count').val()) || 0;
+                signatureCounter.text(`Sélectionnés: ${signatureTotal} / ${minRequired}`);
+                
+                if (signatureTotal >= minRequired) {
+                    signatureCounter.removeClass('invalid').addClass('valid');
+                } else {
+                    signatureCounter.removeClass('valid').addClass('invalid');
+                }
+            }
+            
+            // Compteur accompagnements - RECHERCHE ÉLARGIE
+            let accompanimentTotal = 0;
+            this.container.find('input[data-category="accompaniments"], input[data-category="accompaniment"], input[name*="accompaniment"]').each(function() {
+                const val = parseInt($(this).val()) || 0;
+                accompanimentTotal += val;
+            });
+            this.container.find('.accompaniments-count, .accompaniment-count').text(accompanimentTotal);
+            
+            // Compteur Mini Boss - RECHERCHE ÉLARGIE
+            let miniBossTotal = 0;
+            this.container.find('input[data-category="mini_boss"], input[data-category="mini-boss"], input[name*="mini_boss"]').each(function() {
+                const val = parseInt($(this).val()) || 0;
+                miniBossTotal += val;
+            });
+            this.container.find('.mini-boss-count').text(miniBossTotal);
+            
+            // Compteurs buffets - RECHERCHE ÉLARGIE
+            let buffetSaleTotal = 0;
+            this.container.find('input[data-category="buffet-sale"], input[name*="buffet-sale"], input[name*="buffet_sale"]').each(function() {
+                const val = parseInt($(this).val()) || 0;
+                buffetSaleTotal += val;
+            });
+            this.container.find('.buffet-sale-count').text(buffetSaleTotal);
+            
+            let buffetSucreTotal = 0;
+            this.container.find('input[data-category="buffet-sucre"], input[name*="buffet-sucre"], input[name*="buffet_sucre"]').each(function() {
+                const val = parseInt($(this).val()) || 0;
+                buffetSucreTotal += val;
+            });
+            this.container.find('.buffet-sucre-count').text(buffetSucreTotal);
+            
+            // SYNCHRONISER LES INPUTS AVEC LEURS AFFICHAGES
+            this.container.find('.product-quantity-selector').each(function() {
+                const container = $(this);
+                const input = container.find('input[type="number"]');
+                const displayElement = container.find('.qty-display, .quantity-display');
+                
+                if (input.length && displayElement.length) {
+                    const actualValue = input.val();
+                    displayElement.text(actualValue);
+                }
+            });
+            
+            this.log('Compteurs synchronisés:', {
+                signature: signatureTotal,
+                accompaniment: accompanimentTotal,
+                miniBoss: miniBossTotal,
+                buffetSale: buffetSaleTotal,
+                buffetSucre: buffetSucreTotal
             });
         }
 
@@ -697,31 +1434,80 @@
          */
         validateCurrentStep() {
             const currentStepElement = this.container.find(`[data-step="${this.currentStep}"]`);
+            if (currentStepElement.length === 0) {
+                this.log(`Étape ${this.currentStep} non trouvée pour validation`);
+                return false;
+            }
+            
             let isValid = true;
+            let errorMessages = [];
             
             // Validation des champs requis
             currentStepElement.find('input[required], select[required], textarea[required]').each((index, field) => {
-                if (!this.validateField($(field))) {
+                const $field = $(field);
+                if (!this.validateField($field)) {
                     isValid = false;
+                    const fieldName = $field.attr('name') || $field.attr('id') || 'Champ inconnu';
+                    
+                    // Messages de validation en FRANÇAIS CORRECT
+                    let frenchMessage = '';
+                    switch(fieldName) {
+                        case 'event_date':
+                            frenchMessage = '📅 Veuillez compléter la date de l\'événement';
+                            break;
+                        case 'guest_count':
+                            frenchMessage = '👥 Veuillez indiquer le nombre de convives';
+                            break;
+                        case 'event_duration':
+                            frenchMessage = '⏰ Veuillez choisir la durée de l\'événement';
+                            break;
+                        case 'postal_code':
+                            frenchMessage = '📍 Veuillez saisir votre code postal';
+                            break;
+                        case 'client_name':
+                            frenchMessage = '👤 Veuillez saisir votre nom';
+                            break;
+                        case 'client_firstname':
+                            frenchMessage = '👤 Veuillez saisir votre prénom';
+                            break;
+                        case 'client_email':
+                            frenchMessage = '📧 Veuillez saisir une adresse email valide';
+                            break;
+                        case 'client_phone':
+                            frenchMessage = '📞 Veuillez saisir un numéro de téléphone valide';
+                            break;
+                        default:
+                            frenchMessage = `⚠️ Veuillez compléter le champ "${fieldName}"`;
+                    }
+                    
+                    errorMessages.push(frenchMessage);
                 }
             });
             
             // Validations spécifiques par étape
             switch (this.currentStep) {
                 case 3: // Formules repas
-                    if (!this.validateStep3()) {
+                    const step3Validation = this.validateStep3();
+                    if (!step3Validation.valid) {
                         isValid = false;
+                        errorMessages.push(...step3Validation.errors);
                     }
                     break;
                 case 4: // Buffets
-                    if (!this.validateStep4()) {
+                    const step4Validation = this.validateStep4();
+                    if (!step4Validation.valid) {
                         isValid = false;
+                        errorMessages.push(...step4Validation.errors);
                     }
                     break;
             }
             
             if (!isValid) {
-                this.showError(restaurantPluginAjax.texts.step_validation_error);
+                const errorMessage = errorMessages.length > 0 
+                    ? errorMessages.join('<br>') 
+                    : restaurantPluginAjax.texts.step_validation_error;
+                this.showError(errorMessage);
+                this.log('Validation échouée pour l\'étape', {step: this.currentStep, errors: errorMessages});
             }
             
             return isValid;
@@ -731,59 +1517,85 @@
          * Valider l'étape 3 (formules repas)
          */
         validateStep3() {
+            let errors = [];
+            
             // Vérifier plats signature
-            if (!this.formData.signature_products_valid) {
-                this.showError('Veuillez sélectionner le nombre minimum de plats signature requis');
-                return false;
+            const guestCount = parseInt(this.formData.guest_count) || 10;
+            const signatureMinRequired = guestCount * (this.options.signature_dish_min_per_person || 1);
+            
+            let signatureTotal = 0;
+            this.container.find('input[data-category="signature"]').each(function() {
+                signatureTotal += parseInt($(this).val()) || 0;
+            });
+            
+            if (signatureTotal < signatureMinRequired) {
+                errors.push(`Sélectionnez au moins ${signatureMinRequired} plats signature (${this.options.signature_dish_min_per_person || 1} par personne)`);
             }
             
             // Vérifier accompagnements (min 1/personne)
-            const guestCount = parseInt(this.formData.guest_count) || 10;
+            const accompanimentMinRequired = guestCount * (this.options.accompaniment_min_per_person || 1);
             let accompanimentTotal = 0;
             
             this.container.find('input[data-category="accompaniments"]').each(function() {
                 accompanimentTotal += parseInt($(this).val()) || 0;
             });
             
-            if (accompanimentTotal < guestCount) {
-                this.showError(`Veuillez sélectionner au moins ${guestCount} accompagnements (1 par personne)`);
-                return false;
+            if (accompanimentTotal < accompanimentMinRequired) {
+                errors.push(`Sélectionnez au moins ${accompanimentMinRequired} accompagnements (${this.options.accompaniment_min_per_person || 1} par personne)`);
             }
             
-            return true;
+            this.log('Validation étape 3:', {
+                signatureTotal, 
+                signatureMinRequired,
+                accompanimentTotal,
+                accompanimentMinRequired,
+                errors
+            });
+            
+            return {
+                valid: errors.length === 0,
+                errors: errors
+            };
         }
 
         /**
          * Valider l'étape 4 (buffets)
          */
         validateStep4() {
+            let errors = [];
             const selectedBuffetType = this.container.find('input[name="buffet_type"]:checked').val();
             
             if (!selectedBuffetType || selectedBuffetType === 'none') {
-                return true; // Les buffets sont optionnels
+                return { valid: true, errors: [] }; // Les buffets sont optionnels
             }
             
             // Validation buffet salé
             if (selectedBuffetType === 'sale' || selectedBuffetType === 'both') {
-                if (!this.validateBuffetSale()) {
-                    return false;
+                const saleValidation = this.validateBuffetSale();
+                if (!saleValidation.valid) {
+                    errors.push(...saleValidation.errors);
                 }
             }
             
             // Validation buffet sucré
             if (selectedBuffetType === 'sucre' || selectedBuffetType === 'both') {
-                if (!this.validateBuffetSucre()) {
-                    return false;
+                const sucreValidation = this.validateBuffetSucre();
+                if (!sucreValidation.valid) {
+                    errors.push(...sucreValidation.errors);
                 }
             }
             
-            return true;
+            return {
+                valid: errors.length === 0,
+                errors: errors
+            };
         }
 
         /**
          * Valider le buffet salé (min 1/pers + min 2 recettes)
          */
         validateBuffetSale() {
+            let errors = [];
             const guestCount = parseInt(this.formData.guest_count) || 10;
             const minPerPerson = this.options.buffet_sale_min_per_person || 1;
             const minRecipes = this.options.buffet_sale_min_recipes || 2;
@@ -802,22 +1614,24 @@
             const minTotalQuantity = guestCount * minPerPerson;
             
             if (totalQuantity < minTotalQuantity) {
-                this.showError(`Buffet salé: minimum ${minTotalQuantity} portions requises (${minPerPerson} par personne)`);
-                return false;
+                errors.push(`Buffet salé: minimum ${minTotalQuantity} portions requises (${minPerPerson} par personne)`);
             }
             
             if (selectedRecipes < minRecipes) {
-                this.showError(`Buffet salé: minimum ${minRecipes} recettes différentes requises`);
-                return false;
+                errors.push(`Buffet salé: minimum ${minRecipes} recettes différentes requises`);
             }
             
-            return true;
+            return {
+                valid: errors.length === 0,
+                errors: errors
+            };
         }
 
         /**
          * Valider le buffet sucré (min 1/pers + min 1 plat)
          */
         validateBuffetSucre() {
+            let errors = [];
             const guestCount = parseInt(this.formData.guest_count) || 10;
             const minPerPerson = this.options.buffet_sucre_min_per_person || 1;
             const minDishes = this.options.buffet_sucre_min_dishes || 1;
@@ -836,16 +1650,17 @@
             const minTotalQuantity = guestCount * minPerPerson;
             
             if (totalQuantity < minTotalQuantity) {
-                this.showError(`Buffet sucré: minimum ${minTotalQuantity} portions requises (${minPerPerson} par personne)`);
-                return false;
+                errors.push(`Buffet sucré: minimum ${minTotalQuantity} portions requises (${minPerPerson} par personne)`);
             }
             
             if (selectedDishes < minDishes) {
-                this.showError(`Buffet sucré: minimum ${minDishes} plat requis`);
-                return false;
+                errors.push(`Buffet sucré: minimum ${minDishes} plat requis`);
             }
             
-            return true;
+            return {
+                valid: errors.length === 0,
+                errors: errors
+            };
         }
 
         /**
@@ -946,7 +1761,7 @@
                         }
                     } else {
                         const value = field.val();
-                        if (value) {
+                        if (value !== null && value !== undefined) {
                             formData[name] = value;
                         }
                     }
@@ -956,8 +1771,14 @@
             // Collecter les produits sélectionnés
             this.collectProductsData(formData);
             
+            // Ajouter des données calculées
+            formData.service_type = this.selectedService;
+            formData.current_step = this.currentStep;
+            
             // Mettre à jour les données
             Object.assign(this.formData, formData);
+            
+            this.log('Données formulaire mises à jour:', this.formData);
         }
 
         /**
@@ -993,6 +1814,9 @@
                 return;
             }
             
+            // Mettre à jour les données du formulaire avant le calcul
+            this.updateFormData();
+            
             const data = {
                 action: 'restaurant_plugin_calculate_price',
                 nonce: restaurantPluginAjax.nonce,
@@ -1007,10 +1831,13 @@
                 success: (response) => {
                     if (response.success) {
                         this.updatePriceDisplay(response.data);
+                        this.log('Prix mis à jour:', response.data);
+                    } else {
+                        this.log('Erreur calcul prix:', response.data);
                     }
                 },
-                error: () => {
-                    this.log('Erreur lors du calcul de prix');
+                error: (xhr, status, error) => {
+                    this.log('Erreur AJAX prix:', {xhr, status, error});
                 }
             });
         }
@@ -1024,11 +1851,45 @@
             this.priceProducts.text(this.formatPrice(priceData.products_total || 0));
             this.priceTotal.text(this.formatPrice(priceData.total_price || 0));
             
+            // Afficher le détail des suppléments si disponible
+            if (priceData.breakdown && priceData.breakdown.length > 0) {
+                this.updatePriceBreakdown(priceData.breakdown);
+            }
+            
             // Animation du total
             this.priceTotal.addClass('updated');
             setTimeout(() => {
                 this.priceTotal.removeClass('updated');
             }, 500);
+        }
+
+        /**
+         * Mettre à jour le détail des prix
+         */
+        updatePriceBreakdown(breakdown) {
+            const breakdownContainer = this.calculator.find('.price-breakdown');
+            if (breakdownContainer.length === 0) {
+                // Créer le conteneur s'il n'existe pas
+                this.calculator.find('.restaurant-plugin-price-total').before(`
+                    <div class="price-breakdown" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(36, 49, 39, 0.2);">
+                        <div class="breakdown-items"></div>
+                    </div>
+                `);
+            }
+            
+            const itemsContainer = this.calculator.find('.breakdown-items');
+            itemsContainer.empty();
+            
+            breakdown.forEach(item => {
+                if (item.amount > 0) {
+                    itemsContainer.append(`
+                        <div class="restaurant-plugin-price-row breakdown-item">
+                            <span>${item.label}</span>
+                            <span>+${this.formatPrice(item.amount)}</span>
+                        </div>
+                    `);
+                }
+            });
         }
 
         /**
@@ -1139,23 +2000,51 @@
                 this.generateProgressSteps();
             }
             
-            // Mettre à jour les états
+            // Mettre à jour les états avec les bonnes couleurs
             this.progressBar.find('.restaurant-plugin-progress-step').each((index, step) => {
                 const stepNumber = index + 1;
                 const stepElement = $(step);
+                const stepNumberElement = stepElement.find('.restaurant-plugin-step-number');
                 
                 stepElement.removeClass('active completed');
                 
                 if (stepNumber < this.currentStep) {
+                    // Étapes complétées : fond vert foncé, chiffre beige
                     stepElement.addClass('completed');
+                    stepNumberElement.css({
+                        'background-color': '#243127',
+                        'color': '#F6F2E7',
+                        'border-color': '#243127'
+                    });
                 } else if (stepNumber === this.currentStep) {
+                    // Étape actuelle : fond ORANGE, chiffre vert foncé
                     stepElement.addClass('active');
+                    stepNumberElement.css({
+                        'background-color': '#FFB404',
+                        'color': '#243127',
+                        'border-color': '#FFB404',
+                        'transform': 'scale(1.1)',
+                        'box-shadow': '0 4px 15px rgba(255, 180, 4, 0.4)'
+                    });
+                    
+                    // Label aussi en orange
+                    stepElement.find('.restaurant-plugin-step-label').css({
+                        'color': '#FFB404',
+                        'font-weight': '700'
+                    });
+                } else {
+                    // Étapes futures : fond gris
+                    stepNumberElement.css({
+                        'background-color': '#ddd',
+                        'color': '#666',
+                        'border-color': '#ddd'
+                    });
                 }
             });
             
             // Mettre à jour la ligne de progression
-            const progressPercent = ((this.currentStep - 1) / (this.totalSteps - 1)) * 100;
-            this.progressBar.find('.restaurant-plugin-progress-line-fill').css('width', `${progressPercent}%`);
+            const progressPercent = this.totalSteps > 1 ? ((this.currentStep - 1) / (this.totalSteps - 1)) * 100 : 0;
+            this.progressBar.find('.restaurant-plugin-progress-line-fill').css('width', `${Math.max(0, progressPercent)}%`);
         }
 
         /**
@@ -1163,13 +2052,34 @@
          */
         generateProgressSteps() {
             const stepsContainer = this.progressBar.find('.restaurant-plugin-progress-steps');
-            let stepsHtml = '<div class="restaurant-plugin-progress-line"><div class="restaurant-plugin-progress-line-fill"></div></div>';
             
+            // Nettoyer le conteneur
+            stepsContainer.empty();
+            
+            // Ajouter la ligne de progression
+            stepsContainer.append('<div class="restaurant-plugin-progress-line"><div class="restaurant-plugin-progress-line-fill"></div></div>');
+            
+            // Labels des étapes
+            const stepLabels = [
+                'Service',
+                'Détails', 
+                'Options',
+                'Produits',
+                'Contact',
+                'Récapitulatif'
+            ];
+            
+            // Générer les étapes avec la structure complète
             for (let i = 1; i <= this.totalSteps; i++) {
-                stepsHtml += `<div class="restaurant-plugin-progress-step">${i}</div>`;
+                const stepLabel = stepLabels[i - 1] || `Étape ${i}`;
+                const stepHtml = `
+                    <div class="restaurant-plugin-progress-step">
+                        <div class="restaurant-plugin-step-number">${i}</div>
+                        <div class="restaurant-plugin-step-label">${stepLabel}</div>
+                    </div>
+                `;
+                stepsContainer.append(stepHtml);
             }
-            
-            stepsContainer.html(stepsHtml);
         }
 
         /**
@@ -1279,13 +2189,19 @@
     }
 
     /**
-     * Initialisation automatique
+     * Initialisation automatique avec protection contre les doublons
      */
     $(document).ready(function() {
         $('.restaurant-plugin-container').each(function() {
-            new RestaurantPluginFormBlock(this);
+            // Éviter la double initialisation
+            if (!$(this).hasClass('restaurant-plugin-initialized')) {
+                $(this).addClass('restaurant-plugin-initialized');
+                new RestaurantPluginFormBlock(this);
+            }
         });
     });
 
 })(jQuery);
+
+
 

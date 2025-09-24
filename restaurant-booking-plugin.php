@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Plugin Block & co
  * Plugin URI: https://www.thecomm.agency/
- * Description: Plugin complet de gestion de devis de privatisation pour restaurant avec interface Elementor
- * Version: 1.0.1
+ * Description: Plugin complet de gestion de devis de privatisation pour restaurant avec shortcode intégré
+ * Version: 1.0.6
  * Author: Thecomm
  * Author URI: https://www.thecomm.agency/
  * Text Domain: restaurant-booking
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Définir les constantes du plugin
-define('RESTAURANT_BOOKING_VERSION', '1.0.1');
+define('RESTAURANT_BOOKING_VERSION', '1.0.6');
 define('RESTAURANT_BOOKING_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('RESTAURANT_BOOKING_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('RESTAURANT_BOOKING_PLUGIN_FILE', __FILE__);
@@ -89,9 +89,20 @@ class RestaurantBookingPlugin
         add_action('wp_enqueue_scripts', array($this, 'enqueue_public_scripts'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
 
-        // Hook pour Elementor
-        add_action('elementor/widgets/widgets_registered', array($this, 'register_elementor_widgets'));
-        add_action('elementor/elements/categories_registered', array($this, 'add_elementor_widget_categories'));
+        // Charger les shortcodes
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-shortcode-block-form.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-shortcode-block-form.php';
+        }
+        
+        // Charger le nouveau shortcode V3
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-shortcode-form-v3.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-shortcode-form-v3.php';
+        }
+        
+        // Charger le gestionnaire AJAX V3
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler-v3.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler-v3.php';
+        }
     }
 
     /**
@@ -221,6 +232,18 @@ class RestaurantBookingPlugin
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-settings-admin.php';
         }
         
+        // Options unifiées admin
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-options-unified-admin.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-options-unified-admin.php';
+        }
+        
+        // Migration pour corriger les échappements multiples
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-fix-escaped-quotes-migration.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-fix-escaped-quotes-migration.php';
+            // Exécuter la migration automatiquement
+            RestaurantBooking_Fix_Escaped_Quotes_Migration::run();
+        }
+        
         // Classes d'administration v2
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-games-admin.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-games-admin.php';
@@ -279,9 +302,9 @@ class RestaurantBookingPlugin
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler.php';
         }
 
-        // Widgets Elementor
-        if (did_action('elementor/loaded') && file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'elementor/class-elementor-widgets.php')) {
-            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'elementor/class-elementor-widgets.php';
+        // Shortcode Block Form
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-shortcode-block-form.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-shortcode-block-form.php';
         }
     }
 
@@ -369,30 +392,6 @@ class RestaurantBookingPlugin
     }
 
 
-    /**
-     * Enregistrer les widgets Elementor
-     */
-    public function register_elementor_widgets($widgets_manager)
-    {
-        if (class_exists('RestaurantBooking_Elementor_Widgets')) {
-            $elementor_widgets = new RestaurantBooking_Elementor_Widgets();
-            $elementor_widgets->register_widgets($widgets_manager);
-        }
-    }
-
-    /**
-     * Ajouter les catégories de widgets Elementor
-     */
-    public function add_elementor_widget_categories($elements_manager)
-    {
-        $elements_manager->add_category(
-            'restaurant-booking',
-            array(
-                'title' => __('Block & Co', 'restaurant-booking'),
-                'icon' => 'fa fa-utensils',
-            )
-        );
-    }
 
     /**
      * Charger les scripts et styles publics
@@ -424,12 +423,43 @@ class RestaurantBookingPlugin
             );
         }
 
+        // Styles Block Unifié V2 - Chargement prioritaire
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'assets/css/quote-form-block.css')) {
+            wp_enqueue_style(
+                'restaurant-booking-quote-form-block',
+                RESTAURANT_BOOKING_PLUGIN_URL . 'assets/css/quote-form-block.css',
+                array(),
+                RESTAURANT_BOOKING_VERSION . '-' . time() // Cache busting pour forcer le rechargement
+            );
+        }
+
+        // Styles de force absolue - Priorité maximale
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'assets/css/quote-form-block-force.css')) {
+            wp_enqueue_style(
+                'restaurant-booking-quote-form-block-force',
+                RESTAURANT_BOOKING_PLUGIN_URL . 'assets/css/quote-form-block-force.css',
+                array('restaurant-booking-quote-form-block'),
+                RESTAURANT_BOOKING_VERSION . '-' . time() // Cache busting pour forcer le rechargement
+            );
+        }
+
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'assets/js/quote-form-unified.js')) {
             wp_enqueue_script(
                 'restaurant-booking-quote-form-unified',
                 RESTAURANT_BOOKING_PLUGIN_URL . 'assets/js/quote-form-unified.js',
                 array('jquery'),
                 RESTAURANT_BOOKING_VERSION,
+                true
+            );
+        }
+
+        // JavaScript Block Unifié V2 - Priorité
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'assets/js/quote-form-block-unified.js')) {
+            wp_enqueue_script(
+                'restaurant-booking-quote-form-block-unified',
+                RESTAURANT_BOOKING_PLUGIN_URL . 'assets/js/quote-form-block-unified.js',
+                array('jquery'),
+                RESTAURANT_BOOKING_VERSION . '-' . time(), // Cache busting
                 true
             );
         }

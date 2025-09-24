@@ -230,7 +230,7 @@
             $form.find('[required]').each(function() {
                 var $field = $(this);
                 if (!$field.val().trim()) {
-                    errors.push('Le champ "' + $field.attr('name') + '" est obligatoire');
+                    errors.push('Veuillez compléter le champ "' + $field.attr('name') + '"');
                     $field.addClass('error');
                     isValid = false;
                 } else {

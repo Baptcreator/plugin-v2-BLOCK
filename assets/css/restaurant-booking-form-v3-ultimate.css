@@ -1,0 +1,459 @@
+/* ========================================
+   OVERRIDE ULTIME DES STYLES DE BOUTONS
+   ======================================== */
+
+/* Override avec spécificité maximale pour éliminer la couleur rose */
+html body div .rbf-v3-container button,
+html body div .rbf-v3-container [type="button"],
+html body div .rbf-v3-container [type="submit"],
+html body div .rbf-v3-container input[type="button"],
+html body div .rbf-v3-container input[type="submit"],
+html body div .rbf-v3-container .button,
+html body div .rbf-v3-container .btn,
+html body div .rbf-v3-container .wp-button,
+html body div .rbf-v3-container .wp-core-ui .button,
+html body div .rbf-v3-container .wp-core-ui .button-primary,
+html body div .rbf-v3-container .wp-core-ui .button-secondary,
+html body div .rbf-v3-container .wp-core-ui .button-large,
+html body div .rbf-v3-container .wp-core-ui .button-small,
+html body div .rbf-v3-container .wp-core-ui .button-hero,
+html body div .rbf-v3-container .wp-core-ui .button-link,
+html body div .rbf-v3-container .wp-core-ui .button-group,
+html body div .rbf-v3-container .wp-core-ui .button-group .button,
+html body div .rbf-v3-container .wp-core-ui .button-group .button-primary,
+html body div .rbf-v3-container .wp-core-ui .button-group .button-secondary,
+html body div .rbf-v3-container .wp-core-ui .button-group .button-large,
+html body div .rbf-v3-container .wp-core-ui .button-group .button-small,
+html body div .rbf-v3-container .wp-core-ui .button-group .button-hero,
+html body div .rbf-v3-container .wp-core-ui .button-group .button-link,
+html body div .rbf-v3-container .wp-core-ui .button-group .button-group,
+html body div .rbf-v3-container .wp-core-ui .button-group .button-group .button,
+html body div .rbf-v3-container .wp-core-ui .button-group .button-group .button-primary,
+html body div .rbf-v3-container .wp-core-ui .button-group .button-group .button-secondary,
+html body div .rbf-v3-container .wp-core-ui .button-group .button-group .button-large,
+html body div .rbf-v3-container .wp-core-ui .button-group .button-group .button-small,
+html body div .rbf-v3-container .wp-core-ui .button-group .button-group .button-hero,
+html body div .rbf-v3-container .wp-core-ui .button-group .button-group .button-link {
+    background-color: #F6F2E7 !important;
+    background: #F6F2E7 !important;
+    border: 2px solid #F6F2E7 !important;
+    border-color: #F6F2E7 !important;
+    color: #243127 !important;
+    border-radius: 8px !important;
+    font-family: 'Roboto', sans-serif !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    padding: 12px 20px !important;
+    text-align: center !important;
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    text-indent: 0 !important;
+    text-shadow: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+    z-index: auto !important;
+    transform: none !important;
+    animation: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+/* Override ultime pour tous les boutons de quantité */
+html body div .rbf-v3-container .rbf-v3-qty-btn,
+html body div .rbf-v3-container .rbf-v3-qty-minus,
+html body div .rbf-v3-container .rbf-v3-qty-plus,
+html body div .rbf-v3-container button.rbf-v3-qty-btn,
+html body div .rbf-v3-container button.rbf-v3-qty-minus,
+html body div .rbf-v3-container button.rbf-v3-qty-plus,
+html body div .rbf-v3-container [type="button"].rbf-v3-qty-btn,
+html body div .rbf-v3-container [type="button"].rbf-v3-qty-minus,
+html body div .rbf-v3-container [type="button"].rbf-v3-qty-plus {
+    background: #F6F2E7 !important;
+    background-color: #F6F2E7 !important;
+    border: 2px solid #F6F2E7 !important;
+    border-color: #F6F2E7 !important;
+    color: #243127 !important;
+    border-radius: 8px !important;
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    user-select: none !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    text-indent: 0 !important;
+    text-shadow: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+    z-index: auto !important;
+    transform: none !important;
+    animation: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+/* États hover et active pour les boutons de quantité */
+html body div .rbf-v3-container .rbf-v3-qty-btn:hover:not(:disabled),
+html body div .rbf-v3-container .rbf-v3-qty-minus:hover:not(:disabled),
+html body div .rbf-v3-container .rbf-v3-qty-plus:hover:not(:disabled),
+html body div .rbf-v3-container button.rbf-v3-qty-btn:hover:not(:disabled),
+html body div .rbf-v3-container button.rbf-v3-qty-minus:hover:not(:disabled),
+html body div .rbf-v3-container button.rbf-v3-qty-plus:hover:not(:disabled),
+html body div .rbf-v3-container [type="button"].rbf-v3-qty-btn:hover:not(:disabled),
+html body div .rbf-v3-container [type="button"].rbf-v3-qty-minus:hover:not(:disabled),
+html body div .rbf-v3-container [type="button"].rbf-v3-qty-plus:hover:not(:disabled) {
+    background: #FFB404 !important;
+    background-color: #FFB404 !important;
+    border-color: #FFB404 !important;
+    color: #FFFFFF !important;
+}
+
+html body div .rbf-v3-container .rbf-v3-qty-btn:active:not(:disabled),
+html body div .rbf-v3-container .rbf-v3-qty-minus:active:not(:disabled),
+html body div .rbf-v3-container .rbf-v3-qty-plus:active:not(:disabled),
+html body div .rbf-v3-container button.rbf-v3-qty-btn:active:not(:disabled),
+html body div .rbf-v3-container button.rbf-v3-qty-minus:active:not(:disabled),
+html body div .rbf-v3-container button.rbf-v3-qty-plus:active:not(:disabled),
+html body div .rbf-v3-container [type="button"].rbf-v3-qty-btn:active:not(:disabled),
+html body div .rbf-v3-container [type="button"].rbf-v3-qty-minus:active:not(:disabled),
+html body div .rbf-v3-container [type="button"].rbf-v3-qty-plus:active:not(:disabled) {
+    background: #FFB404 !important;
+    background-color: #FFB404 !important;
+    border-color: #FFB404 !important;
+    color: #FFFFFF !important;
+    transform: scale(0.95) !important;
+}
+
+/* Override ultime pour les boutons primaires */
+html body div .rbf-v3-container .rbf-v3-btn-primary,
+html body div .rbf-v3-container button.rbf-v3-btn-primary,
+html body div .rbf-v3-container [type="button"].rbf-v3-btn-primary,
+html body div .rbf-v3-container [type="submit"].rbf-v3-btn-primary {
+    background: #243127 !important;
+    background-color: #243127 !important;
+    border: 2px solid #243127 !important;
+    border-color: #243127 !important;
+    color: #FFFFFF !important;
+    border-radius: 8px !important;
+    font-family: 'Roboto', sans-serif !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    padding: 12px 20px !important;
+    text-align: center !important;
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    text-indent: 0 !important;
+    text-shadow: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+    z-index: auto !important;
+    transform: none !important;
+    animation: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+/* États hover et active pour les boutons primaires */
+html body div .rbf-v3-container .rbf-v3-btn-primary:hover:not(:disabled),
+html body div .rbf-v3-container button.rbf-v3-btn-primary:hover:not(:disabled),
+html body div .rbf-v3-container [type="button"].rbf-v3-btn-primary:hover:not(:disabled),
+html body div .rbf-v3-container [type="submit"].rbf-v3-btn-primary:hover:not(:disabled) {
+    background: #FFB404 !important;
+    background-color: #FFB404 !important;
+    border-color: #FFB404 !important;
+    color: #FFFFFF !important;
+}
+
+html body div .rbf-v3-container .rbf-v3-btn-primary:active:not(:disabled),
+html body div .rbf-v3-container button.rbf-v3-btn-primary:active:not(:disabled),
+html body div .rbf-v3-container [type="button"].rbf-v3-btn-primary:active:not(:disabled),
+html body div .rbf-v3-container [type="submit"].rbf-v3-btn-primary:active:not(:disabled) {
+    background: #FFB404 !important;
+    background-color: #FFB404 !important;
+    border-color: #FFB404 !important;
+    color: #FFFFFF !important;
+    transform: scale(0.95) !important;
+}
+
+/* Override ultime pour les boutons secondaires */
+html body div .rbf-v3-container .rbf-v3-btn-secondary,
+html body div .rbf-v3-container button.rbf-v3-btn-secondary,
+html body div .rbf-v3-container [type="button"].rbf-v3-btn-secondary,
+html body div .rbf-v3-container [type="submit"].rbf-v3-btn-secondary {
+    background: #EF3D1D !important;
+    background-color: #EF3D1D !important;
+    border: 2px solid #EF3D1D !important;
+    border-color: #EF3D1D !important;
+    color: #FFFFFF !important;
+    border-radius: 8px !important;
+    font-family: 'Roboto', sans-serif !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    padding: 12px 20px !important;
+    text-align: center !important;
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    text-indent: 0 !important;
+    text-shadow: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+    z-index: auto !important;
+    transform: none !important;
+    animation: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+/* États hover et active pour les boutons secondaires */
+html body div .rbf-v3-container .rbf-v3-btn-secondary:hover:not(:disabled),
+html body div .rbf-v3-container button.rbf-v3-btn-secondary:hover:not(:disabled),
+html body div .rbf-v3-container [type="button"].rbf-v3-btn-secondary:hover:not(:disabled),
+html body div .rbf-v3-container [type="submit"].rbf-v3-btn-secondary:hover:not(:disabled) {
+    background: #243127 !important;
+    background-color: #243127 !important;
+    border-color: #243127 !important;
+    color: #FFFFFF !important;
+}
+
+html body div .rbf-v3-container .rbf-v3-btn-secondary:active:not(:disabled),
+html body div .rbf-v3-container button.rbf-v3-btn-secondary:active:not(:disabled),
+html body div .rbf-v3-container [type="button"].rbf-v3-btn-secondary:active:not(:disabled),
+html body div .rbf-v3-container [type="submit"].rbf-v3-btn-secondary:active:not(:disabled) {
+    background: #243127 !important;
+    background-color: #243127 !important;
+    border-color: #243127 !important;
+    color: #FFFFFF !important;
+    transform: scale(0.95) !important;
+}
+
+/* ========================================
+   STYLES SPÉCIFIQUES POUR LES ONGLETS DE BOISSONS
+   ======================================== */
+
+/* Override spécifique pour les onglets de boissons - État normal */
+html body div .rbf-v3-container .rbf-v3-tab-btn,
+html body div .rbf-v3-container button.rbf-v3-tab-btn,
+html body div .rbf-v3-container [type="button"].rbf-v3-tab-btn {
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    border: 2px solid #243127 !important;
+    border-color: #243127 !important;
+    color: #243127 !important;
+    border-radius: 8px !important;
+    font-family: 'Roboto', sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    padding: 12px 20px !important;
+    text-align: center !important;
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    text-indent: 0 !important;
+    text-shadow: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+    z-index: auto !important;
+    transform: none !important;
+    animation: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    min-height: 48px !important;
+    gap: 8px !important;
+}
+
+/* Override spécifique pour les onglets de boissons - État hover */
+html body div .rbf-v3-container .rbf-v3-tab-btn:hover:not(:disabled),
+html body div .rbf-v3-container button.rbf-v3-tab-btn:hover:not(:disabled),
+html body div .rbf-v3-container [type="button"].rbf-v3-tab-btn:hover:not(:disabled) {
+    background: #243127 !important;
+    background-color: #243127 !important;
+    border-color: #243127 !important;
+    color: #FFFFFF !important;
+}
+
+/* Override spécifique pour les onglets de boissons - État actif */
+html body div .rbf-v3-container .rbf-v3-tab-btn.active,
+html body div .rbf-v3-container button.rbf-v3-tab-btn.active,
+html body div .rbf-v3-container [type="button"].rbf-v3-tab-btn.active {
+    background: #243127 !important;
+    background-color: #243127 !important;
+    border-color: #243127 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ========================================
+   OVERRIDE POUR LA SECTION DES PRODUITS
+   ======================================== */
+
+/* Supprimer SEULEMENT le background de la section des produits dans l'étape des boissons */
+html body div .rbf-v3-container .rbf-v3-step-content[data-step="5"] .rbf-v3-product-section {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Assurer que le contenu des boissons a le bon background et les coins arrondis */
+html body div .rbf-v3-container .rbf-v3-drinks-content {
+    background: #F6F2E7 !important;
+    background-color: #F6F2E7 !important;
+    border-radius: 16px !important;
+    padding: 32px !important;
+}
+
+/* Correction pour le message info dans l'étape des boissons - même largeur que les buffets */
+html body div .rbf-v3-container .rbf-v3-step-content[data-step="5"] .rbf-v3-product-section .rbf-v3-message.info {
+    margin: calc(-1 * var(--rbf-v3-spacing-lg)) !important;
+    margin-bottom: var(--rbf-v3-spacing-lg) !important;
+    width: calc(100% + 2 * var(--rbf-v3-spacing-lg)) !important;
+}
+
+/* Restaurer les backgrounds beige pour toutes les autres sections */
+html body div .rbf-v3-container .rbf-v3-product-section {
+    background: #F6F2E7 !important;
+    background-color: #F6F2E7 !important;
+}
+
+html body div .rbf-v3-container .rbf-v3-beverages-section,
+html body div .rbf-v3-container .rbf-v3-mini-boss-products,
+html body div .rbf-v3-container .rbf-v3-accompaniments-section {
+    background: #F6F2E7 !important;
+    background-color: #F6F2E7 !important;
+}
+
+/* Amélioration des sélecteurs de quantité pour les boissons */
+html body div .rbf-v3-container .rbf-v3-qty-input {
+    width: 50px !important;
+    /* Masquer les flèches natives des inputs number */
+    -moz-appearance: textfield !important;
+    flex-shrink: 0 !important;
+}
+
+/* Masquer les flèches natives sur Chrome, Safari, Edge */
+html body div .rbf-v3-container .rbf-v3-qty-input::-webkit-outer-spin-button,
+html body div .rbf-v3-container .rbf-v3-qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+/* Amélioration globale des sélecteurs de quantité */
+html body div .rbf-v3-container .rbf-v3-quantity-selector {
+    border: none !important;
+    background: transparent !important;
+    width: auto !important;
+    max-width: 150px !important;
+    gap: 4px !important;
+}
+
+html body div .rbf-v3-container .rbf-v3-qty-btn {
+    width: 32px !important;
+    height: 32px !important;
+    background: var(--rbf-v3-green) !important;
+    border: 2px solid var(--rbf-v3-green) !important;
+    color: var(--rbf-v3-white) !important;
+    border-radius: var(--rbf-v3-radius-sm) !important;
+    flex-shrink: 0 !important;
+}
+
+html body div .rbf-v3-container .rbf-v3-qty-btn:hover {
+    background: var(--rbf-v3-orange) !important;
+    border-color: var(--rbf-v3-orange) !important;
+}
+
+/* Amélioration de l'espace pour les sélecteurs de quantité sur mobile */
+@media (max-width: 768px) {
+    html body div .rbf-v3-container .rbf-v3-quantity-selector {
+        width: 100% !important;
+        max-width: 160px !important;
+        margin: 0 auto !important;
+        gap: 6px !important;
+    }
+    
+    html body div .rbf-v3-container .rbf-v3-qty-btn {
+        min-width: 36px !important;
+        min-height: 36px !important;
+        font-size: 18px !important;
+    }
+}

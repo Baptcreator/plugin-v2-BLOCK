@@ -1,0 +1,270 @@
+/**
+ * Styles CSS spécifiques pour l'éditeur Elementor
+ * Isolation complète du formulaire Block Unifié V2
+ * 
+ * @package RestaurantBooking
+ * @version 2.0.0
+ */
+
+/* Reset complet pour l'éditeur Elementor */
+.elementor-editor-active .restaurant-plugin-container,
+.elementor-editor-active .restaurant-plugin-container *,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container *,
+.restaurant-plugin-editor-preview,
+.restaurant-plugin-editor-preview * {
+    all: unset !important;
+    box-sizing: border-box !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Variables CSS pour l'éditeur */
+.elementor-editor-active,
+.elementor-widget-restaurant_booking_quote_form_block_unified {
+    --restaurant-primary: #243127 !important;
+    --restaurant-secondary: #FFB404 !important;
+    --restaurant-accent: #EF3D1D !important;
+    --restaurant-white: #FFFFFF !important;
+    --restaurant-light: #F6F2E7 !important;
+    --restaurant-black: #000000 !important;
+}
+
+/* Conteneur principal pour l'éditeur */
+.elementor-editor-active .restaurant-plugin-container,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container,
+.restaurant-plugin-editor-preview {
+    display: block !important;
+    font-family: 'FatKat', Impact, 'Arial Black', Arial, sans-serif !important;
+    max-width: 900px !important;
+    margin: 0 auto !important;
+    background: var(--restaurant-light, #F6F2E7) !important;
+    border-radius: 20px !important;
+    padding: 30px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+    position: relative !important;
+    isolation: isolate !important;
+    color: var(--restaurant-black, #000000) !important;
+    line-height: 1.6 !important;
+    width: 100% !important;
+    min-height: 400px !important;
+}
+
+/* Éléments de base */
+.elementor-editor-active .restaurant-plugin-container div,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container div,
+.restaurant-plugin-editor-preview div {
+    display: block !important;
+}
+
+.elementor-editor-active .restaurant-plugin-container button,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container button,
+.restaurant-plugin-editor-preview button {
+    display: inline-block !important;
+    cursor: pointer !important;
+}
+
+.elementor-editor-active .restaurant-plugin-container h1,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container h1,
+.restaurant-plugin-editor-preview h1 {
+    display: block !important;
+    font-family: 'FatKat', Impact, 'Arial Black', Arial, sans-serif !important;
+    font-size: 2rem !important;
+    font-weight: 900 !important;
+    color: var(--restaurant-primary, #243127) !important;
+    background: var(--restaurant-light, #F6F2E7) !important;
+    text-transform: uppercase !important;
+    margin: 0 0 15px 0 !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3) !important;
+    line-height: 1.2 !important;
+    padding: 15px 20px !important;
+    border-radius: 10px !important;
+}
+
+.elementor-editor-active .restaurant-plugin-container p,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container p,
+.restaurant-plugin-editor-preview p {
+    display: block !important;
+    font-size: 1.2rem !important;
+    color: var(--restaurant-primary, #243127) !important;
+    margin: 0 0 20px 0 !important;
+    opacity: 0.8 !important;
+}
+
+.elementor-editor-active .restaurant-plugin-container h4,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container h4,
+.restaurant-plugin-editor-preview h4 {
+    display: block !important;
+    font-family: 'FatKat', Impact, 'Arial Black', Arial, sans-serif !important;
+    font-size: 1.3rem !important;
+    color: var(--restaurant-primary, #243127) !important;
+    margin: 0 0 15px 0 !important;
+    text-align: center !important;
+}
+
+/* En-tête du formulaire */
+.elementor-editor-active .restaurant-plugin-form-header,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-form-header,
+.restaurant-plugin-editor-preview .restaurant-plugin-form-header {
+    text-align: center !important;
+    margin-bottom: 30px !important;
+}
+
+/* Grille des services - Force le grid */
+.elementor-editor-active .restaurant-plugin-container > div:nth-child(2),
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container > div:nth-child(2) {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+    gap: 20px !important;
+    margin: 30px 0 !important;
+}
+
+/* Cartes de service */
+.elementor-editor-active .restaurant-plugin-container > div:nth-child(2) > div,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container > div:nth-child(2) > div {
+    background: #FFFFFF !important;
+    border-radius: 15px !important;
+    padding: 25px !important;
+    text-align: center !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
+    border: 2px solid transparent !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Icônes des services */
+.elementor-editor-active .restaurant-plugin-container > div:nth-child(2) > div > div:first-child,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container > div:nth-child(2) > div > div:first-child {
+    font-size: 3rem !important;
+    margin-bottom: 15px !important;
+}
+
+/* Titres des services */
+.elementor-editor-active .restaurant-plugin-container > div:nth-child(2) > div > div:nth-child(2),
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container > div:nth-child(2) > div > div:nth-child(2) {
+    font-family: 'FatKat', Impact, 'Arial Black', Arial, sans-serif !important;
+    font-size: 1.5rem !important;
+    font-weight: 900 !important;
+    color: var(--restaurant-primary, #243127) !important;
+    text-transform: uppercase !important;
+    margin: 0 0 10px 0 !important;
+    line-height: 1.2 !important;
+}
+
+/* Sous-titres des services */
+.elementor-editor-active .restaurant-plugin-container > div:nth-child(2) > div > div:nth-child(3),
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container > div:nth-child(2) > div > div:nth-child(3) {
+    color: var(--restaurant-secondary, #FFB404) !important;
+    font-weight: bold !important;
+    font-size: 1.1rem !important;
+    margin: 0 0 15px 0 !important;
+}
+
+/* Descriptions des services */
+.elementor-editor-active .restaurant-plugin-container > div:nth-child(2) > div > div:nth-child(4),
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container > div:nth-child(2) > div > div:nth-child(4) {
+    color: var(--restaurant-primary, #243127) !important;
+    margin: 0 0 20px 0 !important;
+    line-height: 1.5 !important;
+    opacity: 0.8 !important;
+}
+
+/* Boutons - Harmonisés avec la version publique */
+.elementor-editor-active .restaurant-plugin-container button,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container button,
+.restaurant-plugin-editor-preview button,
+.elementor-editor-active .restaurant-plugin-btn-primary,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-btn-primary {
+    background: var(--restaurant-primary, #243127) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    padding: 15px 40px !important;
+    border-radius: 30px !important;
+    font-family: 'FatKat', Impact, 'Arial Black', Arial, sans-serif !important;
+    font-weight: 900 !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    box-shadow: 0 6px 20px rgba(36, 49, 39, 0.4) !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+    letter-spacing: 1px !important;
+    min-width: 150px !important;
+    transition: all 0.3s ease !important;
+    outline: none !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3) !important;
+}
+
+.elementor-editor-active .restaurant-plugin-container button:hover,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container button:hover,
+.restaurant-plugin-editor-preview button:hover,
+.elementor-editor-active .restaurant-plugin-btn-primary:hover,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-btn-primary:hover {
+    background: var(--restaurant-secondary, #FFB404) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important;
+}
+
+/* Calculateur de prix */
+.elementor-editor-active .restaurant-plugin-container > div:last-child,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container > div:last-child {
+    background: #FFFFFF !important;
+    border-radius: 15px !important;
+    padding: 20px !important;
+    margin-top: 30px !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
+    border: 2px solid var(--restaurant-secondary, #FFB404) !important;
+}
+
+/* Total estimatif */
+.elementor-editor-active .restaurant-plugin-container > div:last-child > div:nth-child(2),
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container > div:last-child > div:nth-child(2) {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 15px 0 !important;
+    border-top: 2px solid var(--restaurant-secondary, #FFB404) !important;
+    margin-top: 10px !important;
+    font-family: 'FatKat', Impact, 'Arial Black', Arial, sans-serif !important;
+    font-weight: 900 !important;
+    font-size: 1.2rem !important;
+    color: var(--restaurant-primary, #243127) !important;
+}
+
+/* Texte petit */
+.elementor-editor-active .restaurant-plugin-container > div:last-child > div:last-child,
+.elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container > div:last-child > div:last-child {
+    font-size: 0.9rem !important;
+    opacity: 0.7 !important;
+    margin-top: 10px !important;
+    text-align: center !important;
+}
+
+/* Masquer les éléments non nécessaires dans l'éditeur */
+.elementor-editor-active .restaurant-plugin-dynamic-steps,
+.elementor-editor-active .restaurant-plugin-messages,
+.elementor-editor-active .restaurant-plugin-form-navigation,
+.elementor-editor-active .restaurant-plugin-loading-overlay {
+    display: none !important;
+}
+
+/* Responsive pour l'éditeur */
+@media (max-width: 768px) {
+    .elementor-editor-active .restaurant-plugin-container,
+    .elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container,
+    .restaurant-plugin-editor-preview {
+        padding: 20px !important;
+    }
+    
+    .elementor-editor-active .restaurant-plugin-container h1,
+    .elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container h1,
+    .restaurant-plugin-editor-preview h1 {
+        font-size: 2rem !important;
+    }
+    
+    .elementor-editor-active .restaurant-plugin-container > div:nth-child(2),
+    .elementor-widget-restaurant_booking_quote_form_block_unified .restaurant-plugin-container > div:nth-child(2) {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+    }
+}

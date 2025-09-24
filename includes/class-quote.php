@@ -56,7 +56,13 @@ class RestaurantBooking_Quote
         $required_fields = array('service_type', 'event_date', 'guest_count');
         foreach ($required_fields as $field) {
             if (!isset($data[$field]) || empty($data[$field])) {
-                return new WP_Error('missing_field', sprintf(__('Le champ %s est obligatoire', 'restaurant-booking'), $field));
+                $field_messages = array(
+                    'service_type' => __('Veuillez sélectionner un service', 'restaurant-booking'),
+                    'event_date' => __('Veuillez compléter la date de l\'événement', 'restaurant-booking'),
+                    'guest_count' => __('Veuillez indiquer le nombre de convives', 'restaurant-booking')
+                );
+                $message = isset($field_messages[$field]) ? $field_messages[$field] : sprintf(__('Veuillez compléter le champ %s', 'restaurant-booking'), $field);
+                return new WP_Error('missing_field', $message);
             }
         }
 

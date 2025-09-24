@@ -121,7 +121,7 @@ msgid "Diagnostics complets"
 msgstr "Diagnostics complets"
 
 msgid "Le champ %s est obligatoire"
-msgstr "Le champ %s est obligatoire"
+msgstr "Veuillez compléter le champ %s"
 
 msgid "Erreur lors de la création du devis"
 msgstr "Erreur lors de la création du devis"

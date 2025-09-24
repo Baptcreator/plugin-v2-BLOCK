@@ -343,7 +343,7 @@
                 if (!value) {
                     isValid = false;
                     $field.addClass('error');
-                    errors.push(`Le champ "${$field.prev('label').text()}" est obligatoire.`);
+                    errors.push(`Veuillez compléter le champ "${$field.prev('label').text()}".`);
                 } else {
                     $field.removeClass('error');
                 }

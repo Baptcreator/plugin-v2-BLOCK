@@ -221,6 +221,9 @@ class RestaurantBooking_Beverages_Kegs_Admin
      */
     public function display_form()
     {
+        // Charger les scripts de la médiathèque WordPress
+        wp_enqueue_media();
+        
         $product_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
         $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'add';
         $product = null;

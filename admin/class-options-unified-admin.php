@@ -73,6 +73,25 @@ class RestaurantBooking_Options_Unified_Admin
         'final_message' => 'Votre devis est d\'ores et déjà disponible dans votre boîte mail, la suite ? Block va prendre contact avec vous afin d\'affiner celui-ci et de créer avec vous toute l\'expérience dont vous rêvez',
         'comment_section_text' => '1 question, 1 souhait, n\'hésitez pas de nous en fait part, on en parle, on....',
         
+        // Textes du widget/shortcode
+        'widget_title' => 'Demande de Devis Privatisation',
+        'widget_subtitle' => 'Choisissez votre service et obtenez votre devis personnalisé',
+        'service_selection_title' => 'Choisissez votre service',
+        
+        // Textes carte Restaurant
+        'restaurant_card_title' => 'PRIVATISATION DU RESTAURANT',
+        'restaurant_card_subtitle' => 'De 10 à 30 personnes',
+        'restaurant_card_description' => 'Privatisez notre restaurant pour vos événements intimes et profitez d\'un service personnalisé dans un cadre chaleureux.',
+        
+        // Textes carte Remorque
+        'remorque_card_title' => 'Privatisation de la remorque Block',
+        'remorque_card_subtitle' => 'À partir de 20 personnes',
+        'remorque_card_description' => 'Notre remorque mobile se déplace pour vos événements extérieurs et grandes réceptions.',
+        
+        // Messages système
+        'success_message' => 'Votre devis est d\'ores et déjà disponible dans votre boîte mail',
+        'loading_message' => 'Génération de votre devis en cours...',
+        
         // Descriptions forfaits
         'restaurant_forfait_description' => 'Mise à disposition des murs de Block|Notre équipe salle + cuisine assurant la prestation|Présentation + mise en place buffets, selon vos choix|Mise à disposition vaisselle + verrerie|Entretien + nettoyage',
         'remorque_forfait_description' => 'Notre équipe salle + cuisine assurant la prestation|Déplacement et installation de la remorque BLOCK (aller et retour)|Présentation + mise en place buffets, selon vos choix|La fourniture de vaisselle jetable recyclable|La fourniture de verrerie (en cas d\'ajout de boisson)'
@@ -87,6 +106,12 @@ class RestaurantBooking_Options_Unified_Admin
         if (isset($_POST['save_options']) && wp_verify_nonce($_POST['_wpnonce'], 'save_unified_options')) {
             $this->save_options();
             echo '<div class="notice notice-success is-dismissible"><p>' . __('Options sauvegardées avec succès !', 'restaurant-booking') . '</p></div>';
+        }
+        
+        // Traitement du nettoyage des échappements
+        if (isset($_POST['clean_escaped_quotes']) && wp_verify_nonce($_POST['_wpnonce'], 'save_unified_options')) {
+            $this->clean_all_escaped_quotes();
+            echo '<div class="notice notice-success is-dismissible"><p>' . __('Nettoyage des échappements terminé !', 'restaurant-booking') . '</p></div>';
         }
 
         $options = $this->get_options();
@@ -465,10 +490,108 @@ class RestaurantBooking_Options_Unified_Admin
                         </div>
                     </div>
 
+                    <!-- Section 5: Textes du Formulaire (Shortcode) -->
+                    <div class="options-section">
+                        <h2>📝 <?php _e('Textes du Formulaire de Devis', 'restaurant-booking'); ?></h2>
+                        <p class="description"><?php _e('Ces textes sont utilisés dans le shortcode [restaurant_booking_form]', 'restaurant-booking'); ?></p>
+                        
+                        <div class="options-group">
+                            <h3><?php _e('En-tête du formulaire', 'restaurant-booking'); ?></h3>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php _e('Titre principal', 'restaurant-booking'); ?></th>
+                                    <td>
+                                        <input type="text" name="widget_title" value="<?php echo esc_attr($options['widget_title']); ?>" class="large-text" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php _e('Sous-titre', 'restaurant-booking'); ?></th>
+                                    <td>
+                                        <textarea name="widget_subtitle" rows="2" class="large-text"><?php echo esc_textarea($options['widget_subtitle']); ?></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php _e('Titre sélection service', 'restaurant-booking'); ?></th>
+                                    <td>
+                                        <input type="text" name="service_selection_title" value="<?php echo esc_attr($options['service_selection_title']); ?>" class="large-text" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="options-group">
+                            <h3><?php _e('Carte Restaurant', 'restaurant-booking'); ?></h3>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php _e('Titre', 'restaurant-booking'); ?></th>
+                                    <td>
+                                        <input type="text" name="restaurant_card_title" value="<?php echo esc_attr($options['restaurant_card_title']); ?>" class="large-text" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php _e('Sous-titre', 'restaurant-booking'); ?></th>
+                                    <td>
+                                        <input type="text" name="restaurant_card_subtitle" value="<?php echo esc_attr($options['restaurant_card_subtitle']); ?>" class="large-text" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php _e('Description', 'restaurant-booking'); ?></th>
+                                    <td>
+                                        <textarea name="restaurant_card_description" rows="3" class="large-text"><?php echo esc_textarea($options['restaurant_card_description']); ?></textarea>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="options-group">
+                            <h3><?php _e('Carte Remorque', 'restaurant-booking'); ?></h3>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php _e('Titre', 'restaurant-booking'); ?></th>
+                                    <td>
+                                        <input type="text" name="remorque_card_title" value="<?php echo esc_attr($options['remorque_card_title']); ?>" class="large-text" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php _e('Sous-titre', 'restaurant-booking'); ?></th>
+                                    <td>
+                                        <input type="text" name="remorque_card_subtitle" value="<?php echo esc_attr($options['remorque_card_subtitle']); ?>" class="large-text" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php _e('Description', 'restaurant-booking'); ?></th>
+                                    <td>
+                                        <textarea name="remorque_card_description" rows="3" class="large-text"><?php echo esc_textarea($options['remorque_card_description']); ?></textarea>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="options-group">
+                            <h3><?php _e('Messages système', 'restaurant-booking'); ?></h3>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php _e('Message de succès', 'restaurant-booking'); ?></th>
+                                    <td>
+                                        <textarea name="success_message" rows="2" class="large-text"><?php echo esc_textarea($options['success_message']); ?></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php _e('Message de chargement', 'restaurant-booking'); ?></th>
+                                    <td>
+                                        <input type="text" name="loading_message" value="<?php echo esc_attr($options['loading_message']); ?>" class="large-text" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
                 </div>
 
                 <p class="submit">
                     <input type="submit" name="save_options" class="button-primary" value="<?php _e('Sauvegarder toutes les options', 'restaurant-booking'); ?>" />
+                    <input type="submit" name="clean_escaped_quotes" class="button-secondary" value="<?php _e('Nettoyer les échappements multiples', 'restaurant-booking'); ?>" style="margin-left: 10px;" 
+                           onclick="return confirm('<?php _e('Êtes-vous sûr de vouloir nettoyer les échappements multiples ? Cette action corrigera les apostrophes mal échappées.', 'restaurant-booking'); ?>');" />
                 </p>
             </form>
         </div>
@@ -526,6 +649,14 @@ class RestaurantBooking_Options_Unified_Admin
     public function get_options()
     {
         $saved_options = get_option('restaurant_booking_unified_options', array());
+        
+        // Nettoyer les échappements multiples dans les options sauvegardées
+        foreach ($saved_options as $key => $value) {
+            if (is_string($value)) {
+                $saved_options[$key] = $this->clean_escaped_quotes($value);
+            }
+        }
+        
         return array_merge($this->default_options, $saved_options);
     }
 
@@ -545,12 +676,51 @@ class RestaurantBooking_Options_Unified_Admin
                 if (is_numeric($default_value)) {
                     $options[$key] = floatval($value);
                 } else {
+                    // Nettoyer les échappements multiples pour les textes
+                    $value = $this->clean_escaped_quotes($value);
                     $options[$key] = $value;
                 }
             }
         }
         
         update_option('restaurant_booking_unified_options', $options);
+    }
+    
+    /**
+     * Nettoyer les échappements multiples d'apostrophes
+     */
+    private function clean_escaped_quotes($text)
+    {
+        // Remplacer les multiples échappements par une seule apostrophe
+        $text = preg_replace('/\\\\+\'/', "'", $text);
+        $text = preg_replace('/\\\\+\"/', '"', $text);
+        
+        return $text;
+    }
+    
+    /**
+     * Nettoyer tous les échappements dans les options sauvegardées
+     */
+    private function clean_all_escaped_quotes()
+    {
+        $options = get_option('restaurant_booking_unified_options', array());
+        $updated = false;
+        
+        foreach ($options as $key => $value) {
+            if (is_string($value)) {
+                $cleaned_value = $this->clean_escaped_quotes($value);
+                if ($cleaned_value !== $value) {
+                    $options[$key] = $cleaned_value;
+                    $updated = true;
+                }
+            }
+        }
+        
+        if ($updated) {
+            update_option('restaurant_booking_unified_options', $options);
+        }
+        
+        return $updated;
     }
 
     /**

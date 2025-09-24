@@ -137,7 +137,7 @@ msgstr ""
 
 #: includes/class-quote.php:50
 msgid "Le champ %s est obligatoire"
-msgstr ""
+msgstr "Veuillez compléter le champ %s"
 
 #: includes/class-quote.php:60
 msgid "Erreur lors de la création du devis"

@@ -126,6 +126,18 @@ class RestaurantBooking_Ajax_Handler_Block_Unified
         add_action('wp_ajax_restaurant_plugin_get_signature_products', [$this, 'get_signature_products']);
         add_action('wp_ajax_nopriv_restaurant_plugin_get_signature_products', [$this, 'get_signature_products']);
 
+        // Produits Mini Boss
+        add_action('wp_ajax_restaurant_plugin_get_mini_boss_products', [$this, 'get_mini_boss_products']);
+        add_action('wp_ajax_nopriv_restaurant_plugin_get_mini_boss_products', [$this, 'get_mini_boss_products']);
+
+        // Produits buffet
+        add_action('wp_ajax_restaurant_plugin_get_buffet_products', [$this, 'get_buffet_products']);
+        add_action('wp_ajax_nopriv_restaurant_plugin_get_buffet_products', [$this, 'get_buffet_products']);
+
+        // Boissons par catégorie
+        add_action('wp_ajax_restaurant_plugin_get_beverages', [$this, 'get_beverages']);
+        add_action('wp_ajax_nopriv_restaurant_plugin_get_beverages', [$this, 'get_beverages']);
+
         // Soumission finale
         add_action('wp_ajax_restaurant_plugin_submit_quote', [$this, 'submit_quote']);
         add_action('wp_ajax_nopriv_restaurant_plugin_submit_quote', [$this, 'submit_quote']);
@@ -205,17 +217,20 @@ class RestaurantBooking_Ajax_Handler_Block_Unified
             ? __('Pourquoi privatiser notre restaurant ?', 'restaurant-booking')
             : __('Pourquoi privatiser notre remorque Block ?', 'restaurant-booking');
 
+        // ÉTAPES RÉELLES avec boissons visibles
         $process_steps = ($service_type === 'restaurant') ? [
             '1. Forfait de base',
-            '2. Choix du formule repas (personnalisable)',
-            '3. Choix des boissons (optionnel)',
-            '4. Coordonnées / Contact'
+            '2. Choix du formule repas (personnalisable)', 
+            '3. Choix des buffets',
+            '4. Choix des boissons (optionnel)',
+            '5. Récapitulatif & Contact'
         ] : [
             '1. Forfait de base',
             '2. Choix du formule repas (personnalisable)',
-            '3. Choix des boissons (optionnel)',
-            '4. Choix des options (optionnel)',
-            '5. Coordonnées/Contact'
+            '3. Choix des buffets', 
+            '4. Choix des boissons (optionnel)',
+            '5. Choix des options (optionnel)',
+            '6. Récapitulatif & Contact'
         ];
 
         $content = '<div class="restaurant-plugin-intro-section">';
@@ -228,11 +243,6 @@ class RestaurantBooking_Ajax_Handler_Block_Unified
         }
         
         $content .= '</ul>';
-        $content .= '<div class="restaurant-plugin-text-center restaurant-plugin-mt-4">';
-        $content .= '<button type="button" class="restaurant-plugin-btn-accent start-quote-button">';
-        $content .= __('COMMENCER MON DEVIS', 'restaurant-booking');
-        $content .= '</button>';
-        $content .= '</div>';
         $content .= '</div>';
         $content .= '</div>';
 
@@ -271,7 +281,12 @@ class RestaurantBooking_Ajax_Handler_Block_Unified
         $content .= '<div class="restaurant-plugin-form-group">';
         $content .= '<label for="guest_count" class="required">' . __('Nombre de convives', 'restaurant-booking') . '</label>';
         $content .= '<input type="number" id="guest_count" name="guest_count" required min="' . $min_guests . '" max="' . $max_guests . '" placeholder="' . $min_guests . '">';
-        $content .= '<small class="restaurant-plugin-small-text">' . sprintf(__('Entre %d et %d personnes', 'restaurant-booking'), $min_guests, $max_guests) . '</small>';
+        
+        // Utiliser le texte depuis les options unifiées
+        $guests_text_key = $service_type . '_guests_text';
+        $guests_text = isset($this->options[$guests_text_key]) ? $this->options[$guests_text_key] : sprintf(__('Entre %d et %d personnes', 'restaurant-booking'), $min_guests, $max_guests);
+        
+        $content .= '<small class="restaurant-plugin-small-text">' . esc_html($guests_text) . '</small>';
         $content .= '</div>';
         $content .= '</div>';
 
@@ -304,21 +319,30 @@ class RestaurantBooking_Ajax_Handler_Block_Unified
             ? __('FORFAIT DE BASE PRIVATISATION RESTO', 'restaurant-booking')
             : __('FORFAIT DE BASE PRIVATISATION REMORQUE BLOCK', 'restaurant-booking');
 
-        $forfait_items = ($service_type === 'restaurant') ? [
-            'Mise à disposition des murs de Block',
-            '[DURATION]H de privatisation (service inclus, hors installation et nettoyage)',
-            'Notre équipe salle + cuisine assurant la prestation',
-            'Présentation + mise en place buffets, selon vos choix',
-            'Mise à disposition vaisselle + verrerie',
-            'Entretien + nettoyage'
-        ] : [
-            '[DURATION]H de privatisation (service inclus, hors installation et nettoyage)',
-            'Notre équipe salle + cuisine assurant la prestation',
-            'Déplacement et installation de la remorque BLOCK (aller et retour)',
-            'Présentation + mise en place buffets, selon vos choix',
-            'La fourniture de vaisselle jetable recyclable',
-            'La fourniture de verrerie (en cas d\'ajout de boisson)'
-        ];
+        // Récupérer les descriptions depuis les options
+        $forfait_description_key = $service_type . '_forfait_description';
+        $forfait_description = isset($this->options[$forfait_description_key]) ? $this->options[$forfait_description_key] : '';
+        
+        if ($forfait_description) {
+            $forfait_items = explode('|', $forfait_description);
+        } else {
+            // Fallback vers les valeurs par défaut
+            $forfait_items = ($service_type === 'restaurant') ? [
+                'Mise à disposition des murs de Block',
+                '[DURATION]H de privatisation (service inclus, hors installation et nettoyage)',
+                'Notre équipe salle + cuisine assurant la prestation',
+                'Présentation + mise en place buffets, selon vos choix',
+                'Mise à disposition vaisselle + verrerie',
+                'Entretien + nettoyage'
+            ] : [
+                '[DURATION]H de privatisation (service inclus, hors installation et nettoyage)',
+                'Notre équipe salle + cuisine assurant la prestation',
+                'Déplacement et installation de la remorque BLOCK (aller et retour)',
+                'Présentation + mise en place buffets, selon vos choix',
+                'La fourniture de vaisselle jetable recyclable',
+                'La fourniture de verrerie (en cas d\'ajout de boisson)'
+            ];
+        }
 
         $content .= '<div class="restaurant-plugin-card restaurant-plugin-mt-4">';
         $content .= '<h3>' . $forfait_title . '</h3>';
@@ -418,14 +442,14 @@ class RestaurantBooking_Ajax_Handler_Block_Unified
      */
     private function generate_step_4_content($service_type, $form_data)
     {
-        $title = __('CHOIX DU/DES BUFFET(S)', 'restaurant-booking') . ' <small>(' . __('Optionnel', 'restaurant-booking') . ')</small>';
+        $title = __('CHOIX DU/DES BUFFET(S)', 'restaurant-booking');
 
         $content = '<div class="restaurant-plugin-buffets-section">';
 
         // Information
-        $content .= '<div class="restaurant-plugin-message restaurant-plugin-message-warning">';
+        $content .= '<div class="restaurant-plugin-message restaurant-plugin-message-info">';
         $content .= '<p><strong>🍽️ ' . __('Information :', 'restaurant-booking') . '</strong></p>';
-        $content .= '<p>' . __('Les buffets sont optionnels et viennent compléter vos plats signature. Vous ne pouvez choisir qu\'un seul type de buffet.', 'restaurant-booking') . '</p>';
+        $content .= '<p>' . __('Les buffets sont obligatoires et viennent compléter vos plats signature. Vous devez choisir un type de buffet.', 'restaurant-booking') . '</p>';
         $content .= '</div>';
 
         // Sélecteur de type de buffet
@@ -433,10 +457,6 @@ class RestaurantBooking_Ajax_Handler_Block_Unified
         $content .= '<h3>' . __('Choisissez votre type de buffet', 'restaurant-booking') . '</h3>';
         
         $content .= '<div class="restaurant-plugin-buffet-selector restaurant-plugin-mt-3">';
-        $content .= '<label class="restaurant-plugin-radio-option">';
-        $content .= '<input type="radio" name="buffet_type" value="none" checked>';
-        $content .= '<span>🚫 ' . __('Aucun buffet', 'restaurant-booking') . '</span>';
-        $content .= '</label>';
         $content .= '<label class="restaurant-plugin-radio-option">';
         $content .= '<input type="radio" name="buffet_type" value="sale">';
         $content .= '<span>🥗 ' . __('Buffet salé uniquement', 'restaurant-booking') . '</span>';
@@ -534,7 +554,10 @@ class RestaurantBooking_Ajax_Handler_Block_Unified
      */
     private function generate_step_6_content($service_type, $form_data)
     {
-        if ($service_type === 'remorque') {
+        if ($service_type === 'restaurant') {
+            // Récapitulatif restaurant
+            return $this->generate_recap_step($service_type, $form_data);
+        } else {
             // Options remorque
             $title = __('CHOIX DES OPTIONS', 'restaurant-booking') . ' <small>(' . __('Optionnel', 'restaurant-booking') . ')</small>';
             
@@ -579,18 +602,14 @@ class RestaurantBooking_Ajax_Handler_Block_Unified
             $content .= '</div>';
 
             $content .= '</div>';
-
-        } else {
-            // Coordonnées restaurant (étape finale)
-            return $this->generate_contact_form_content();
+            
+            return [
+                'step_number' => 6,
+                'service_type' => $service_type,
+                'title' => $title,
+                'content' => $content
+            ];
         }
-
-        return [
-            'step_number' => 6,
-            'service_type' => $service_type,
-            'title' => $title,
-            'content' => $content
-        ];
     }
 
     /**
@@ -694,35 +713,89 @@ class RestaurantBooking_Ajax_Handler_Block_Unified
         $base_price = ($service_type === 'restaurant') ? 300 : 350;
         $supplements_total = 0;
         $products_total = 0;
+        $breakdown = [];
         
         // Supplément durée
         if (isset($form_data['event_duration'])) {
             $duration = (int) $form_data['event_duration'];
             $included_duration = $this->options[$service_type . '_max_duration_included'];
             $extra_hours = max(0, $duration - $included_duration);
-            $supplements_total += $extra_hours * $this->options[$service_type . '_extra_hour_price'];
+            if ($extra_hours > 0) {
+                $duration_supplement = $extra_hours * $this->options[$service_type . '_extra_hour_price'];
+                $supplements_total += $duration_supplement;
+                $breakdown[] = [
+                    'label' => "Supplément durée ({$extra_hours}h)",
+                    'amount' => $duration_supplement
+                ];
+            }
         }
         
         // Supplément convives (remorque)
         if ($service_type === 'remorque' && isset($form_data['guest_count'])) {
             $guest_count = (int) $form_data['guest_count'];
             if ($guest_count > $this->options['remorque_staff_threshold']) {
-                $supplements_total += $this->options['remorque_staff_supplement'];
+                $staff_supplement = $this->options['remorque_staff_supplement'];
+                $supplements_total += $staff_supplement;
+                $breakdown[] = [
+                    'label' => "Supplément personnel (+{$this->options['remorque_staff_threshold']} pers)",
+                    'amount' => $staff_supplement
+                ];
             }
         }
         
         // Supplément distance (remorque)
-        if (isset($form_data['delivery_supplement'])) {
-            $supplements_total += (float) $form_data['delivery_supplement'];
+        if (isset($form_data['delivery_supplement']) && $form_data['delivery_supplement'] > 0) {
+            $delivery_supplement = (float) $form_data['delivery_supplement'];
+            $supplements_total += $delivery_supplement;
+            $breakdown[] = [
+                'label' => "Frais de livraison",
+                'amount' => $delivery_supplement
+            ];
         }
         
         // Options remorque
         if ($service_type === 'remorque') {
             if (!empty($form_data['option_tireuse'])) {
                 $supplements_total += $this->options['tireuse_price'];
+                $breakdown[] = [
+                    'label' => "Option Tireuse",
+                    'amount' => $this->options['tireuse_price']
+                ];
             }
             if (!empty($form_data['option_games'])) {
                 $supplements_total += $this->options['games_price'];
+                $breakdown[] = [
+                    'label' => "Option Jeux",
+                    'amount' => $this->options['games_price']
+                ];
+            }
+        }
+        
+        // Calcul des produits
+        if (isset($form_data['selected_products']) && is_array($form_data['selected_products'])) {
+            foreach ($form_data['selected_products'] as $category => $products) {
+                if (is_array($products)) {
+                    foreach ($products as $product_id => $product_data) {
+                        if (isset($product_data['quantity']) && $product_data['quantity'] > 0) {
+                            // Récupérer le prix du produit
+                            global $wpdb;
+                            $products_table = $wpdb->prefix . 'restaurant_products';
+                            $product = $wpdb->get_row($wpdb->prepare(
+                                "SELECT * FROM $products_table WHERE id = %d",
+                                $product_id
+                            ));
+                            
+                            if ($product) {
+                                $product_total = $product->price * $product_data['quantity'];
+                                $products_total += $product_total;
+                                $breakdown[] = [
+                                    'label' => "{$product->name} x{$product_data['quantity']}",
+                                    'amount' => $product_total
+                                ];
+                            }
+                        }
+                    }
+                }
             }
         }
         
@@ -734,7 +807,7 @@ class RestaurantBooking_Ajax_Handler_Block_Unified
             'supplements_total' => $supplements_total,
             'products_total' => $products_total,
             'total_price' => $total_price,
-            'breakdown' => []
+            'breakdown' => $breakdown
         ];
     }
 
@@ -869,11 +942,98 @@ class RestaurantBooking_Ajax_Handler_Block_Unified
             $category_table = $wpdb->prefix . 'restaurant_categories';
             $products_table = $wpdb->prefix . 'restaurant_products';
             
-            $category_slug = strtolower($signature_type);
+            // Corriger le mapping des slugs selon la structure DB
+            $category_slug = ($signature_type === 'DOG') ? 'plats-signature-dog' : 'plats-signature-croq';
             
             $category = $wpdb->get_row($wpdb->prepare(
                 "SELECT * FROM $category_table WHERE slug = %s AND is_active = 1",
                 $category_slug
+            ));
+            
+            if (!$category) {
+                wp_send_json_success(['products' => []]);
+                return;
+            }
+            
+            $products = $wpdb->get_results($wpdb->prepare(
+                "SELECT * FROM $products_table WHERE category_id = %d AND is_active = 1 ORDER BY display_order ASC",
+                $category->id
+            ));
+
+            wp_send_json_success(['products' => $products]);
+
+        } catch (Exception $e) {
+            wp_send_json_error($e->getMessage());
+        }
+    }
+
+    /**
+     * Récupérer les produits Mini Boss
+     */
+    public function get_mini_boss_products()
+    {
+        try {
+            if (!wp_verify_nonce($_POST['nonce'], 'restaurant_plugin_form')) {
+                throw new Exception(__('Erreur de sécurité', 'restaurant-booking'));
+            }
+
+            $service_type = sanitize_text_field($_POST['service_type']);
+
+            // Récupérer les produits depuis la base de données
+            global $wpdb;
+            
+            $category_table = $wpdb->prefix . 'restaurant_categories';
+            $products_table = $wpdb->prefix . 'restaurant_products';
+            
+            // Recherche plus large pour Mini Boss
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $category_table WHERE (slug LIKE %s OR slug LIKE %s OR slug LIKE %s OR slug LIKE %s OR name LIKE %s) AND is_active = 1",
+                '%mini-boss%', '%mini_boss%', '%miniboss%', '%boss%', '%Mini Boss%'
+            ));
+            
+            if (!$category) {
+                wp_send_json_success(['products' => []]);
+                return;
+            }
+            
+            $products = $wpdb->get_results($wpdb->prepare(
+                "SELECT * FROM $products_table WHERE category_id = %d AND is_active = 1 ORDER BY display_order ASC",
+                $category->id
+            ));
+
+            wp_send_json_success(['products' => $products]);
+
+        } catch (Exception $e) {
+            wp_send_json_error($e->getMessage());
+        }
+    }
+
+    /**
+     * Récupérer les produits buffet
+     */
+    public function get_buffet_products()
+    {
+        try {
+            if (!wp_verify_nonce($_POST['nonce'], 'restaurant_plugin_form')) {
+                throw new Exception(__('Erreur de sécurité', 'restaurant-booking'));
+            }
+
+            $buffet_type = sanitize_text_field($_POST['buffet_type']);
+            $service_type = sanitize_text_field($_POST['service_type']);
+
+            // Récupérer les produits depuis la base de données
+            global $wpdb;
+            
+            $category_table = $wpdb->prefix . 'restaurant_categories';
+            $products_table = $wpdb->prefix . 'restaurant_products';
+            
+            // Mapping des types de buffet vers les slugs de catégorie
+            $category_slug = ($buffet_type === 'sale') ? 'buffet-sale' : 'buffet-sucre';
+            
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $category_table WHERE slug IN (%s, %s) AND is_active = 1",
+                $category_slug,
+                str_replace('-', '_', $category_slug)
             ));
             
             if (!$category) {
@@ -1029,8 +1189,10 @@ class RestaurantBooking_Ajax_Handler_Block_Unified
         $category_table = $wpdb->prefix . 'restaurant_categories';
         $products_table = $wpdb->prefix . 'restaurant_products';
         
+        // Recherche plus large pour Mini Boss
         $category = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM $category_table WHERE slug = 'mini-boss' AND is_active = 1"
+            "SELECT * FROM $category_table WHERE (slug LIKE %s OR slug LIKE %s OR slug LIKE %s OR slug LIKE %s OR name LIKE %s) AND is_active = 1",
+            '%mini-boss%', '%mini_boss%', '%miniboss%', '%boss%', '%Mini Boss%'
         ));
         
         if (!$category) {
@@ -1081,7 +1243,7 @@ class RestaurantBooking_Ajax_Handler_Block_Unified
         $products_table = $wpdb->prefix . 'restaurant_products';
         
         $category = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM $category_table WHERE slug = 'accompaniments' AND is_active = 1"
+            "SELECT * FROM $category_table WHERE slug = 'accompagnements' AND is_active = 1"
         ));
         
         if (!$category) {
@@ -1100,25 +1262,347 @@ class RestaurantBooking_Ajax_Handler_Block_Unified
         $html = '<div class="restaurant-plugin-accompaniments-list">';
         
         foreach ($products as $product) {
-            $html .= '<div class="restaurant-plugin-accompaniment-item" data-product-id="' . $product->id . '">';
-            $html .= '<div class="accompaniment-info">';
-            $html .= '<span class="accompaniment-name">' . esc_html($product->name) . '</span>';
-            $html .= '<span class="accompaniment-price">' . number_format($product->price, 2, ',', ' ') . ' €</span>';
+            $html .= '<div class="restaurant-plugin-product-card accompaniment-card" data-product-id="' . $product->id . '">';
+            
+            // En-tête du produit
+            $html .= '<div class="product-header">';
+            $html .= '<h4 class="product-title">' . esc_html($product->name) . '</h4>';
+            if (!empty($product->description)) {
+                $html .= '<p class="product-description">' . esc_html($product->description) . '</p>';
+            }
+            $html .= '<div class="product-price">' . number_format($product->price, 2, ',', ' ') . ' €</div>';
             $html .= '</div>';
-            $html .= '<div class="accompaniment-quantity-selector">';
+            
+            // Sélecteur de quantité
+            $html .= '<div class="product-quantity-selector">';
             $html .= '<button type="button" class="qty-btn qty-minus" data-target="accompaniment_' . $product->id . '">-</button>';
             $html .= '<input type="number" class="qty-input" id="accompaniment_' . $product->id . '" name="products[accompaniments][' . $product->id . ']" value="0" min="0" max="50" data-product-id="' . $product->id . '" data-category="accompaniments">';
             $html .= '<button type="button" class="qty-btn qty-plus" data-target="accompaniment_' . $product->id . '">+</button>';
             $html .= '</div>';
+            
+            // Sous-options spécifiques pour certains accompagnements
+            if (strtolower($product->name) === 'frites' || strpos(strtolower($product->name), 'frite') !== false) {
+                $html .= $this->generate_frites_suboptions($product->id);
+            }
+            
             $html .= '</div>';
         }
         
         $html .= '</div>';
         
+        // Validation counter
+        $html .= '<div class="accompaniments-validation-info">';
+        $html .= '<p><strong>' . __('Règle :', 'restaurant-booking') . '</strong> ' . __('Minimum 1 accompagnement par personne', 'restaurant-booking') . '</p>';
+        $html .= '<div class="accompaniments-counter">';
+        $html .= '<span>' . __('Sélectionnés :', 'restaurant-booking') . ' </span>';
+        $html .= '<span class="accompaniments-count">0</span>';
+        $html .= '<span> / <span class="min-required">10</span></span>';
+        $html .= '</div>';
+        $html .= '</div>';
+        
         return $html;
+    }
+    
+    /**
+     * Générer les sous-options pour les frites
+     */
+    private function generate_frites_suboptions($frites_product_id)
+    {
+        $html = '<div class="accompaniment-suboptions" id="frites_options_' . $frites_product_id . '" style="display: none;">';
+        $html .= '<h4>' . __('Options pour les frites :', 'restaurant-booking') . '</h4>';
+        
+        // Option 1: Enrobée sauce chimichurri +1€
+        $html .= '<div class="accompaniment-suboption">';
+        $html .= '<label>';
+        $html .= '<input type="checkbox" name="frites_options[' . $frites_product_id . '][chimichurri]" value="1" data-price="1">';
+        $html .= __('Enrobée sauce chimichurri', 'restaurant-booking');
+        $html .= '</label>';
+        $html .= '<span class="suboption-price">+1,00 €</span>';
+        $html .= '<div class="suboption-quantity">';
+        $html .= '<button type="button" class="qty-btn qty-minus" data-target="chimichurri_qty_' . $frites_product_id . '">-</button>';
+        $html .= '<input type="number" class="qty-input" id="chimichurri_qty_' . $frites_product_id . '" name="frites_options[' . $frites_product_id . '][chimichurri_qty]" value="0" min="0" max="50">';
+        $html .= '<button type="button" class="qty-btn qty-plus" data-target="chimichurri_qty_' . $frites_product_id . '">+</button>';
+        $html .= '</div>';
+        $html .= '</div>';
+        
+        // Option 2: Choix des sauces
+        $html .= '<div class="accompaniment-suboption">';
+        $html .= '<h5>' . __('Choix de la sauce :', 'restaurant-booking') . '</h5>';
+        
+        $sauces = [
+            'ketchup' => __('Ketchup', 'restaurant-booking'),
+            'mayo' => __('Mayo', 'restaurant-booking'),
+            'bbq' => __('BBQ', 'restaurant-booking'),
+            'moutarde' => __('Moutarde', 'restaurant-booking')
+        ];
+        
+        foreach ($sauces as $sauce_key => $sauce_name) {
+            $html .= '<div class="sauce-option">';
+            $html .= '<label>' . $sauce_name . '</label>';
+            $html .= '<div class="suboption-quantity">';
+            $html .= '<button type="button" class="qty-btn qty-minus" data-target="sauce_' . $sauce_key . '_' . $frites_product_id . '">-</button>';
+            $html .= '<input type="number" class="qty-input" id="sauce_' . $sauce_key . '_' . $frites_product_id . '" name="frites_options[' . $frites_product_id . '][sauces][' . $sauce_key . ']" value="0" min="0" max="50">';
+            $html .= '<button type="button" class="qty-btn qty-plus" data-target="sauce_' . $sauce_key . '_' . $frites_product_id . '">+</button>';
+            $html .= '</div>';
+            $html .= '</div>';
+        }
+        
+        $html .= '</div>';
+        $html .= '</div>';
+        
+        return $html;
+    }
+
+    /**
+     * Récupérer les boissons par catégorie
+     */
+    public function get_beverages()
+    {
+        if (!wp_verify_nonce($_POST['nonce'], 'restaurant_plugin_form')) {
+            wp_send_json_error(['message' => 'Nonce invalide']);
+            return;
+        }
+
+        $category = sanitize_text_field($_POST['category']);
+        $service_type = sanitize_text_field($_POST['service_type']);
+
+        global $wpdb;
+        
+        // Tables
+        $beverages_table = $wpdb->prefix . 'restaurant_beverages';
+        $categories_table = $wpdb->prefix . 'restaurant_beverage_categories';
+        
+        // Récupérer la catégorie
+        $category_data = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $categories_table WHERE slug = %s AND is_active = 1",
+            $category
+        ));
+        
+        if (!$category_data) {
+            wp_send_json_success(['html' => '<p>Catégorie non trouvée.</p>']);
+            return;
+        }
+        
+        // Récupérer les boissons de cette catégorie
+        $beverages = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $beverages_table WHERE category_id = %d AND is_active = 1 ORDER BY name ASC",
+            $category_data->id
+        ));
+        
+        if (empty($beverages)) {
+            wp_send_json_success(['html' => '<p>Aucune boisson disponible dans cette catégorie.</p>']);
+            return;
+        }
+        
+        // Générer le HTML
+        $html = $this->generate_beverages_html($beverages, $category);
+        
+        wp_send_json_success(['html' => $html]);
+    }
+
+    /**
+     * Générer le HTML des boissons
+     */
+    private function generate_beverages_html($beverages, $category)
+    {
+        $html = '<div class="restaurant-plugin-beverages-grid">';
+        
+        foreach ($beverages as $beverage) {
+            $html .= '<div class="restaurant-plugin-beverage-card" data-beverage-id="' . $beverage->id . '">';
+            
+            // Image
+            if (!empty($beverage->image_url)) {
+                $html .= '<div class="beverage-image">';
+                $html .= '<img src="' . esc_url($beverage->image_url) . '" alt="' . esc_attr($beverage->name) . '">';
+                $html .= '</div>';
+            } else {
+                $html .= '<div class="beverage-image placeholder">🍺</div>';
+            }
+            
+            // Contenu
+            $html .= '<div class="beverage-content">';
+            $html .= '<h4 class="beverage-title">' . esc_html($beverage->name) . '</h4>';
+            
+            if (!empty($beverage->description)) {
+                $html .= '<p class="beverage-description">' . esc_html($beverage->description) . '</p>';
+            }
+            
+            // Prix et contenances
+            $sizes = json_decode($beverage->sizes, true);
+            if ($sizes && is_array($sizes)) {
+                $html .= '<div class="beverage-sizes">';
+                foreach ($sizes as $size => $price) {
+                    $html .= '<div class="beverage-size">';
+                    $html .= '<span class="size-label">' . esc_html($size) . '</span>';
+                    $html .= '<span class="size-price">' . number_format($price, 2) . ' €</span>';
+                    $html .= '<div class="beverage-quantity-selector">';
+                    $html .= '<button type="button" class="qty-btn qty-minus" data-target="beverage_' . $beverage->id . '_' . sanitize_title($size) . '">-</button>';
+                    $html .= '<input type="number" class="qty-input" name="beverages[' . $beverage->id . '][' . $size . ']" id="beverage_' . $beverage->id . '_' . sanitize_title($size) . '" value="0" min="0" data-price="' . $price . '">';
+                    $html .= '<button type="button" class="qty-btn qty-plus" data-target="beverage_' . $beverage->id . '_' . sanitize_title($size) . '">+</button>';
+                    $html .= '</div>';
+                    $html .= '</div>';
+                }
+                $html .= '</div>';
+            }
+            
+            $html .= '</div>'; // beverage-content
+            $html .= '</div>'; // beverage-card
+        }
+        
+        $html .= '</div>'; // beverages-grid
+        
+        return $html;
+    }
+
+    /**
+     * Générer l'étape récapitulatif - AVEC CONTENU RÉEL
+     */
+    private function generate_recap_step($service_type, $form_data)
+    {
+        $title = __('📋 RÉCAPITULATIF DE VOTRE DEMANDE', 'restaurant-booking');
+        
+        $content = '<div class="restaurant-plugin-recap-section">';
+        
+        // Informations de base - TOUJOURS AFFICHÉES
+        $content .= '<div class="restaurant-plugin-card restaurant-plugin-recap-basic">';
+        $content .= '<h3>📋 ' . __('Informations de base', 'restaurant-booking') . '</h3>';
+        
+        // Afficher les infos même si pas dans form_data (valeurs par défaut)
+        $event_date = isset($form_data['event_date']) ? $form_data['event_date'] : 'Non spécifiée';
+        $guest_count = isset($form_data['guest_count']) ? $form_data['guest_count'] : '10';
+        $event_duration = isset($form_data['event_duration']) ? $form_data['event_duration'] : '2';
+        
+        $content .= '<p><strong>📅 ' . __('Date :', 'restaurant-booking') . '</strong> ' . esc_html($event_date) . '</p>';
+        $content .= '<p><strong>👥 ' . __('Nombre de convives :', 'restaurant-booking') . '</strong> ' . esc_html($guest_count) . ' personnes</p>';
+        $content .= '<p><strong>⏰ ' . __('Durée :', 'restaurant-booking') . '</strong> ' . esc_html($event_duration) . 'H de privatisation</p>';
+        $content .= '<p><strong>🏪 ' . __('Service :', 'restaurant-booking') . '</strong> ' . ucfirst($service_type) . '</p>';
+        
+        $content .= '</div>';
+        
+        // Forfait de base - TOUJOURS AFFICHÉ
+        $base_price = ($service_type === 'restaurant') ? 300 : 350;
+        $content .= '<div class="restaurant-plugin-card restaurant-plugin-recap-pricing">';
+        $content .= '<h3>💰 ' . __('Tarification', 'restaurant-booking') . '</h3>';
+        $content .= '<p><strong>' . __('Forfait de base :', 'restaurant-booking') . '</strong> ' . $base_price . ' €</p>';
+        
+        // Suppléments durée
+        if ($event_duration > 2) {
+            $duration_supplement = ($event_duration - 2) * 50;
+            $content .= '<p><strong>' . __('Supplément durée :', 'restaurant-booking') . '</strong> +' . $duration_supplement . ' € (' . ($event_duration - 2) . 'H x 50€)</p>';
+        }
+        
+        $content .= '</div>';
+        
+        // Sélections produits
+        if (isset($form_data['selected_products']) && !empty($form_data['selected_products'])) {
+            $content .= '<div class="restaurant-plugin-card restaurant-plugin-recap-products">';
+            $content .= '<h3>🍽️ ' . __('Vos sélections', 'restaurant-booking') . '</h3>';
+            
+            foreach ($form_data['selected_products'] as $category => $products) {
+                if (is_array($products) && !empty($products)) {
+                    $category_name = '';
+                    switch ($category) {
+                        case 'signature':
+                            $category_name = __('Plats signature', 'restaurant-booking');
+                            break;
+                        case 'mini_boss':
+                            $category_name = __('Menu Mini Boss', 'restaurant-booking');
+                            break;
+                        case 'accompaniments':
+                            $category_name = __('Accompagnements', 'restaurant-booking');
+                            break;
+                        case 'buffet-sale':
+                            $category_name = __('Buffet salé', 'restaurant-booking');
+                            break;
+                        case 'buffet-sucre':
+                            $category_name = __('Buffet sucré', 'restaurant-booking');
+                            break;
+                        default:
+                            $category_name = ucfirst($category);
+                    }
+                    
+                    $content .= '<h4>' . esc_html($category_name) . '</h4>';
+                    $content .= '<ul>';
+                    
+                    foreach ($products as $product_id => $product_data) {
+                        if (isset($product_data['quantity']) && $product_data['quantity'] > 0) {
+                            // Récupérer les détails du produit
+                            global $wpdb;
+                            $products_table = $wpdb->prefix . 'restaurant_products';
+                            $product = $wpdb->get_row($wpdb->prepare(
+                                "SELECT * FROM $products_table WHERE id = %d",
+                                $product_id
+                            ));
+                            
+                            if ($product) {
+                                $content .= '<li>';
+                                $content .= '<strong>' . esc_html($product->name) . '</strong>';
+                                $content .= ' - Quantité: ' . esc_html($product_data['quantity']);
+                                $content .= ' - Prix: ' . number_format($product->price * $product_data['quantity'], 2) . ' €';
+                                $content .= '</li>';
+                            }
+                        }
+                    }
+                    
+                    $content .= '</ul>';
+                }
+            }
+            
+            $content .= '</div>';
+        }
+        
+        // Formulaire de contact
+        $content .= '<div class="restaurant-plugin-card restaurant-plugin-contact-form">';
+        $content .= '<h3>📞 ' . __('Vos coordonnées', 'restaurant-booking') . '</h3>';
+        
+        $content .= '<div class="restaurant-plugin-form-row">';
+        $content .= '<div class="restaurant-plugin-form-col">';
+        $content .= '<label for="client_firstname">' . __('Prénom *', 'restaurant-booking') . '</label>';
+        $content .= '<input type="text" id="client_firstname" name="client_firstname" required>';
+        $content .= '</div>';
+        $content .= '<div class="restaurant-plugin-form-col">';
+        $content .= '<label for="client_name">' . __('Nom *', 'restaurant-booking') . '</label>';
+        $content .= '<input type="text" id="client_name" name="client_name" required>';
+        $content .= '</div>';
+        $content .= '</div>';
+        
+        $content .= '<div class="restaurant-plugin-form-row">';
+        $content .= '<div class="restaurant-plugin-form-col">';
+        $content .= '<label for="client_email">' . __('Email *', 'restaurant-booking') . '</label>';
+        $content .= '<input type="email" id="client_email" name="client_email" required>';
+        $content .= '</div>';
+        $content .= '<div class="restaurant-plugin-form-col">';
+        $content .= '<label for="client_phone">' . __('Téléphone *', 'restaurant-booking') . '</label>';
+        $content .= '<input type="tel" id="client_phone" name="client_phone" required>';
+        $content .= '</div>';
+        $content .= '</div>';
+        
+        $content .= '<div class="restaurant-plugin-form-row">';
+        $content .= '<label for="client_message">' . __('Questions / Commentaires', 'restaurant-booking') . '</label>';
+        $content .= '<textarea id="client_message" name="client_message" rows="4" placeholder="' . esc_attr($this->options['contact_placeholder'] ?? '1 question, 1 souhait, n\'hésitez pas de nous en faire part...') . '"></textarea>';
+        $content .= '</div>';
+        
+        // Bouton final
+        $content .= '<div class="restaurant-plugin-form-actions restaurant-plugin-text-center restaurant-plugin-mt-4">';
+        $content .= '<button type="submit" class="restaurant-plugin-btn-primary restaurant-plugin-final-button" id="obtenir-devis-btn">';
+        $content .= __('🎯 OBTENIR MON DEVIS ESTIMATIF', 'restaurant-booking');
+        $content .= '</button>';
+        $content .= '</div>';
+        
+        $content .= '</div>';
+        $content .= '</div>';
+        
+        return [
+            'step_number' => 6,
+            'service_type' => $service_type,
+            'title' => $title,
+            'content' => $content
+        ];
     }
 }
 
 // Initialiser le gestionnaire AJAX
 RestaurantBooking_Ajax_Handler_Block_Unified::get_instance();
+
+
 
