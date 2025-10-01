@@ -97,6 +97,11 @@
     margin: 0 0 var(--rbf-v3-spacing-sm) 0;
     text-transform: uppercase;
     letter-spacing: 1px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+    line-height: 1.2;
 }
 
 .rbf-v3-subtitle {
@@ -171,6 +176,19 @@
     text-align: center;
 }
 
+/* Adaptation pour 7 étapes (remorque) sur mobile */
+@media (max-width: 768px) {
+    .rbf-v3-progress-steps .rbf-v3-step:nth-child(n+7) .rbf-v3-step-label {
+        font-size: 0.65rem;
+    }
+    
+    .rbf-v3-progress-steps .rbf-v3-step:nth-child(n+7) .rbf-v3-step-number {
+        width: 35px;
+        height: 35px;
+        font-size: 0.8rem;
+    }
+}
+
 /* États des étapes */
 .rbf-v3-step.active .rbf-v3-step-number {
     background: var(--rbf-v3-orange);
@@ -226,17 +244,30 @@
     border: 1px solid rgba(239, 61, 29, 0.2);
 }
 
+/* Style spécial pour les erreurs de distance */
+.rbf-v3-message.error:contains("Livraison impossible") {
+    background: rgba(239, 61, 29, 0.15);
+    border: 2px solid var(--rbf-v3-red);
+    font-weight: 600;
+    animation: rbf-v3-shake 0.5s ease-in-out;
+}
+
+@keyframes rbf-v3-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
 .rbf-v3-message.info {
     background: var(--rbf-v3-orange-light);
     color: var(--rbf-v3-green);
     border: 1px solid rgba(255, 180, 4, 0.2);
 }
 
-/* Correction pour l'étape des boissons - message info avec la même largeur que les buffets */
-.rbf-v3-step-content[data-step="5"] .rbf-v3-product-section .rbf-v3-message.info {
-    margin: calc(-1 * var(--rbf-v3-spacing-lg));
-    margin-bottom: var(--rbf-v3-spacing-lg);
-    width: calc(100% + 2 * var(--rbf-v3-spacing-lg));
+/* Correction pour l'étape des boissons - message info avec la même largeur que le contenu de l'étape */
+.rbf-v3-step-content[data-step="5"] .rbf-v3-message.info {
+    width: 100%;
+    margin: 0 0 var(--rbf-v3-spacing-lg) 0;
 }
 
 .rbf-v3-message-content {
@@ -276,6 +307,11 @@
     text-align: center;
     margin: 0 0 var(--rbf-v3-spacing-lg) 0;
     text-transform: uppercase;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+    line-height: 1.2;
 }
 
 /* ========================================
@@ -513,6 +549,285 @@
     font-weight: 600;
 }
 
+/* Styles pour l'affichage hiérarchique */
+.rbf-v3-price-main {
+    font-weight: 600;
+}
+
+.rbf-v3-price-option {
+    font-size: 0.9em;
+    color: #666;
+    padding-left: 0;
+}
+
+.rbf-v3-price-suboption {
+    font-size: 0.85em;
+    color: #888;
+    padding-left: 0;
+}
+
+/* Filtres de sous-catégories pour boissons */
+.rbf-v3-subcategory-filters {
+    margin-bottom: 20px;
+}
+
+.rbf-v3-beverage-subcategory-tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+/* Boutons de sous-catégories avec spécificité élevée pour éviter les conflits WordPress */
+.rbf-v3-container .rbf-v3-beverage-subcategory-tabs .rbf-v3-subcategory-btn,
+.rbf-v3-container button.rbf-v3-subcategory-btn,
+button.rbf-v3-subcategory-btn {
+    background: var(--rbf-v3-white) !important;
+    border: 2px solid var(--rbf-v3-green) !important;
+    color: var(--rbf-v3-green) !important;
+    padding: var(--rbf-v3-spacing-sm) var(--rbf-v3-spacing-md) !important;
+    border-radius: var(--rbf-v3-radius) !important;
+    font-family: var(--rbf-v3-font-title) !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    min-height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: var(--rbf-v3-spacing-xs) !important;
+    text-decoration: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+}
+
+.rbf-v3-container .rbf-v3-beverage-subcategory-tabs .rbf-v3-subcategory-btn:hover,
+.rbf-v3-container button.rbf-v3-subcategory-btn:hover,
+button.rbf-v3-subcategory-btn:hover {
+    border-color: var(--rbf-v3-orange) !important;
+    background: var(--rbf-v3-orange-light) !important;
+    color: var(--rbf-v3-orange) !important;
+    transform: none !important;
+}
+
+.rbf-v3-container .rbf-v3-beverage-subcategory-tabs .rbf-v3-subcategory-btn.active,
+.rbf-v3-container button.rbf-v3-subcategory-btn.active,
+button.rbf-v3-subcategory-btn.active {
+    background: var(--rbf-v3-green) !important;
+    border-color: var(--rbf-v3-green) !important;
+    color: var(--rbf-v3-white) !important;
+    box-shadow: var(--rbf-v3-shadow-sm) !important;
+}
+
+.rbf-v3-option-indent {
+    padding-left: 20px;
+    position: relative;
+}
+
+.rbf-v3-option-indent::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    width: 8px;
+    height: 1px;
+    background-color: #ccc;
+}
+
+/* ========================================
+   NOUVEAU LAYOUT VERTICAL ACCOMPAGNEMENTS
+   ======================================== */
+
+.rbf-v3-accompaniments-vertical {
+    width: 100%;
+}
+
+.rbf-v3-accompaniments-vertical-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--rbf-v3-spacing-md);
+}
+
+/* Card d'accompagnement */
+.rbf-v3-accompaniment-card {
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius);
+    padding: var(--rbf-v3-spacing-sm);
+    box-shadow: var(--rbf-v3-shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.rbf-v3-accompaniment-card:hover {
+    border-color: var(--rbf-v3-orange);
+    box-shadow: var(--rbf-v3-shadow-md);
+}
+
+/* En-tête de la card */
+.rbf-v3-acc-header {
+    display: flex;
+    gap: var(--rbf-v3-spacing-sm);
+    align-items: flex-start;
+    margin-bottom: var(--rbf-v3-spacing-sm);
+}
+
+.rbf-v3-acc-image {
+    flex-shrink: 0;
+    width: 120px;
+    height: 120px;
+    border-radius: var(--rbf-v3-radius-sm);
+    overflow: hidden;
+    background-color: var(--rbf-v3-beige);
+}
+
+.rbf-v3-acc-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.rbf-v3-acc-info {
+    flex: 1;
+}
+
+.rbf-v3-acc-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--rbf-v3-green);
+    margin: 0 0 var(--rbf-v3-spacing-xs) 0;
+}
+
+.rbf-v3-acc-description {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0 0 var(--rbf-v3-spacing-sm) 0;
+    line-height: 1.4;
+}
+
+.rbf-v3-acc-price-qty {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--rbf-v3-spacing-md);
+}
+
+.rbf-v3-acc-price {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--rbf-v3-green);
+}
+
+/* Section des options */
+.rbf-v3-acc-options {
+    border-top: 1px solid var(--rbf-v3-beige);
+    padding-top: var(--rbf-v3-spacing-sm);
+    margin-top: var(--rbf-v3-spacing-sm);
+}
+
+.rbf-v3-options-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--rbf-v3-green);
+    margin: 0 0 var(--rbf-v3-spacing-sm) 0;
+}
+
+/* Item d'option */
+.rbf-v3-option-item {
+    margin-bottom: var(--rbf-v3-spacing-sm);
+}
+
+.rbf-v3-option-header {
+    font-weight: 500;
+    color: var(--rbf-v3-green);
+    margin-bottom: var(--rbf-v3-spacing-xs);
+}
+
+.rbf-v3-option-simple {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--rbf-v3-spacing-xs) 0;
+}
+
+.rbf-v3-option-name {
+    font-weight: 500;
+    color: var(--rbf-v3-green);
+}
+
+/* Sous-options */
+.rbf-v3-suboptions {
+    margin-left: var(--rbf-v3-spacing-md);
+    border-left: 2px solid var(--rbf-v3-beige);
+    padding-left: var(--rbf-v3-spacing-md);
+}
+
+.rbf-v3-suboption-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--rbf-v3-spacing-xs) 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.rbf-v3-suboption-item:last-child {
+    border-bottom: none;
+}
+
+.rbf-v3-suboption-name {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Sélecteurs de quantité spécialisés */
+.rbf-v3-qty-main {
+    /* Sélecteur principal (accompagnement) */
+}
+
+.rbf-v3-qty-small {
+    /* Sélecteur pour options/sous-options */
+    transform: scale(0.9);
+}
+
+.rbf-v3-qty-small .rbf-v3-qty-input {
+    width: 50px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .rbf-v3-acc-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .rbf-v3-acc-image {
+        align-self: center;
+    }
+    
+    .rbf-v3-acc-price-qty {
+        flex-direction: column;
+        gap: var(--rbf-v3-spacing-sm);
+    }
+    
+    .rbf-v3-option-simple,
+    .rbf-v3-suboption-item {
+        flex-direction: column;
+        gap: var(--rbf-v3-spacing-xs);
+        text-align: center;
+    }
+    
+    .rbf-v3-suboptions {
+        margin-left: 0;
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid var(--rbf-v3-beige);
+        padding-top: var(--rbf-v3-spacing-sm);
+    }
+}
+
 /* Animation prix mis à jour */
 .rbf-v3-price-updated {
     animation: rbf-v3-price-pulse 0.3s ease-in-out;
@@ -598,7 +913,7 @@
     font-family: var(--rbf-v3-font-title);
     font-size: 20px;
     font-weight: 600;
-    margin: var(--rbf-v3-spacing-lg) 0 var(--rbf-v3-spacing-md) 0;
+    margin: var(--rbf-v3-spacing-xl) 0 var(--rbf-v3-spacing-md) 0;
     padding-bottom: var(--rbf-v3-spacing-sm);
     border-bottom: 2px solid var(--rbf-v3-beige);
 }
@@ -648,7 +963,7 @@
 /* Image boisson */
 .rbf-v3-beverage-image {
     width: 100%;
-    height: 200px;
+    aspect-ratio: 1;
     margin-bottom: var(--rbf-v3-spacing-md);
     border-radius: var(--rbf-v3-radius-sm);
     overflow: hidden;
@@ -704,24 +1019,31 @@
 
 .rbf-v3-size-option {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
     padding: var(--rbf-v3-spacing-sm);
     background: var(--rbf-v3-white);
     border: 1px solid var(--rbf-v3-beige);
     border-radius: var(--rbf-v3-radius-sm);
-    gap: var(--rbf-v3-spacing-sm);
+    gap: var(--rbf-v3-spacing-xs);
     box-shadow: var(--rbf-v3-shadow-xs);
-    min-height: 50px;
+    min-height: 60px;
+}
+
+/* Première ligne : label et prix */
+.rbf-v3-size-option .rbf-v3-size-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--rbf-v3-spacing-sm);
 }
 
 /* Améliorer les sélecteurs dans les boissons */
 .rbf-v3-beverage-card .rbf-v3-quantity-selector {
-    justify-content: flex-end;
-    margin-left: auto;
-    width: auto;
+    justify-content: center;
+    width: 100%;
     max-width: 140px;
     gap: 6px;
+    margin: 0 auto;
 }
 
 .rbf-v3-size-label {
@@ -745,7 +1067,7 @@
     align-items: center;
     gap: var(--rbf-v3-spacing-xs);
     width: auto;
-    max-width: 150px;
+    max-width: 170px; /* Élargi de 150px à 170px pour accommoder les champs plus larges */
 }
 
 .rbf-v3-qty-btn {
@@ -783,19 +1105,22 @@
 }
 
 .rbf-v3-qty-input {
-    width: 50px;
+    width: 70px; /* Élargi de 50px à 70px pour 3 chiffres */
     height: 32px;
     border: 2px solid var(--rbf-v3-beige);
     border-radius: var(--rbf-v3-radius-sm);
     text-align: center;
     font-weight: 600;
-    font-size: 16px;
+    font-size: 16px; /* Minimum 16px pour éviter le zoom sur iOS */
     color: var(--rbf-v3-green);
     background: var(--rbf-v3-white);
     transition: all 0.2s ease;
     flex-shrink: 0;
     /* Masquer les flèches natives des inputs number */
     -moz-appearance: textfield;
+    /* Empêcher le zoom sur mobile */
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
 }
 
 .rbf-v3-qty-input:focus {
@@ -878,6 +1203,19 @@
     .rbf-v3-container {
         padding: var(--rbf-v3-spacing-sm);
         margin: var(--rbf-v3-spacing-sm);
+        overflow-x: hidden; /* Empêcher le scroll horizontal */
+        max-width: 100vw; /* S'assurer que le conteneur ne dépasse pas la largeur de l'écran */
+    }
+    
+    /* S'assurer que tous les inputs ont une taille de police minimale de 16px sur mobile */
+    .rbf-v3-qty-input,
+    input[type="number"],
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"] {
+        font-size: 16px !important;
+        -webkit-text-size-adjust: 100% !important;
+        -ms-text-size-adjust: 100% !important;
     }
     
     /* Boissons - Mobile */
@@ -903,12 +1241,11 @@
     }
     
     .rbf-v3-beverage-image {
-        height: 100px;
+        aspect-ratio: 1;
     }
     
     .rbf-v3-size-option {
-        flex-direction: column;
-        align-items: stretch;
+        /* Structure déjà en colonne par défaut */
         gap: var(--rbf-v3-spacing-xs);
     }
     
@@ -946,6 +1283,11 @@
     
     .rbf-v3-step-title {
         font-size: 1.5rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        max-width: 100%;
+        line-height: 1.2;
     }
     
     .rbf-v3-progress-steps {
@@ -990,10 +1332,28 @@
     .rbf-v3-container {
         margin: 0;
         border-radius: 0;
+        overflow-x: hidden; /* Empêcher le scroll horizontal */
+        max-width: 100vw; /* S'assurer que le conteneur ne dépasse pas la largeur de l'écran */
+    }
+    
+    /* S'assurer que tous les inputs ont une taille de police minimale de 16px sur très petits écrans */
+    .rbf-v3-qty-input,
+    input[type="number"],
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"] {
+        font-size: 16px !important;
+        -webkit-text-size-adjust: 100% !important;
+        -ms-text-size-adjust: 100% !important;
     }
     
     .rbf-v3-title {
         font-size: 1.5rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        max-width: 100%;
+        line-height: 1.2;
     }
     
     .rbf-v3-progress-steps {
@@ -1351,10 +1711,13 @@
     font-weight: 600;
     color: var(--rbf-v3-green);
     background: var(--rbf-v3-white);
-    font-size: 1rem;
+    font-size: 16px; /* Minimum 16px pour éviter le zoom sur iOS */
     flex-shrink: 0;
     /* Masquer les flèches natives des inputs number */
     -moz-appearance: textfield;
+    /* Empêcher le zoom sur mobile */
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
 }
 
 .rbf-v3-qty-input:focus {
@@ -1424,6 +1787,73 @@
     margin-top: var(--rbf-v3-spacing-md);
     padding-top: var(--rbf-v3-spacing-md);
     border-top: 1px solid var(--rbf-v3-beige);
+}
+
+/* Options intégrées dans les cartes produits */
+.rbf-v3-options-integrated {
+    margin-top: var(--rbf-v3-spacing-sm);
+    padding: var(--rbf-v3-spacing-sm);
+    background: var(--rbf-v3-green-light);
+    border-radius: var(--rbf-v3-radius-sm);
+    border-top: 1px solid var(--rbf-v3-beige);
+    /* S'assurer que les événements passent */
+    pointer-events: auto;
+    position: relative;
+    z-index: 1;
+}
+
+.rbf-v3-options-integrated .rbf-v3-option-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--rbf-v3-spacing-sm);
+}
+
+.rbf-v3-options-integrated .rbf-v3-option-row:last-child {
+    margin-bottom: 0;
+}
+
+.rbf-v3-options-integrated .rbf-v3-checkbox-option {
+    display: flex;
+    align-items: center;
+    gap: var(--rbf-v3-spacing-xs);
+    cursor: pointer;
+    flex: 1;
+}
+
+.rbf-v3-options-integrated .rbf-v3-checkbox-text {
+    font-size: 0.875rem;
+    color: var(--rbf-v3-green);
+    font-weight: 500;
+}
+
+.rbf-v3-options-integrated .rbf-v3-sauce-section {
+    margin-top: var(--rbf-v3-spacing-md);
+    padding-top: var(--rbf-v3-spacing-sm);
+    border-top: 1px solid var(--rbf-v3-beige);
+}
+
+.rbf-v3-options-integrated .rbf-v3-sauce-section h5 {
+    font-size: 0.9rem;
+    color: var(--rbf-v3-green);
+    margin: 0 0 var(--rbf-v3-spacing-sm) 0;
+    font-weight: 600;
+}
+
+.rbf-v3-options-integrated .rbf-v3-qty-small {
+    transform: scale(0.9);
+    /* S'assurer que les boutons restent cliquables */
+    pointer-events: auto;
+}
+
+.rbf-v3-options-integrated .rbf-v3-qty-small .rbf-v3-qty-btn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    position: relative;
+    z-index: 10;
+    /* S'assurer qu'ils sont cliquables */
+    min-width: 32px;
+    min-height: 32px;
 }
 
 .rbf-v3-option-item {
@@ -1535,8 +1965,10 @@
 
 .rbf-v3-product-section {
     margin-bottom: var(--rbf-v3-spacing-xl);
-    padding: var(--rbf-v3-spacing-lg);
+    /* Background et padding pour les étapes repas/buffets */
+    background: var(--rbf-v3-beige);
     border-radius: var(--rbf-v3-radius-lg);
+    padding: var(--rbf-v3-spacing-lg);
 }
 
 .rbf-v3-product-section h3 {
@@ -1831,6 +2263,7 @@
     font-size: 1.25rem;
     margin: 0;
     text-transform: uppercase;
+    color: var(--rbf-v3-white);
 }
 
 .rbf-v3-forfait-description {
@@ -2112,12 +2545,15 @@
     border: 2px solid var(--rbf-v3-beige);
     border-radius: var(--rbf-v3-radius-sm);
     font-weight: 600;
-    font-size: 14px;
+    font-size: 16px; /* Minimum 16px pour éviter le zoom sur iOS */
     color: var(--rbf-v3-green);
     background: var(--rbf-v3-white);
     flex-shrink: 0;
     /* Masquer les flèches natives des inputs number */
     -moz-appearance: textfield;
+    /* Empêcher le zoom sur mobile */
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
 }
 
 .rbf-v3-qty-input:focus {
@@ -2230,4 +2666,649 @@
 
 .rbf-v3-checkmark {
     margin-left: var(--rbf-v3-spacing-xs);
+}
+
+/* ========================================
+   CORRECTIONS ÉTAPE OPTIONS REMORQUE
+   ======================================== */
+
+/* Correction pour l'étape 6 des options remorque - alignement avec le contenu des étapes */
+.rbf-v3-step-content[data-step="6"] .rbf-v3-product-section {
+    padding: 0;
+    background: none;
+    border-radius: 0;
+}
+
+/* Le message info garde son background et sa largeur est adaptée */
+.rbf-v3-step-content[data-step="6"] .rbf-v3-product-section .rbf-v3-message.info {
+    margin: 0 0 var(--rbf-v3-spacing-lg) 0;
+    width: 100%;
+}
+
+/* Exception pour l'étape 1 - pas de background beige */
+.rbf-v3-step-content[data-step="1"] .rbf-v3-product-section {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+}
+
+/* Titres des sections d'options - réduction de la taille pour éviter les retours à la ligne */
+.rbf-v3-kegs-selection h4,
+.rbf-v3-games-selection h4 {
+    font-family: var(--rbf-v3-font-title);
+    font-size: 1.125rem; /* Réduit de 1.5rem à 1.125rem */
+    font-weight: 600;
+    color: var(--rbf-v3-green);
+    margin: var(--rbf-v3-spacing-md) 0 var(--rbf-v3-spacing-sm) 0;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+/* Suppression du symbole ▼ des titres d'options */
+.rbf-v3-kegs-selection h4:before,
+.rbf-v3-games-selection h4:before {
+    content: none;
+}
+
+/* Marge entre rbf-v3-kegs-tabs et rbf-v3-no-products */
+.rbf-v3-kegs-tabs {
+    margin-bottom: var(--rbf-v3-spacing-md);
+}
+
+.rbf-v3-kegs-tabs + .rbf-v3-kegs-content .rbf-v3-no-products {
+    margin-top: var(--rbf-v3-spacing-md);
+}
+
+/* Styles pour les onglets fûts */
+.rbf-v3-kegs-tabs {
+    display: flex;
+    gap: var(--rbf-v3-spacing-sm);
+    margin-bottom: var(--rbf-v3-spacing-lg);
+    flex-wrap: wrap;
+}
+
+.rbf-v3-kegs-tabs .rbf-v3-tab-btn {
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-green);
+    color: var(--rbf-v3-green);
+    padding: var(--rbf-v3-spacing-sm) var(--rbf-v3-spacing-md);
+    border-radius: var(--rbf-v3-radius);
+    font-family: var(--rbf-v3-font-title);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.rbf-v3-kegs-tabs .rbf-v3-tab-btn:hover {
+    border-color: var(--rbf-v3-orange);
+    background: var(--rbf-v3-orange-light);
+    color: var(--rbf-v3-orange);
+}
+
+.rbf-v3-kegs-tabs .rbf-v3-tab-btn.active {
+    background: var(--rbf-v3-green);
+    border-color: var(--rbf-v3-green);
+    color: var(--rbf-v3-white);
+    box-shadow: var(--rbf-v3-shadow-sm);
+}
+
+/* ========================================
+   CARTES DE JEUX (ÉTAPE OPTIONS REMORQUE)
+   ======================================== */
+
+/* Grille des jeux */
+.rbf-v3-games-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--rbf-v3-spacing-md);
+    margin-top: var(--rbf-v3-spacing-md);
+}
+
+/* Carte de jeu - Layout horizontal */
+.rbf-v3-game-card {
+    display: flex;
+    align-items: center;
+    background: var(--rbf-v3-beige);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius-lg);
+    padding: var(--rbf-v3-spacing-md);
+    transition: var(--rbf-v3-transition);
+    box-shadow: var(--rbf-v3-shadow-sm);
+    gap: var(--rbf-v3-spacing-md);
+    min-height: 120px;
+}
+
+.rbf-v3-game-card:hover {
+    border-color: var(--rbf-v3-orange);
+    box-shadow: var(--rbf-v3-shadow-md);
+    transform: translateY(-2px);
+}
+
+/* Image du jeu - À gauche */
+.rbf-v3-game-image {
+    flex-shrink: 0;
+    width: 100px;
+    height: 100px;
+    border-radius: var(--rbf-v3-radius);
+    overflow: hidden;
+    background: var(--rbf-v3-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--rbf-v3-white);
+}
+
+.rbf-v3-game-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: var(--rbf-v3-transition);
+}
+
+.rbf-v3-game-card:hover .rbf-v3-game-image img {
+    transform: scale(1.05);
+}
+
+.rbf-v3-game-image .rbf-v3-placeholder-image {
+    font-size: 32px;
+    color: var(--rbf-v3-green);
+    opacity: 0.6;
+}
+
+/* Informations du jeu - À droite */
+.rbf-v3-game-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--rbf-v3-spacing-xs);
+    min-height: 80px;
+    justify-content: space-between;
+}
+
+.rbf-v3-game-info h5 {
+    font-family: var(--rbf-v3-font-title);
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--rbf-v3-green);
+    margin: 0;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.rbf-v3-game-description {
+    font-size: 0.875rem;
+    color: var(--rbf-v3-green);
+    opacity: 0.8;
+    line-height: 1.4;
+    margin: 0;
+    flex-grow: 1;
+}
+
+/* Prix et sélection du jeu */
+.rbf-v3-game-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    gap: var(--rbf-v3-spacing-sm);
+}
+
+.rbf-v3-game-price span {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--rbf-v3-orange);
+}
+
+.rbf-v3-game-price .rbf-v3-checkbox-label {
+    margin: 0;
+    font-weight: 600;
+    color: var(--rbf-v3-green);
+    display: flex;
+    align-items: center;
+    gap: var(--rbf-v3-spacing-xs);
+    cursor: pointer;
+}
+
+.rbf-v3-game-price .rbf-v3-checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--rbf-v3-orange);
+    cursor: pointer;
+}
+
+.rbf-v3-game-price .rbf-v3-checkmark {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-left: 0;
+}
+
+/* Responsive pour les cartes de jeux */
+@media (max-width: 768px) {
+    .rbf-v3-game-card {
+        flex-direction: column;
+        text-align: center;
+        min-height: auto;
+        gap: var(--rbf-v3-spacing-sm);
+    }
+    
+    .rbf-v3-game-image {
+        width: 80px;
+        height: 80px;
+        align-self: center;
+    }
+    
+    .rbf-v3-game-info {
+        align-items: center;
+        text-align: center;
+        min-height: auto;
+    }
+    
+    .rbf-v3-game-price {
+        justify-content: center;
+        flex-direction: column;
+        gap: var(--rbf-v3-spacing-xs);
+    }
+}
+
+@media (max-width: 480px) {
+    .rbf-v3-games-grid {
+        gap: var(--rbf-v3-spacing-sm);
+    }
+    
+    .rbf-v3-game-card {
+        padding: var(--rbf-v3-spacing-sm);
+    }
+    
+    .rbf-v3-game-image {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .rbf-v3-game-info h5 {
+        font-size: 1rem;
+    }
+    
+    .rbf-v3-game-description {
+        font-size: 0.8rem;
+    }
+}
+
+/* ========================================
+   OVERRIDE SPÉCIFIQUE POUR LE CALENDRIER
+   ======================================== */
+
+/* Bouton calendrier - Override avec !important et spécificité maximale */
+.rbf-v3-container button.rbf-v3-calendar-btn,
+.rbf-v3-container .rbf-v3-calendar-btn[type="button"],
+.rbf-v3-container .rbf-v3-date-selector .rbf-v3-calendar-btn {
+    background: #FFB404 !important;
+    background-color: #FFB404 !important;
+    color: var(--rbf-v3-white) !important;
+    border: none !important;
+    border-color: #FFB404 !important;
+    padding: 12px 16px !important;
+    font-size: 18px !important;
+    min-width: 48px !important;
+    height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: var(--rbf-v3-radius-sm) !important;
+    transition: var(--rbf-v3-transition) !important;
+    cursor: pointer !important;
+}
+
+.rbf-v3-container button.rbf-v3-calendar-btn:hover,
+.rbf-v3-container .rbf-v3-calendar-btn[type="button"]:hover,
+.rbf-v3-container .rbf-v3-date-selector .rbf-v3-calendar-btn:hover {
+    background: var(--rbf-v3-green) !important;
+    background-color: var(--rbf-v3-green) !important;
+    border-color: var(--rbf-v3-green) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: var(--rbf-v3-shadow-md) !important;
+}
+
+/* Titre du calendrier - Override avec !important */
+.rbf-v3-calendar-title {
+    margin: 0 !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    font-family: 'Roboto', sans-serif !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    color: var(--rbf-v3-white) !important;
+}
+
+/* Flèches de navigation du calendrier - Override avec !important et spécificité maximale */
+.rbf-v3-modal button.rbf-v3-calendar-nav,
+.rbf-v3-modal .rbf-v3-calendar-nav[type="button"],
+.rbf-v3-calendar-widget button.rbf-v3-calendar-nav,
+.rbf-v3-calendar-widget .rbf-v3-calendar-nav[type="button"],
+.rbf-v3-calendar-nav.rbf-v3-calendar-prev,
+.rbf-v3-calendar-nav.rbf-v3-calendar-next {
+    background: #F6F2E7 !important;
+    background-color: #F6F2E7 !important;
+    border: 2px solid #F6F2E7 !important;
+    border-color: #F6F2E7 !important;
+    color: var(--rbf-v3-green) !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: var(--rbf-v3-transition) !important;
+    padding: 0 !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+}
+
+/* Icônes SVG des flèches - couleur verte */
+.rbf-v3-modal button.rbf-v3-calendar-nav svg,
+.rbf-v3-modal .rbf-v3-calendar-nav[type="button"] svg,
+.rbf-v3-calendar-widget button.rbf-v3-calendar-nav svg,
+.rbf-v3-calendar-widget .rbf-v3-calendar-nav[type="button"] svg,
+.rbf-v3-calendar-nav.rbf-v3-calendar-prev svg,
+.rbf-v3-calendar-nav.rbf-v3-calendar-next svg {
+    color: var(--rbf-v3-green) !important;
+    fill: var(--rbf-v3-green) !important;
+    width: 16px !important;
+    height: 16px !important;
+    display: block !important;
+    pointer-events: none !important;
+    flex-shrink: 0 !important;
+}
+
+.rbf-v3-modal button.rbf-v3-calendar-nav:hover,
+.rbf-v3-modal .rbf-v3-calendar-nav[type="button"]:hover,
+.rbf-v3-calendar-widget button.rbf-v3-calendar-nav:hover,
+.rbf-v3-calendar-widget .rbf-v3-calendar-nav[type="button"]:hover,
+.rbf-v3-calendar-nav.rbf-v3-calendar-prev:hover,
+.rbf-v3-calendar-nav.rbf-v3-calendar-next:hover {
+    background: var(--rbf-v3-green) !important;
+    background-color: var(--rbf-v3-green) !important;
+    border-color: var(--rbf-v3-green) !important;
+    color: var(--rbf-v3-white) !important;
+    transform: scale(1.1) !important;
+}
+
+/* Icônes SVG des flèches au hover - couleur blanche */
+.rbf-v3-modal button.rbf-v3-calendar-nav:hover svg,
+.rbf-v3-modal .rbf-v3-calendar-nav[type="button"]:hover svg,
+.rbf-v3-calendar-widget button.rbf-v3-calendar-nav:hover svg,
+.rbf-v3-calendar-widget .rbf-v3-calendar-nav[type="button"]:hover svg,
+.rbf-v3-calendar-nav.rbf-v3-calendar-prev:hover svg,
+.rbf-v3-calendar-nav.rbf-v3-calendar-next:hover svg {
+    color: var(--rbf-v3-white) !important;
+    fill: var(--rbf-v3-white) !important;
+    width: 16px !important;
+    height: 16px !important;
+    display: block !important;
+    pointer-events: none !important;
+    flex-shrink: 0 !important;
+}
+
+/* RÈGLES DE SÉCURITÉ FINALE - SPÉCIFICITÉ ULTIME */
+.rbf-v3-container .rbf-v3-form-group .rbf-v3-date-selector button.rbf-v3-calendar-btn {
+    background: #FFB404 !important;
+    background-color: #FFB404 !important;
+    border-color: #FFB404 !important;
+}
+
+.rbf-v3-container .rbf-v3-form-group .rbf-v3-date-selector button.rbf-v3-calendar-btn:hover {
+    background: var(--rbf-v3-green) !important;
+    background-color: var(--rbf-v3-green) !important;
+    border-color: var(--rbf-v3-green) !important;
+}
+
+/* ========================================
+   INFORMATIONS DE LIVRAISON
+   ======================================== */
+
+.rbf-v3-delivery-info {
+    margin-top: 8px;
+    margin-bottom: 0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    animation: fadeIn 0.3s ease-in-out;
+    overflow: hidden;
+    line-height: 1.4;
+    min-height: auto;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.rbf-v3-delivery-free {
+    background-color: rgba(34, 197, 94, 0.1);
+    border-color: #22c55e;
+    color: #15803d;
+    padding: 10px 14px;
+}
+
+.rbf-v3-delivery-paid {
+    background-color: var(--rbf-v3-orange-light);
+    border-color: var(--rbf-v3-orange);
+    color: #d97706;
+    padding: 10px 14px;
+}
+
+.rbf-v3-delivery-error {
+    background-color: var(--rbf-v3-red-light);
+    border-color: var(--rbf-v3-red);
+    color: var(--rbf-v3-red);
+    font-weight: 600;
+    animation: rbf-v3-shake 0.5s ease-in-out;
+    padding: 10px 14px;
+}
+
+/* Optimisation pour éviter les espaces blancs inutiles */
+.rbf-v3-delivery-info > div {
+    margin: 0;
+    display: block;
+}
+
+.rbf-v3-delivery-free,
+.rbf-v3-delivery-paid,
+.rbf-v3-delivery-error {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    line-height: 1.4;
+    border: none;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 44px;
+}
+
+/* Gestion spécifique du contenu avec émojis et texte long */
+.rbf-v3-delivery-free .emoji,
+.rbf-v3-delivery-paid .emoji,
+.rbf-v3-delivery-error .emoji {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+/* Adaptation pour le texte long avec retour à la ligne */
+.rbf-v3-delivery-info {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.rbf-v3-delivery-free,
+.rbf-v3-delivery-paid,
+.rbf-v3-delivery-error {
+    white-space: normal;
+    text-align: left;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========================================
+   CARTES DE FÛTS (ÉTAPE OPTIONS REMORQUE)
+   ======================================== */
+
+/* Contenu des fûts - Grille pour un meilleur rendu */
+.rbf-v3-kegs-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Grille responsive */
+    gap: var(--rbf-v3-spacing-md);
+    margin-top: var(--rbf-v3-spacing-md);
+}
+
+/* Carte de fût - Layout vertical avec image centrée au-dessus */
+.rbf-v3-keg-card {
+    display: flex;
+    flex-direction: column; /* Layout vertical */
+    align-items: center; /* Centrage horizontal */
+    background: var(--rbf-v3-beige);
+    border: 2px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius-lg);
+    padding: var(--rbf-v3-spacing-md);
+    transition: var(--rbf-v3-transition);
+    box-shadow: var(--rbf-v3-shadow-sm);
+    gap: var(--rbf-v3-spacing-sm); /* Espacement réduit pour le layout vertical */
+    min-height: auto; /* Hauteur automatique */
+    text-align: center; /* Centrage du texte */
+}
+
+.rbf-v3-keg-card:hover {
+    border-color: var(--rbf-v3-orange);
+    box-shadow: var(--rbf-v3-shadow-md);
+    transform: translateY(-2px);
+}
+
+/* Image du fût - Centrée et agrandie */
+.rbf-v3-keg-image {
+    flex-shrink: 0;
+    width: 120px; /* Agrandie de 100px à 120px */
+    height: 120px; /* Agrandie de 100px à 120px */
+    border-radius: var(--rbf-v3-radius);
+    overflow: hidden;
+    background: var(--rbf-v3-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--rbf-v3-shadow-sm);
+    margin: 0 auto var(--rbf-v3-spacing-sm) auto; /* Centrage horizontal et marge en bas */
+}
+
+.rbf-v3-keg-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.rbf-v3-keg-image .rbf-v3-placeholder-image {
+    font-size: 2rem;
+    color: var(--rbf-v3-green);
+}
+
+/* Contenu du fût - Centré en dessous de l'image */
+.rbf-v3-keg-content {
+    width: 100%; /* Prendre toute la largeur disponible */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centrage horizontal du contenu */
+    gap: var(--rbf-v3-spacing-sm);
+}
+
+/* Informations du fût */
+.rbf-v3-keg-info h5 {
+    font-family: var(--rbf-v3-font-title);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--rbf-v3-green);
+    margin: 0 0 var(--rbf-v3-spacing-xs) 0;
+}
+
+.rbf-v3-keg-description {
+    font-size: 0.875rem;
+    color: var(--rbf-v3-green);
+    opacity: 0.8;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Tailles du fût */
+.rbf-v3-keg-sizes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--rbf-v3-spacing-sm);
+    margin-top: var(--rbf-v3-spacing-sm);
+}
+
+.rbf-v3-keg-sizes .rbf-v3-size-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--rbf-v3-white);
+    border: 1px solid var(--rbf-v3-beige);
+    border-radius: var(--rbf-v3-radius-sm);
+    padding: var(--rbf-v3-spacing-sm);
+    transition: var(--rbf-v3-transition);
+}
+
+.rbf-v3-keg-sizes .rbf-v3-size-option:hover {
+    border-color: var(--rbf-v3-orange);
+    box-shadow: var(--rbf-v3-shadow-sm);
+}
+
+.rbf-v3-size-info {
+    display: flex;
+    align-items: center;
+    gap: var(--rbf-v3-spacing-xs);
+}
+
+.rbf-v3-size-label {
+    font-weight: 600;
+    color: var(--rbf-v3-green);
+}
+
+.rbf-v3-featured {
+    color: var(--rbf-v3-orange);
+    font-size: 1rem;
+}
+
+/* Filtrage par catégorie */
+.rbf-v3-keg-card[data-category] {
+    display: none;
+}
+
+.rbf-v3-keg-card[data-category].show {
+    display: flex;
+}
+
+/* Responsive pour les fûts */
+@media (max-width: 768px) {
+    .rbf-v3-keg-image {
+        width: 100px; /* Légèrement plus grande sur mobile */
+        height: 100px;
+        margin: 0 auto var(--rbf-v3-spacing-xs) auto; /* Marge réduite sur mobile */
+    }
+    
+    .rbf-v3-keg-sizes .rbf-v3-size-option {
+        flex-direction: column;
+        gap: var(--rbf-v3-spacing-sm);
+        text-align: center;
+    }
 }

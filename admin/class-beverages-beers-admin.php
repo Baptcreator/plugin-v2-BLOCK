@@ -17,6 +17,9 @@ class RestaurantBooking_Beverages_Beers_Admin
      */
     public function display_list()
     {
+        // Gérer les actions (suppression, etc.)
+        $this->handle_actions();
+        
         $products = $this->get_beers();
         
         ?>
@@ -26,6 +29,27 @@ class RestaurantBooking_Beverages_Beers_Admin
                 <?php _e('Ajouter une bière', 'restaurant-booking'); ?>
             </a>
             <hr class="wp-header-end">
+
+            <?php
+            // Afficher les messages de succès
+            if (isset($_GET['message'])) {
+                $success_message = '';
+                switch ($_GET['message']) {
+                    case 'updated':
+                        $success_message = __('Bière mise à jour avec succès.', 'restaurant-booking');
+                        break;
+                    case 'created':
+                        $success_message = __('Bière créée avec succès.', 'restaurant-booking');
+                        break;
+                    case 'deleted':
+                        $success_message = __('Bière supprimée avec succès.', 'restaurant-booking');
+                        break;
+                }
+                if ($success_message) {
+                    echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($success_message) . '</p></div>';
+                }
+            }
+            ?>
 
             <div class="restaurant-booking-info-card">
                 <h3><?php _e('Bières en bouteilles', 'restaurant-booking'); ?></h3>
@@ -59,65 +83,130 @@ class RestaurantBooking_Beverages_Beers_Admin
                 </div>
             </div>
 
-            <!-- Tableau des bières -->
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th class="manage-column"><?php _e('Bière', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Catégorie', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Degré/Volume', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Prix', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Suggestion', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Actions', 'restaurant-booking'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($products)): ?>
+            <form method="post" id="beers-filter">
+                <?php wp_nonce_field('restaurant_booking_beers_action'); ?>
+                
+                <div class="tablenav top">
+                    <div class="alignleft actions bulkactions">
+                        <select name="action" id="bulk-action-selector-top">
+                            <option value="-1"><?php _e('Actions groupées', 'restaurant-booking'); ?></option>
+                            <option value="activate"><?php _e('Activer', 'restaurant-booking'); ?></option>
+                            <option value="deactivate"><?php _e('Désactiver', 'restaurant-booking'); ?></option>
+                            <option value="delete"><?php _e('Supprimer', 'restaurant-booking'); ?></option>
+                        </select>
+                        <?php submit_button(__('Appliquer', 'restaurant-booking'), 'action', '', false, array('id' => 'doaction')); ?>
+                    </div>
+                </div>
+
+                <!-- Tableau des bières -->
+                <table class="wp-list-table widefat fixed striped">
+                    <thead>
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 40px;">
-                                <p><?php _e('Aucune bière configurée.', 'restaurant-booking'); ?></p>
-                                <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-beers&action=add'); ?>" class="button button-primary">
-                                    <?php _e('Créer la première bière', 'restaurant-booking'); ?>
-                                </a>
+                            <td class="manage-column column-cb check-column">
+                                <input id="cb-select-all-1" type="checkbox">
                             </td>
+                            <th scope="col" class="manage-column column-image"><?php _e('Image', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-name column-primary"><?php _e('Nom', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-description"><?php _e('Description', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-type"><?php _e('Type', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-degree"><?php _e('Degré', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-volume"><?php _e('Volume', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-price"><?php _e('Prix', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-order"><?php _e('Ordre', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-status"><?php _e('Statut', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-date"><?php _e('Date de création', 'restaurant-booking'); ?></th>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($products as $product): ?>
-                            <tr>
-                                <td>
-                                    <strong><?php echo esc_html($product['name']); ?></strong>
-                                    <?php if ($product['description']): ?>
-                                        <br><small class="description"><?php echo esc_html(wp_trim_words($product['description'], 10)); ?></small>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <span class="beer-category-badge">
-                                        <?php echo esc_html($product['beer_category'] ?: 'Non classée'); ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <strong><?php echo $product['alcohol_degree']; ?>°</strong>
-                                    <br><small><?php echo $product['volume_cl']; ?> cl</small>
-                                </td>
-                                <td>
-                                    <strong><?php echo number_format($product['price'], 2, ',', ' '); ?> €</strong>
-                                </td>
-                                <td>
-                                    <?php if ($product['suggested_beverage']): ?>
-                                        <span class="suggestion-yes">⭐</span>
-                                    <?php else: ?>
-                                        <span class="suggestion-no">—</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-beers&action=edit&product_id=' . $product['id']); ?>" 
-                                       class="button button-small"><?php _e('Modifier', 'restaurant-booking'); ?></a>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($products)): ?>
+                            <tr class="no-items">
+                                <td class="colspanchange" colspan="11">
+                                    <?php _e('Aucune bière trouvée.', 'restaurant-booking'); ?>
                                 </td>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                        <?php else: ?>
+                            <?php foreach ($products as $product): ?>
+                                <tr>
+                                    <th scope="row" class="check-column">
+                                        <input id="cb-select-<?php echo $product['id']; ?>" type="checkbox" name="beer_ids[]" value="<?php echo $product['id']; ?>">
+                                    </th>
+                                    <td class="column-image">
+                                        <?php if (!empty($product['image_url'])): ?>
+                                            <img src="<?php echo esc_url($product['image_url']); ?>" alt="<?php echo esc_attr($product['name']); ?>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                        <?php else: ?>
+                                            <div style="width: 50px; height: 50px; background: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #666;">
+                                                <span class="dashicons dashicons-format-image"></span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-name column-primary">
+                                        <strong>
+                                            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-beers&action=edit&product_id=' . $product['id']); ?>">
+                                                <?php echo esc_html($product['name']); ?>
+                                            </a>
+                                        </strong>
+                                        <div class="row-actions">
+                                            <span class="edit">
+                                                <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-beers&action=edit&product_id=' . $product['id']); ?>">
+                                                    <?php _e('Modifier', 'restaurant-booking'); ?>
+                                                </a> |
+                                            </span>
+                                            <span class="toggle-status">
+                                                <a href="#" class="toggle-beer-status" data-beer-id="<?php echo $product['id']; ?>" data-current-status="<?php echo $product['is_active'] ? 1 : 0; ?>">
+                                                    <?php echo $product['is_active'] ? __('Désactiver', 'restaurant-booking') : __('Activer', 'restaurant-booking'); ?>
+                                                </a> |
+                                            </span>
+                                            <span class="delete">
+                                                <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=restaurant-booking-beverages-beers&action=delete&beer_id=' . $product['id']), 'delete_beer_' . $product['id']); ?>" 
+                                                   class="button button-small button-link-delete" 
+                                                   onclick="return confirm('<?php _e('Êtes-vous sûr de vouloir supprimer cette bière ?', 'restaurant-booking'); ?>')">
+                                                    <?php _e('Supprimer', 'restaurant-booking'); ?>
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="column-description">
+                                        <?php echo esc_html(wp_trim_words($product['description'] ?? '', 10)); ?>
+                                    </td>
+                                    <td class="column-type">
+                                        <span class="beer-category-badge">
+                                            <?php echo esc_html($product['beer_category'] ?: 'Non classée'); ?>
+                                        </span>
+                                    </td>
+                                    <td class="column-degree">
+                                        <strong><?php echo $product['alcohol_degree']; ?>°</strong>
+                                    </td>
+                                    <td class="column-volume">
+                                        <strong><?php echo $product['volume_cl']; ?> cl</strong>
+                                    </td>
+                                    <td class="column-price">
+                                        <strong><?php echo number_format($product['price'], 2, ',', ' '); ?> €</strong>
+                                    </td>
+                                    <td class="column-order">
+                                        <input type="number" class="small-text beer-order-input" 
+                                               value="<?php echo $product['display_order'] ?? 0; ?>" 
+                                               data-beer-id="<?php echo $product['id']; ?>"
+                                               min="0" max="999">
+                                    </td>
+                                    <td class="column-status">
+                                        <?php if ($product['is_active']): ?>
+                                            <span class="status-active"><?php _e('Actif', 'restaurant-booking'); ?></span>
+                                        <?php else: ?>
+                                            <span class="status-inactive"><?php _e('Inactif', 'restaurant-booking'); ?></span>
+                                        <?php endif; ?>
+                                        <?php if ($product['suggested_beverage']): ?>
+                                            <br><small style="color: #ff9800;">⭐ <?php _e('Suggestion', 'restaurant-booking'); ?></small>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-date">
+                                        <?php echo date_i18n(get_option('date_format'), strtotime($product['created_at'] ?? 'now')); ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </form>
         </div>
 
         <style>
@@ -131,6 +220,9 @@ class RestaurantBooking_Beverages_Beers_Admin
         .restaurant-booking-info-card h3 {
             margin-top: 0;
             color: #ef6c00;
+        }
+        .restaurant-booking-info-card ul {
+            margin-bottom: 0;
         }
         .restaurant-booking-stats {
             margin: 20px 0;
@@ -158,17 +250,26 @@ class RestaurantBooking_Beverages_Beers_Admin
             color: #646970;
             font-size: 13px;
         }
+        .status-active { color: #46b450; font-weight: 600; }
+        .status-inactive { color: #dc3232; font-weight: 600; }
+        .beer-order-input { width: 60px; }
+        .column-image { width: 70px; }
+        .column-type { width: 100px; }
+        .column-degree { width: 80px; text-align: center; }
+        .column-volume { width: 80px; text-align: center; }
+        .column-price { width: 100px; text-align: center; }
+        .column-order { width: 80px; }
+        .column-status { width: 100px; }
+        .column-date { width: 120px; }
         .beer-category-badge {
-            background: #fff3e0;
-            color: #ef6c00;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 11px;
+            background: #f0f6fc;
+            border: 1px solid #0969da;
+            color: #0969da;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
             font-weight: 500;
         }
-        .suggestion-yes { color: #ff9800; font-weight: bold; }
-        .suggestion-no { color: #666; }
-        .description { color: #666; font-style: italic; }
         </style>
         <?php
     }
@@ -181,7 +282,7 @@ class RestaurantBooking_Beverages_Beers_Admin
         // Charger les scripts de la médiathèque WordPress
         wp_enqueue_media();
         
-        $product_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $product_id = isset($_GET['product_id']) ? intval($_GET['product_id']) : 0;
         $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'add';
         $product = null;
 
@@ -208,6 +309,42 @@ class RestaurantBooking_Beverages_Beers_Admin
             </a>
             <hr class="wp-header-end">
 
+            <?php
+            // Afficher les messages d'erreur ou de succès
+            if (isset($_GET['error'])) {
+                $error_message = '';
+                switch ($_GET['error']) {
+                    case 'validation':
+                        $error_message = __('Erreur de validation : veuillez vérifier tous les champs obligatoires.', 'restaurant-booking');
+                        break;
+                    case 'no_category':
+                        $error_message = __('Erreur : catégorie bière introuvable.', 'restaurant-booking');
+                        break;
+                    case 'save_failed':
+                        $error_message = __('Erreur lors de la sauvegarde. Veuillez réessayer.', 'restaurant-booking');
+                        break;
+                    default:
+                        $error_message = __('Une erreur est survenue.', 'restaurant-booking');
+                }
+                echo '<div class="notice notice-error is-dismissible"><p>' . esc_html($error_message) . '</p></div>';
+            }
+
+            if (isset($_GET['message'])) {
+                $success_message = '';
+                switch ($_GET['message']) {
+                    case 'updated':
+                        $success_message = __('Bière mise à jour avec succès.', 'restaurant-booking');
+                        break;
+                    case 'created':
+                        $success_message = __('Bière créée avec succès.', 'restaurant-booking');
+                        break;
+                }
+                if ($success_message) {
+                    echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($success_message) . '</p></div>';
+                }
+            }
+            ?>
+
             <div class="restaurant-booking-info-card">
                 <h3><?php _e('Informations sur les bières', 'restaurant-booking'); ?></h3>
                 <ul>
@@ -220,7 +357,7 @@ class RestaurantBooking_Beverages_Beers_Admin
 
             <form method="post" action="" id="beer-form">
                 <?php wp_nonce_field('save_beer', 'beer_nonce'); ?>
-                <input type="hidden" name="action" value="save_beer">
+                <input type="hidden" name="restaurant_booking_action" value="save_beer">
                 <?php if ($product): ?>
                     <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
                 <?php endif; ?>
@@ -249,18 +386,33 @@ class RestaurantBooking_Beverages_Beers_Admin
 
                     <tr>
                         <th scope="row">
-                            <label for="beer_category"><?php _e('Type de bière', 'restaurant-booking'); ?></label>
+                            <label for="beer_category"><?php _e('Type de bière', 'restaurant-booking'); ?> *</label>
                         </th>
                         <td>
-                            <select id="beer_category" name="beer_category" class="regular-text">
+                            <select id="beer_category" name="beer_category" class="regular-text" required>
                                 <option value=""><?php _e('Sélectionner un type', 'restaurant-booking'); ?></option>
-                                <option value="blonde" <?php selected($product['beer_category'] ?? '', 'blonde'); ?>><?php _e('Blonde', 'restaurant-booking'); ?></option>
-                                <option value="blanche" <?php selected($product['beer_category'] ?? '', 'blanche'); ?>><?php _e('Blanche', 'restaurant-booking'); ?></option>
-                                <option value="brune" <?php selected($product['beer_category'] ?? '', 'brune'); ?>><?php _e('Brune', 'restaurant-booking'); ?></option>
-                                <option value="ipa" <?php selected($product['beer_category'] ?? '', 'ipa'); ?>><?php _e('IPA', 'restaurant-booking'); ?></option>
-                                <option value="ambree" <?php selected($product['beer_category'] ?? '', 'ambree'); ?>><?php _e('Ambrée', 'restaurant-booking'); ?></option>
-                                <option value="pils" <?php selected($product['beer_category'] ?? '', 'pils'); ?>><?php _e('Pils', 'restaurant-booking'); ?></option>
+                                <?php 
+                                $beer_types = $this->get_beer_types();
+                                foreach ($beer_types as $type): ?>
+                                    <option value="<?php echo esc_attr($type['category']); ?>" <?php selected($product['beer_category'] ?? '', $type['category']); ?>>
+                                        <?php echo esc_html($type['name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
+                            <p class="description"><?php _e('Sélectionnez le type de bière. Vous pouvez ajouter de nouveaux types ci-dessous.', 'restaurant-booking'); ?></p>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <th scope="row">
+                            <label><?php _e('Gérer les types', 'restaurant-booking'); ?></label>
+                        </th>
+                        <td>
+                            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-categories-manager&action=subcategories&category_id=beers_group'); ?>" 
+                               class="button button-secondary" target="_blank">
+                                🍺 <?php _e('Gérer les types de bières', 'restaurant-booking'); ?>
+                            </a>
+                            <p class="description"><?php _e('Ajoutez, modifiez ou supprimez les types de bières disponibles dans la liste ci-dessus.', 'restaurant-booking'); ?></p>
                         </td>
                     </tr>
 
@@ -381,6 +533,24 @@ class RestaurantBooking_Beverages_Beers_Admin
                 $('#beer_image_preview').empty();
                 $(this).hide();
             });
+
+            // Gestionnaire pour les types de bières
+            $('#new_beer_type').on('input', function() {
+                var newTypeValue = $(this).val().trim();
+                if (newTypeValue.length > 0) {
+                    $('#beer_category').prop('disabled', true).val('');
+                    $('#beer_category').after('<p class="description" style="color: #d63638;"><em><?php _e('Le nouveau type sera utilisé à la place de la sélection.', 'restaurant-booking'); ?></em></p>');
+                } else {
+                    $('#beer_category').prop('disabled', false);
+                    $('#beer_category').next('p').remove();
+                }
+            });
+
+            $('#beer_category').on('change', function() {
+                if ($(this).val()) {
+                    $('#new_beer_type').val('');
+                }
+            });
         });
         </script>
         <?php
@@ -389,11 +559,20 @@ class RestaurantBooking_Beverages_Beers_Admin
     /**
      * Gérer la sauvegarde d'une bière
      */
-    private function handle_save_beer()
+    public function handle_save_beer()
     {
         // Vérifier le nonce
         if (!wp_verify_nonce($_POST['beer_nonce'], 'save_beer')) {
             wp_die(__('Erreur de sécurité', 'restaurant-booking'));
+        }
+
+        // Log du début de la sauvegarde
+        if (class_exists('RestaurantBooking_Logger')) {
+            RestaurantBooking_Logger::info('Début sauvegarde bière', array(
+                'product_id' => isset($_POST['product_id']) ? intval($_POST['product_id']) : 0,
+                'beer_name' => isset($_POST['beer_name']) ? sanitize_text_field($_POST['beer_name']) : '',
+                'action' => isset($_POST['product_id']) && $_POST['product_id'] ? 'update' : 'create'
+            ));
         }
 
         // Récupérer les données
@@ -408,7 +587,7 @@ class RestaurantBooking_Beverages_Beers_Admin
         $suggested_beverage = isset($_POST['suggested_beverage']) ? 1 : 0;
 
         // Validation
-        if (empty($beer_name) || $beer_price <= 0 || $volume_cl <= 0) {
+        if (empty($beer_name) || empty($beer_category) || $beer_price <= 0 || $volume_cl <= 0) {
             wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-beers&action=add&error=validation'));
             exit;
         }
@@ -439,11 +618,19 @@ class RestaurantBooking_Beverages_Beers_Admin
         if ($product_id) {
             // Mise à jour
             $result = RestaurantBooking_Product::update($product_id, $product_data);
-            $success_param = $result ? 'updated' : 'error';
+            if (is_wp_error($result)) {
+                wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-beers&action=edit&product_id=' . $product_id . '&error=save_failed'));
+                exit;
+            }
+            $success_param = 'updated';
         } else {
             // Création
             $result = RestaurantBooking_Product::create($product_data);
-            $success_param = $result ? 'created' : 'error';
+            if (is_wp_error($result)) {
+                wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-beers&action=add&error=save_failed'));
+                exit;
+            }
+            $success_param = 'created';
         }
 
         // Redirection
@@ -473,8 +660,147 @@ class RestaurantBooking_Beverages_Beers_Admin
             $product['volume_cl'] = (int) $product['volume_cl'];
             $product['suggested_beverage'] = (bool) $product['suggested_beverage'];
             $product['is_active'] = (bool) $product['is_active'];
+            $product['image_url'] = $product['image_id'] ? wp_get_attachment_image_url($product['image_id'], 'thumbnail') : '';
         }
 
         return $products ?: array();
+    }
+
+    /**
+     * Obtenir les types de bières disponibles
+     */
+    private function get_beer_types()
+    {
+        global $wpdb;
+        
+        // CORRECTION : Récupérer depuis la nouvelle table wp_restaurant_beer_types en priorité
+        $beer_types_table = $wpdb->prefix . 'restaurant_beer_types';
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$beer_types_table'");
+        
+        if ($table_exists) {
+            // Utiliser la nouvelle table wp_restaurant_beer_types
+            $types = $wpdb->get_results("
+                SELECT slug as category, name
+                FROM $beer_types_table
+                WHERE is_active = 1
+                ORDER BY display_order ASC, name ASC
+            ", ARRAY_A);
+            
+            if (!empty($types)) {
+                return $types;
+            }
+        }
+        
+        // Fallback : Récupérer depuis la table des sous-catégories si elle existe encore
+        $subcategories_table = $wpdb->prefix . 'restaurant_subcategories';
+        $subcategories_exists = $wpdb->get_var("SHOW TABLES LIKE '$subcategories_table'") == $subcategories_table;
+        
+        if ($subcategories_exists) {
+            $beer_category_id = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}restaurant_categories WHERE type = 'biere_bouteille'");
+            
+            if ($beer_category_id) {
+                $types = $wpdb->get_results($wpdb->prepare("
+                    SELECT subcategory_key as category, subcategory_name as name
+                    FROM $subcategories_table
+                    WHERE parent_category_id = %d AND is_active = 1
+                    ORDER BY display_order ASC, subcategory_name ASC
+                ", $beer_category_id), ARRAY_A);
+                
+                if (!empty($types)) {
+                    return $types;
+                }
+            }
+        }
+        
+        // Fallback : Récupérer depuis les produits existants
+        $existing_types = $wpdb->get_results("
+            SELECT DISTINCT 
+                p.beer_category as category, 
+                p.beer_category as name
+            FROM {$wpdb->prefix}restaurant_products p
+            INNER JOIN {$wpdb->prefix}restaurant_categories c ON p.category_id = c.id
+            WHERE c.type = 'biere_bouteille' 
+            AND p.is_active = 1 
+            AND p.beer_category IS NOT NULL 
+            AND p.beer_category != ''
+            ORDER BY p.beer_category ASC
+        ", ARRAY_A);
+        
+        if (!empty($existing_types)) {
+            // Formatter les noms pour l'affichage
+            foreach ($existing_types as &$type) {
+                $type['name'] = ucfirst($type['name']);
+            }
+            return $existing_types;
+        }
+        
+        // Dernier fallback : types par défaut (seulement si rien d'autre n'existe)
+        return array(
+            array('category' => 'blonde', 'name' => __('Blonde', 'restaurant-booking')),
+            array('category' => 'blanche', 'name' => __('Blanche', 'restaurant-booking')),
+            array('category' => 'brune', 'name' => __('Brune', 'restaurant-booking'))
+        );
+    }
+
+    /**
+     * Créer un nouveau type de bière
+     */
+    private function create_new_beer_type($type_name)
+    {
+        // Nettoyer et formater le nom du type
+        $beer_category = strtolower(sanitize_title($type_name));
+        
+        // Vérifier si le type existe déjà (dans les bières bouteilles OU les fûts)
+        global $wpdb;
+        $existing = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*) FROM {$wpdb->prefix}restaurant_products p
+            INNER JOIN {$wpdb->prefix}restaurant_categories c ON p.category_id = c.id
+            WHERE c.type IN (%s, %s) AND p.beer_category = %s
+        ", 'biere_bouteille', 'fut', $beer_category));
+        
+        // Retourner le type (existant ou nouveau)
+        return $beer_category;
+    }
+
+    /**
+     * Gérer les actions (suppression, etc.)
+     */
+    public function handle_actions()
+    {
+        if (!isset($_GET['action']) || !isset($_GET['beer_id'])) {
+            return;
+        }
+
+        $action = sanitize_text_field($_GET['action']);
+        $beer_id = (int) $_GET['beer_id'];
+
+        switch ($action) {
+            case 'delete':
+                $this->delete_beer($beer_id);
+                break;
+        }
+    }
+
+    /**
+     * Supprimer une bière
+     */
+    private function delete_beer($beer_id)
+    {
+        if (!wp_verify_nonce($_GET['_wpnonce'], 'delete_beer_' . $beer_id)) {
+            wp_die(__('Action non autorisée.', 'restaurant-booking'));
+        }
+
+        if (!current_user_can('manage_restaurant_quotes')) {
+            wp_die(__('Permissions insuffisantes.', 'restaurant-booking'));
+        }
+
+        $result = RestaurantBooking_Product::delete($beer_id);
+        
+        if (is_wp_error($result)) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-beers&message=error&error=' . urlencode($result->get_error_message())));
+        } else {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-beers&message=deleted'));
+        }
+        exit;
     }
 }

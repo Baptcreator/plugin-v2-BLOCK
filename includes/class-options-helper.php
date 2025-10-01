@@ -37,10 +37,10 @@ class RestaurantBooking_Options_Helper
         'buffet_sucre_text' => 'min 1/personne et min 1 plat',
         
         'accompaniment_min_per_person' => 1,
-        'accompaniment_text' => 'mini 1/personne',
+        'accompaniment_text' => 'exactement 1/personne',
         
         'signature_dish_min_per_person' => 1,
-        'signature_dish_text' => 'minimum 1 plat par personne',
+        'signature_dish_text' => 'exactement 1 plat par personne',
         
         // Limites privatisation restaurant
         'restaurant_min_guests' => 10,
@@ -415,16 +415,17 @@ class RestaurantBooking_Options_Helper
         
         $errors = array();
         
-        // Vérifier le nombre minimum par personne
+        // Vérifier le nombre exact par personne
         $total_quantity = array_sum($selected_accompaniments);
-        $min_total = $guests_count * $rules['min_per_person'];
+        $required_total = $guests_count * $rules['min_per_person'];
         
-        if ($total_quantity < $min_total) {
+        if ($total_quantity !== $required_total) {
             $errors[] = sprintf(
-                __('Vous devez sélectionner au minimum %d accompagnements pour %d personnes (%s).', 'restaurant-booking'),
-                $min_total,
+                __('Vous devez sélectionner exactement %d accompagnements pour %d personnes (%s). Actuellement sélectionnés : %d accompagnements.', 'restaurant-booking'),
+                $required_total,
                 $guests_count,
-                $rules['text']
+                $rules['text'],
+                $total_quantity
             );
         }
         
@@ -442,14 +443,15 @@ class RestaurantBooking_Options_Helper
         
         // Vérifier le nombre minimum par personne
         $total_quantity = array_sum($selected_dishes);
-        $min_total = $guests_count * $rules['min_per_person'];
+        $required_minimum = $guests_count * $rules['min_per_person'];
         
-        if ($total_quantity < $min_total) {
+        if ($total_quantity < $required_minimum) {
             $errors[] = sprintf(
-                __('Vous devez sélectionner au minimum %d plats signature pour %d personnes (%s).', 'restaurant-booking'),
-                $min_total,
+                __('Vous devez sélectionner au minimum %d plats signature pour %d personnes (%s). Actuellement sélectionnés : %d plats.', 'restaurant-booking'),
+                $required_minimum,
                 $guests_count,
-                $rules['text']
+                $rules['text'],
+                $total_quantity
             );
         }
         

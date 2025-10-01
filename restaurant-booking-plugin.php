@@ -21,6 +21,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Mode debug temporaire pour diagnostiquer les problèmes d'affichage
+define('RESTAURANT_BOOKING_DEBUG', true);
+
 // Définir les constantes du plugin
 define('RESTAURANT_BOOKING_VERSION', '1.0.6');
 define('RESTAURANT_BOOKING_PLUGIN_DIR', plugin_dir_path(__FILE__));
@@ -30,8 +33,15 @@ define('RESTAURANT_BOOKING_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
 // Mode debug
 if (!defined('RESTAURANT_BOOKING_DEBUG')) {
-    define('RESTAURANT_BOOKING_DEBUG', false);
+    define('RESTAURANT_BOOKING_DEBUG', true);
 }
+
+// mPDF supprimé - utilisation de TCPDF natif WordPress
+
+// Charger l'autoloader Google API si disponible (temporairement désactivé)
+// if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'vendor/autoload.php')) {
+//     require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'vendor/autoload.php';
+// }
 
 /**
  * Classe principale du plugin
@@ -88,11 +98,10 @@ class RestaurantBookingPlugin
         add_action('init', array($this, 'load_components'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_public_scripts'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
+        
+        // Note: Les actions AJAX sont enregistrées par la classe Admin
 
-        // Charger les shortcodes
-        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-shortcode-block-form.php')) {
-            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-shortcode-block-form.php';
-        }
+        // Ancien shortcode supprimé - Utiliser uniquement [restaurant_booking_form_v3]
         
         // Charger le nouveau shortcode V3
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-shortcode-form-v3.php')) {
@@ -142,26 +151,61 @@ class RestaurantBookingPlugin
     private function include_files()
     {
         // Charger le logger EN PREMIER
-        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-logger.php';
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-logger.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-logger.php';
+        } else {
+            // Fallback si le logger n'existe pas
+            error_log('Restaurant Booking: class-logger.php not found at ' . RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-logger.php');
+            // Créer une classe logger de fallback
+            if (!class_exists('RestaurantBooking_Logger')) {
+                $this->create_fallback_logger();
+            }
+        }
         
         // Charger les permissions
-        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-permissions.php';
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-permissions.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-permissions.php';
+        }
         
         // Classes principales
-        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-database.php';
-        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-settings.php';
-        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-quote.php';
-        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-product.php';
-        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-category.php';
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-database.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-database.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-settings.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-settings.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-quote.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-quote.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-product.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-product.php';
+        }
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-category.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-category.php';
+        }
         
         // Helper pour les options unifiées
-        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-options-helper.php';
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-options-helper.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-options-helper.php';
+        }
+        
+        // Classe de nettoyage des textes
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-text-cleaner.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-text-cleaner.php';
+        }
         
         // Classes v2 (nouvelles fonctionnalités)
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-v2.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-v2.php';
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-v3.php';
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-v4-cleanup.php';
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-fix-hardcoded-issues.php';
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-beer-types.php';
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-add-games.php';
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-fix-keg-categories.php';
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-create-subcategories.php';
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-restructure-wine-categories.php';
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-migration-fix-collations.php';
         }
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-game.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-game.php';
@@ -187,8 +231,8 @@ class RestaurantBookingPlugin
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-beverage-manager.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-beverage-manager.php';
         }
-        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-distance-calculator.php')) {
-            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-distance-calculator.php';
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-google-maps-service.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-google-maps-service.php';
         }
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-quote-calculator-v2.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-quote-calculator-v2.php';
@@ -213,6 +257,8 @@ class RestaurantBookingPlugin
         // Intégration Google Calendar
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-google-calendar.php')) {
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-google-calendar.php';
+            // Initialiser immédiatement pour enregistrer les actions AJAX
+            RestaurantBooking_Google_Calendar::get_instance();
         }
 
         // Interface d'administration
@@ -242,6 +288,16 @@ class RestaurantBookingPlugin
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-fix-escaped-quotes-migration.php';
             // Exécuter la migration automatiquement
             RestaurantBooking_Fix_Escaped_Quotes_Migration::run();
+        }
+        
+        // Migration complète pour corriger les échappements multiples
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-fix-escaped-quotes-complete-migration.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-fix-escaped-quotes-complete-migration.php';
+        }
+        
+        // Interface admin pour la correction des échappements
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-fix-escaped-quotes-admin.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-fix-escaped-quotes-admin.php';
         }
         
         // Classes d'administration v2
@@ -289,10 +345,7 @@ class RestaurantBookingPlugin
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler-v2.php';
         }
         
-        // Gestionnaire AJAX Block Unifié V2
-        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler-block-unified.php')) {
-            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler-block-unified.php';
-        }
+        // Ancien gestionnaire AJAX supprimé - Utiliser uniquement V3
         
         // Initialiser les gestionnaires après inclusion de toutes les classes
         if (class_exists('RestaurantBooking_Ajax_Handler_V2')) {
@@ -302,10 +355,7 @@ class RestaurantBookingPlugin
             require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-ajax-handler.php';
         }
 
-        // Shortcode Block Form
-        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-shortcode-block-form.php')) {
-            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'public/class-shortcode-block-form.php';
-        }
+        // Ancien shortcode Block Form supprimé - Utiliser [restaurant_booking_form_v3]
     }
 
     /**
@@ -314,13 +364,26 @@ class RestaurantBookingPlugin
     private function init_components()
     {
         // Initialiser la base de données
-        RestaurantBooking_Database::get_instance();
+        if (class_exists('RestaurantBooking_Database')) {
+            RestaurantBooking_Database::get_instance();
+        } else {
+            error_log('Restaurant Booking: RestaurantBooking_Database class not found');
+        }
         
         // Initialiser les paramètres
-        RestaurantBooking_Settings::get_instance();
+        if (class_exists('RestaurantBooking_Settings')) {
+            RestaurantBooking_Settings::get_instance();
+        }
         
         // Initialiser le logger
-        RestaurantBooking_Logger::get_instance();
+        if (class_exists('RestaurantBooking_Logger')) {
+            RestaurantBooking_Logger::get_instance();
+        }
+        
+        // Initialiser le service Google Maps
+        if (class_exists('RestaurantBooking_Google_Maps_Service')) {
+            RestaurantBooking_Google_Maps_Service::get_instance();
+        }
         
         // Initialiser les composants v2
         if (class_exists('RestaurantBooking_Migration_V2')) {
@@ -335,6 +398,41 @@ class RestaurantBookingPlugin
         // Exécuter la migration v4 de nettoyage si nécessaire
         if (class_exists('RestaurantBooking_Migration_V4_Cleanup') && RestaurantBooking_Migration_V4_Cleanup::needs_migration()) {
             RestaurantBooking_Migration_V4_Cleanup::run();
+        }
+        
+        // Exécuter la migration de correction des problèmes hardcodés si nécessaire
+        if (class_exists('RestaurantBooking_Migration_Fix_Hardcoded_Issues') && RestaurantBooking_Migration_Fix_Hardcoded_Issues::is_migration_needed()) {
+            RestaurantBooking_Migration_Fix_Hardcoded_Issues::migrate();
+        }
+        
+        // Exécuter la migration pour diversifier les types de bières
+        if (class_exists('RestaurantBooking_Migration_Beer_Types') && RestaurantBooking_Migration_Beer_Types::is_migration_needed()) {
+            RestaurantBooking_Migration_Beer_Types::migrate();
+        }
+        
+        // Exécuter la migration pour ajouter les jeux
+        if (class_exists('RestaurantBooking_Migration_Add_Games') && RestaurantBooking_Migration_Add_Games::is_migration_needed()) {
+            RestaurantBooking_Migration_Add_Games::migrate();
+        }
+        
+        // Migration pour corriger les catégories de bières des fûts
+        if (class_exists('RestaurantBooking_Migration_Fix_Keg_Categories') && RestaurantBooking_Migration_Fix_Keg_Categories::is_migration_needed()) {
+            RestaurantBooking_Migration_Fix_Keg_Categories::migrate();
+        }
+        
+        // Migration pour créer la table des sous-catégories
+        if (class_exists('RestaurantBooking_Migration_Create_Subcategories') && RestaurantBooking_Migration_Create_Subcategories::is_migration_needed()) {
+            RestaurantBooking_Migration_Create_Subcategories::migrate();
+        }
+
+        // Migration pour restructurer les catégories de vins
+        if (class_exists('RestaurantBooking_Migration_Restructure_Wine_Categories') && RestaurantBooking_Migration_Restructure_Wine_Categories::is_migration_needed()) {
+            RestaurantBooking_Migration_Restructure_Wine_Categories::migrate();
+        }
+        
+        // Migration pour corriger les collations de base de données
+        if (class_exists('RestaurantBooking_Migration_Fix_Collations') && RestaurantBooking_Migration_Fix_Collations::is_needed()) {
+            RestaurantBooking_Migration_Fix_Collations::run();
         }
         if (class_exists('RestaurantBooking_Game')) {
             RestaurantBooking_Game::get_instance();
@@ -354,9 +452,6 @@ class RestaurantBookingPlugin
         if (class_exists('RestaurantBooking_Beverage_Manager')) {
             RestaurantBooking_Beverage_Manager::get_instance();
         }
-        if (class_exists('RestaurantBooking_Distance_Calculator')) {
-            RestaurantBooking_Distance_Calculator::get_instance();
-        }
         if (class_exists('RestaurantBooking_Ajax_Handler_V2')) {
             RestaurantBooking_Ajax_Handler_V2::get_instance();
         }
@@ -372,7 +467,11 @@ class RestaurantBookingPlugin
     {
         // Interface d'administration
         if (is_admin()) {
-            RestaurantBooking_Admin::get_instance();
+            if (class_exists('RestaurantBooking_Admin')) {
+                RestaurantBooking_Admin::get_instance();
+            } else {
+                error_log('Restaurant Booking: RestaurantBooking_Admin class not found');
+            }
             
             // Charger les classes d'administration v2
             if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'admin/class-games-admin.php')) {
@@ -387,7 +486,11 @@ class RestaurantBookingPlugin
 
         // Interface publique
         if (!is_admin()) {
-            RestaurantBooking_Public::get_instance();
+            if (class_exists('RestaurantBooking_Public')) {
+                RestaurantBooking_Public::get_instance();
+            } else {
+                error_log('Restaurant Booking: RestaurantBooking_Public class not found');
+            }
         }
     }
 
@@ -423,25 +526,9 @@ class RestaurantBookingPlugin
             );
         }
 
-        // Styles Block Unifié V2 - Chargement prioritaire
-        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'assets/css/quote-form-block.css')) {
-            wp_enqueue_style(
-                'restaurant-booking-quote-form-block',
-                RESTAURANT_BOOKING_PLUGIN_URL . 'assets/css/quote-form-block.css',
-                array(),
-                RESTAURANT_BOOKING_VERSION . '-' . time() // Cache busting pour forcer le rechargement
-            );
-        }
+        // Ancien CSS Block supprimé - Utiliser uniquement V3
 
-        // Styles de force absolue - Priorité maximale
-        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'assets/css/quote-form-block-force.css')) {
-            wp_enqueue_style(
-                'restaurant-booking-quote-form-block-force',
-                RESTAURANT_BOOKING_PLUGIN_URL . 'assets/css/quote-form-block-force.css',
-                array('restaurant-booking-quote-form-block'),
-                RESTAURANT_BOOKING_VERSION . '-' . time() // Cache busting pour forcer le rechargement
-            );
-        }
+        // Ancien CSS Block Force supprimé - Utiliser uniquement V3
 
         if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'assets/js/quote-form-unified.js')) {
             wp_enqueue_script(
@@ -453,16 +540,7 @@ class RestaurantBookingPlugin
             );
         }
 
-        // JavaScript Block Unifié V2 - Priorité
-        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'assets/js/quote-form-block-unified.js')) {
-            wp_enqueue_script(
-                'restaurant-booking-quote-form-block-unified',
-                RESTAURANT_BOOKING_PLUGIN_URL . 'assets/js/quote-form-block-unified.js',
-                array('jquery'),
-                RESTAURANT_BOOKING_VERSION . '-' . time(), // Cache busting
-                true
-            );
-        }
+        // Ancien JavaScript Block supprimé - Utiliser uniquement V3
 
         // Localisation des scripts
         wp_localize_script('restaurant-booking-public', 'restaurant_booking_ajax', array(
@@ -490,9 +568,13 @@ class RestaurantBookingPlugin
             'restaurant-booking-admin',
             RESTAURANT_BOOKING_PLUGIN_URL . 'assets/css/admin.css',
             array(),
-            RESTAURANT_BOOKING_VERSION
+            RESTAURANT_BOOKING_VERSION . '-' . time() // Cache busting pour forcer le rechargement
         );
 
+        // S'assurer que jQuery est chargé
+        wp_enqueue_script('jquery');
+        wp_enqueue_script('wp-util');
+        
         wp_enqueue_script(
             'restaurant-booking-admin',
             RESTAURANT_BOOKING_PLUGIN_URL . 'assets/js/admin.js',
@@ -646,6 +728,112 @@ class RestaurantBookingPlugin
         
         // Supprimer les options de menu obsolètes
         delete_option('restaurant_booking_menu_cache');
+    }
+
+    /**
+     * Créer une classe logger de fallback
+     */
+    private function create_fallback_logger()
+    {
+        if (!class_exists('RestaurantBooking_Logger')) {
+            eval('
+                class RestaurantBooking_Logger {
+                    public static function log($message, $level = "info", $context = null) {
+                        error_log("[Restaurant Booking] [" . strtoupper($level) . "] " . $message);
+                    }
+                    public static function error($message, $context = null) { self::log($message, "error", $context); }
+                    public static function warning($message, $context = null) { self::log($message, "warning", $context); }
+                    public static function info($message, $context = null) { self::log($message, "info", $context); }
+                    public static function debug($message, $context = null) { self::log($message, "debug", $context); }
+                }
+            ');
+        }
+    }
+
+    /**
+     * Gestionnaire AJAX de fallback
+     */
+    public function handle_fallback_ajax()
+    {
+        // Vérifier le nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'restaurant_booking_admin_nonce')) {
+            wp_die(__('Token de sécurité invalide', 'restaurant-booking'));
+        }
+
+        $action = sanitize_text_field($_POST['admin_action']);
+
+        // Si la classe Admin est disponible, déléguer à elle
+        if (class_exists('RestaurantBooking_Admin')) {
+            $admin = RestaurantBooking_Admin::get_instance();
+            if (method_exists($admin, 'handle_ajax_action')) {
+                $admin->handle_ajax_action();
+                return;
+            }
+        }
+
+        // Fallback pour les actions de suppression
+        switch ($action) {
+            case 'delete_product':
+            case 'delete_beer':
+            case 'delete_wine':
+            case 'delete_soft_beverage':
+            case 'delete_keg':
+            case 'delete_accompaniment':
+            case 'delete_game':
+            case 'delete_dog_product':
+            case 'delete_croq_product':
+            case 'delete_buffet_sale':
+            case 'delete_buffet_sucre':
+            case 'delete_mini_boss':
+                $this->handle_fallback_delete($action);
+                break;
+            default:
+                wp_send_json_error(__('Action non reconnue', 'restaurant-booking'));
+        }
+    }
+
+    /**
+     * Gestionnaire de suppression de fallback
+     */
+    private function handle_fallback_delete($action)
+    {
+        if (!current_user_can('manage_restaurant_quotes')) {
+            wp_send_json_error(__('Permissions insuffisantes', 'restaurant-booking'));
+            return;
+        }
+
+        // Déterminer le paramètre d'ID selon l'action
+        $id_param = 'product_id';
+        if ($action === 'delete_beer') {
+            $id_param = 'beer_id';
+        } elseif ($action === 'delete_accompaniment') {
+            $id_param = 'accompaniment_id';
+        } elseif ($action === 'delete_game') {
+            $id_param = 'game_id';
+        }
+
+        $id = (int) $_POST[$id_param];
+        if ($id <= 0) {
+            wp_send_json_error(__('ID invalide', 'restaurant-booking'));
+            return;
+        }
+
+        // Utiliser la classe Product pour la suppression
+        if (class_exists('RestaurantBooking_Product')) {
+            if ($action === 'delete_game' && class_exists('RestaurantBooking_Game')) {
+                $result = RestaurantBooking_Game::delete($id);
+            } else {
+                $result = RestaurantBooking_Product::delete($id);
+            }
+
+            if (is_wp_error($result)) {
+                wp_send_json_error($result->get_error_message());
+            } else {
+                wp_send_json_success(__('Élément supprimé avec succès', 'restaurant-booking'));
+            }
+        } else {
+            wp_send_json_error(__('Classes de gestion des produits non disponibles', 'restaurant-booking'));
+        }
     }
 }
 

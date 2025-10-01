@@ -118,7 +118,7 @@ Le **Formulaire Block V3** est un système de devis multi-étapes pour deux serv
 - **Date** : Uniquement dates futures, connexion Google Calendar
 - **Convives** : Min 10, Max 30 personnes
 - **Durée** : 2H inclus, 3H/4H avec supplément +50€/H
-- **Prix base** : 200€ (configurable admin)
+- **Prix base** : 300€ (configurable admin)
 
 #### **Fonctionnalités**
 - **Sélecteur de date** avec disponibilités
@@ -162,9 +162,13 @@ Le **Formulaire Block V3** est un système de devis multi-étapes pour deux serv
 │  🥗 ACCOMPAGNEMENTS                                        │
 │  mini 1/personne                                           │
 │                                                             │
-│  ☐ Salade 4€        [-] 0 [+]                             │
-│  ☑ Frites 4€        [-] 15 [+]                            │
-│    ☐ Enrobée sauce chimichurri +1€  [-] 0 [+]            │
+│  ☐ Salade 4€        [-] 0 [+]
+│  ☐ Légumes Grillés 4€        [-] 0 [+]                             │
+│  ☑ Frites 4€        [-] 15 [+]
+│     Options 1:                       │
+│    ☐ Enrobée sauce chimichurri +1€  [-] 0 [+]
+│     options 2 : Choix de la sauce
+│     sous options :       │
 │    ☐ Sauce ketchup                  [-] 0 [+]            │
 │    ☐ Sauce mayo                     [-] 0 [+]            │
 │                                                             │
@@ -401,7 +405,7 @@ Le **Formulaire Block V3** est un système de devis multi-étapes pour deux serv
   - 50-100km : +70€
   - 100-150km : +120€
   - Max 150km
-- **Prix base** : 300€ (configurable admin)
+- **Prix base** : 350€ (configurable admin)
 
 ---
 
@@ -556,4 +560,3 @@ Base: 300€
 **Ce cahier des charges détaille exactement toutes les fonctionnalités à implémenter pour un formulaire V3 complet et conforme aux spécifications.**
 
 **Dois-je procéder à l'implémentation complète selon ce cahier des charges ?**
-

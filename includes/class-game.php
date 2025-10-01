@@ -65,22 +65,31 @@ class RestaurantBooking_Game
             }
         }
 
-        // Préparer les données pour l'insertion
-        $game_data = array(
+        // Obtenir la catégorie "Jeux et Animations" (ID 111)
+        $category = RestaurantBooking_Category::get(111);
+        if (!$category) {
+            return new WP_Error('category_not_found', __('Catégorie "Jeux et Animations" introuvable', 'restaurant-booking'));
+        }
+
+        // Préparer les données pour l'insertion dans wp_restaurant_products
+        $product_data = array(
+            'category_id' => $category['id'],
             'name' => sanitize_text_field($data['name']),
             'description' => isset($data['description']) ? wp_kses_post($data['description']) : '',
             'price' => (float) $data['price'],
+            'unit_type' => 'jour',
+            'unit_label' => '/jour',
             'image_id' => isset($data['image_id']) && !empty($data['image_id']) ? (int) $data['image_id'] : null,
             'display_order' => isset($data['display_order']) ? (int) $data['display_order'] : 0,
             'is_active' => isset($data['is_active']) ? (bool) $data['is_active'] : true,
             'created_at' => current_time('mysql')
         );
 
-        // Insérer en base de données
+        // Insérer en base de données dans la table des produits
         $result = $wpdb->insert(
-            $wpdb->prefix . 'restaurant_games',
-            $game_data,
-            array('%s', '%s', '%f', '%d', '%d', '%d', '%s')
+            $wpdb->prefix . 'restaurant_products',
+            $product_data,
+            array('%d', '%s', '%s', '%f', '%s', '%s', '%d', '%d', '%d', '%s')
         );
 
         if ($result === false) {
@@ -109,7 +118,10 @@ class RestaurantBooking_Game
         global $wpdb;
 
         $game = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}restaurant_games WHERE id = %d",
+            "SELECT p.*, c.name as category_name 
+             FROM {$wpdb->prefix}restaurant_products p
+             INNER JOIN {$wpdb->prefix}restaurant_categories c ON p.category_id = c.id
+             WHERE p.id = %d AND c.id = 111",
             $game_id
         ), ARRAY_A);
 
@@ -196,7 +208,7 @@ class RestaurantBooking_Game
 
         // Effectuer la mise à jour
         $result = $wpdb->update(
-            $wpdb->prefix . 'restaurant_games',
+            $wpdb->prefix . 'restaurant_products',
             $update_data,
             array('id' => $game_id),
             $format,
@@ -234,7 +246,7 @@ class RestaurantBooking_Game
         }
 
         $result = $wpdb->delete(
-            $wpdb->prefix . 'restaurant_games',
+            $wpdb->prefix . 'restaurant_products',
             array('id' => $game_id),
             array('%d')
         );
@@ -268,29 +280,29 @@ class RestaurantBooking_Game
 
         $args = wp_parse_args($args, $defaults);
 
-        // Construire la requête
-        $where_conditions = array();
+        // Construire la requête avec filtre par catégorie Jeux et Animations (ID 111)
+        $where_conditions = array('c.id = 111');
         $params = array();
 
         if ($args['is_active'] !== '') {
-            $where_conditions[] = 'is_active = %d';
+            $where_conditions[] = 'p.is_active = %d';
             $params[] = (int) $args['is_active'];
         }
 
         if (!empty($args['search'])) {
-            $where_conditions[] = '(name LIKE %s OR description LIKE %s)';
+            $where_conditions[] = '(p.name LIKE %s OR p.description LIKE %s)';
             $search_term = '%' . $wpdb->esc_like($args['search']) . '%';
             $params[] = $search_term;
             $params[] = $search_term;
         }
 
-        $where_clause = '';
-        if (!empty($where_conditions)) {
-            $where_clause = 'WHERE ' . implode(' AND ', $where_conditions);
-        }
+        $where_clause = 'WHERE ' . implode(' AND ', $where_conditions);
 
         // Requête de comptage
-        $count_sql = "SELECT COUNT(*) FROM {$wpdb->prefix}restaurant_games $where_clause";
+        $count_sql = "SELECT COUNT(*) 
+                      FROM {$wpdb->prefix}restaurant_products p
+                      INNER JOIN {$wpdb->prefix}restaurant_categories c ON p.category_id = c.id
+                      $where_clause";
         if (!empty($params)) {
             $total = $wpdb->get_var($wpdb->prepare($count_sql, $params));
         } else {
@@ -298,10 +310,15 @@ class RestaurantBooking_Game
         }
 
         // Requête principale
-        $orderby = sanitize_sql_orderby($args['orderby'] . ' ' . $args['order']);
-        $sql = "SELECT * FROM {$wpdb->prefix}restaurant_games 
+        $allowed_orderby = array('name', 'price', 'display_order', 'created_at');
+        $orderby_field = in_array($args['orderby'], $allowed_orderby) ? $args['orderby'] : 'display_order';
+        $order_direction = strtoupper($args['order']) === 'DESC' ? 'DESC' : 'ASC';
+        
+        $sql = "SELECT p.*, c.name as category_name 
+                FROM {$wpdb->prefix}restaurant_products p
+                INNER JOIN {$wpdb->prefix}restaurant_categories c ON p.category_id = c.id
                 $where_clause 
-                ORDER BY $orderby 
+                ORDER BY p.$orderby_field $order_direction 
                 LIMIT %d OFFSET %d";
 
         $params[] = $args['limit'];
@@ -353,7 +370,7 @@ class RestaurantBooking_Game
         global $wpdb;
 
         $result = $wpdb->update(
-            $wpdb->prefix . 'restaurant_games',
+            $wpdb->prefix . 'restaurant_products',
             array('display_order' => (int) $new_order),
             array('id' => $game_id),
             array('%d'),
@@ -371,7 +388,7 @@ class RestaurantBooking_Game
         global $wpdb;
 
         $current_status = $wpdb->get_var($wpdb->prepare(
-            "SELECT is_active FROM {$wpdb->prefix}restaurant_games WHERE id = %d",
+            "SELECT is_active FROM {$wpdb->prefix}restaurant_products WHERE id = %d",
             $game_id
         ));
 
@@ -382,7 +399,7 @@ class RestaurantBooking_Game
         $new_status = $current_status ? 0 : 1;
 
         $result = $wpdb->update(
-            $wpdb->prefix . 'restaurant_games',
+            $wpdb->prefix . 'restaurant_products',
             array('is_active' => $new_status),
             array('id' => $game_id),
             array('%d'),

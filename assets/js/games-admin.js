@@ -96,7 +96,8 @@
                 url: rb_games_admin.ajax_url,
                 type: 'POST',
                 data: {
-                    action: 'delete_game',
+                    action: 'restaurant_booking_admin_action',
+                    admin_action: 'delete_game',
                     nonce: rb_games_admin.nonce,
                     game_id: gameId
                 },
@@ -132,7 +133,8 @@
                 url: rb_games_admin.ajax_url,
                 type: 'POST',
                 data: {
-                    action: 'toggle_game_status',
+                    action: 'restaurant_booking_admin_action',
+                    admin_action: 'toggle_game_status',
                     nonce: rb_games_admin.nonce,
                     game_id: gameId
                 },

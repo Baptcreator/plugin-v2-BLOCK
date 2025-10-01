@@ -17,6 +17,9 @@ class RestaurantBooking_Products_BuffetSucre_Admin
      */
     public function display_list()
     {
+        // Gérer les actions (suppression, etc.)
+        $this->handle_actions();
+        
         $products = $this->get_buffet_sucre_products();
         
         ?>
@@ -58,73 +61,117 @@ class RestaurantBooking_Products_BuffetSucre_Admin
                 </div>
             </div>
 
-            <!-- Tableau des produits -->
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th class="manage-column"><?php _e('Dessert', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Quantité/personne', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Prix', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Statut', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Actions', 'restaurant-booking'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($products)): ?>
+            <form method="post" id="buffet-sucre-products-filter">
+                <?php wp_nonce_field('restaurant_booking_buffet_sucre_products_action'); ?>
+                
+                <div class="tablenav top">
+                    <div class="alignleft actions bulkactions">
+                        <select name="action" id="bulk-action-selector-top">
+                            <option value="-1"><?php _e('Actions groupées', 'restaurant-booking'); ?></option>
+                            <option value="activate"><?php _e('Activer', 'restaurant-booking'); ?></option>
+                            <option value="deactivate"><?php _e('Désactiver', 'restaurant-booking'); ?></option>
+                            <option value="delete"><?php _e('Supprimer', 'restaurant-booking'); ?></option>
+                        </select>
+                        <?php submit_button(__('Appliquer', 'restaurant-booking'), 'action', '', false, array('id' => 'doaction')); ?>
+                    </div>
+                </div>
+
+                <!-- Tableau des produits -->
+                <table class="wp-list-table widefat fixed striped">
+                    <thead>
                         <tr>
-                            <td colspan="5" style="text-align: center; padding: 40px;">
-                                <p><?php _e('Aucun dessert de buffet configuré.', 'restaurant-booking'); ?></p>
-                                <a href="<?php echo admin_url('admin.php?page=restaurant-booking-products-buffet-sucre&action=add'); ?>" class="button button-primary">
-                                    <?php _e('Créer le premier dessert', 'restaurant-booking'); ?>
-                                </a>
+                            <td class="manage-column column-cb check-column">
+                                <input id="cb-select-all-1" type="checkbox">
                             </td>
+                            <th scope="col" class="manage-column column-image"><?php _e('Image', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-name column-primary"><?php _e('Nom', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-description"><?php _e('Description', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-quantity"><?php _e('Quantité/personne', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-price"><?php _e('Prix', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-order"><?php _e('Ordre', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-status"><?php _e('Statut', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-date"><?php _e('Date de création', 'restaurant-booking'); ?></th>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($products as $product): ?>
-                            <tr>
-                                <td>
-                                    <div class="product-info">
-                                        <?php if ($product['image_url']): ?>
-                                            <img src="<?php echo esc_url($product['image_url']); ?>" 
-                                                 alt="<?php echo esc_attr($product['name']); ?>" 
-                                                 class="product-thumb">
-                                        <?php endif; ?>
-                                        <div>
-                                            <strong><?php echo esc_html($product['name']); ?></strong>
-                                            <?php if ($product['description']): ?>
-                                                <br><small class="description"><?php echo esc_html(wp_trim_words($product['description'], 15)); ?></small>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <strong><?php echo esc_html($product['unit_per_person'] ?: '1 portion/pers'); ?></strong>
-                                    <br><small><?php echo esc_html($product['unit_label']); ?></small>
-                                </td>
-                                <td>
-                                    <strong><?php echo number_format($product['price'], 2, ',', ' '); ?> €</strong>
-                                    <br><small><?php echo esc_html($product['unit_label']); ?></small>
-                                </td>
-                                <td>
-                                    <span class="product-status status-<?php echo $product['is_active'] ? 'active' : 'inactive'; ?>">
-                                        <?php echo $product['is_active'] ? __('Actif', 'restaurant-booking') : __('Inactif', 'restaurant-booking'); ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="<?php echo admin_url('admin.php?page=restaurant-booking-products-buffet-sucre&action=edit&product_id=' . $product['id']); ?>" 
-                                       class="button button-small">
-                                        <?php _e('Modifier', 'restaurant-booking'); ?>
-                                    </a>
-                                    <a href="#" class="button button-small button-link-delete" 
-                                       onclick="return confirm('<?php _e('Êtes-vous sûr de vouloir supprimer ce dessert ?', 'restaurant-booking'); ?>')">
-                                        <?php _e('Supprimer', 'restaurant-booking'); ?>
-                                    </a>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($products)): ?>
+                            <tr class="no-items">
+                                <td class="colspanchange" colspan="9">
+                                    <?php _e('Aucun dessert de buffet trouvé.', 'restaurant-booking'); ?>
                                 </td>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                        <?php else: ?>
+                            <?php foreach ($products as $product): ?>
+                                <tr>
+                                    <th scope="row" class="check-column">
+                                        <input id="cb-select-<?php echo $product['id']; ?>" type="checkbox" name="buffet_sucre_product_ids[]" value="<?php echo $product['id']; ?>">
+                                    </th>
+                                    <td class="column-image">
+                                        <?php if (!empty($product['image_url'])): ?>
+                                            <img src="<?php echo esc_url($product['image_url']); ?>" alt="<?php echo esc_attr($product['name']); ?>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                        <?php else: ?>
+                                            <div style="width: 50px; height: 50px; background: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #666;">
+                                                <span class="dashicons dashicons-format-image"></span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-name column-primary">
+                                        <strong>
+                                            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-products-buffet-sucre&action=edit&product_id=' . $product['id']); ?>">
+                                                <?php echo esc_html($product['name']); ?>
+                                            </a>
+                                        </strong>
+                                        <div class="row-actions">
+                                            <span class="edit">
+                                                <a href="<?php echo admin_url('admin.php?page=restaurant-booking-products-buffet-sucre&action=edit&product_id=' . $product['id']); ?>">
+                                                    <?php _e('Modifier', 'restaurant-booking'); ?>
+                                                </a> |
+                                            </span>
+                                            <span class="toggle-status">
+                                                <a href="#" class="toggle-buffet-sucre-status" data-product-id="<?php echo $product['id']; ?>" data-current-status="<?php echo $product['is_active'] ? 1 : 0; ?>">
+                                                    <?php echo $product['is_active'] ? __('Désactiver', 'restaurant-booking') : __('Activer', 'restaurant-booking'); ?>
+                                                </a> |
+                                            </span>
+                                            <span class="delete">
+                                                <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=restaurant-booking-products-buffet-sucre&action=delete&product_id=' . $product['id']), 'delete_buffet_sucre_' . $product['id']); ?>" 
+                                                   class="button button-small button-link-delete" 
+                                                   onclick="return confirm('<?php _e('Êtes-vous sûr de vouloir supprimer ce buffet sucré ?', 'restaurant-booking'); ?>')">
+                                                    <?php _e('Supprimer', 'restaurant-booking'); ?>
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="column-description">
+                                        <?php echo esc_html(wp_trim_words($product['description'] ?? '', 10)); ?>
+                                    </td>
+                                    <td class="column-quantity">
+                                        <strong><?php echo esc_html($product['unit_per_person'] ?: '1 portion/pers'); ?></strong>
+                                    </td>
+                                    <td class="column-price">
+                                        <strong><?php echo number_format($product['price'], 2, ',', ' '); ?> €</strong>
+                                    </td>
+                                    <td class="column-order">
+                                        <input type="number" class="small-text buffet-sucre-order-input" 
+                                               value="<?php echo $product['display_order'] ?? 0; ?>" 
+                                               data-product-id="<?php echo $product['id']; ?>"
+                                               min="0" max="999">
+                                    </td>
+                                    <td class="column-status">
+                                        <?php if ($product['is_active']): ?>
+                                            <span class="status-active"><?php _e('Actif', 'restaurant-booking'); ?></span>
+                                        <?php else: ?>
+                                            <span class="status-inactive"><?php _e('Inactif', 'restaurant-booking'); ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-date">
+                                        <?php echo date_i18n(get_option('date_format'), strtotime($product['created_at'] ?? 'now')); ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </form>
         </div>
 
         <style>
@@ -183,15 +230,15 @@ class RestaurantBooking_Products_BuffetSucre_Admin
             color: #666;
             font-style: italic;
         }
-        .product-status {
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .status-active { background: #d4edda; color: #155724; }
-        .status-inactive { background: #f8d7da; color: #721c24; }
+        .status-active { color: #46b450; font-weight: 600; }
+        .status-inactive { color: #dc3232; font-weight: 600; }
+        .buffet-sucre-order-input { width: 60px; }
+        .column-image { width: 70px; }
+        .column-price { width: 100px; text-align: center; }
+        .column-quantity { width: 120px; }
+        .column-order { width: 80px; }
+        .column-status { width: 80px; }
+        .column-date { width: 120px; }
         </style>
         <?php
     }
@@ -478,6 +525,66 @@ class RestaurantBooking_Products_BuffetSucre_Admin
         </style>
         <?php
     }
+    
+    /**
+     * Gérer la sauvegarde d'un buffet sucré
+     */
+    public function handle_save_buffet_sucre()
+    {
+        // Vérifier le nonce
+        if (!wp_verify_nonce($_POST['product_buffet_sucre_nonce'], 'restaurant_booking_product_buffet_sucre')) {
+            wp_die(__('Erreur de sécurité', 'restaurant-booking'));
+        }
+
+        // Récupérer les données
+        $product_id = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
+        $product_name = sanitize_text_field($_POST['product_name']);
+        $product_description = sanitize_textarea_field($_POST['product_description']);
+        $product_price = floatval($_POST['product_price']);
+        $product_image_id = intval($_POST['product_image_id']);
+        $is_active = isset($_POST['is_active']) ? 1 : 0;
+
+        // Validation
+        if (empty($product_name) || $product_price <= 0) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-products-buffet-sucre&action=add&error=validation'));
+            exit;
+        }
+
+        // Obtenir la catégorie
+        $category = RestaurantBooking_Category::get_by_type('buffet_sucre');
+        if (!$category) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-products-buffet-sucre&action=add&error=no_category'));
+            exit;
+        }
+
+        // Préparer les données du produit
+        $product_data = array(
+            'category_id' => $category['id'],
+            'name' => $product_name,
+            'description' => $product_description,
+            'price' => $product_price,
+            'unit_type' => 'portion_6p',
+            'unit_label' => '/6 personnes',
+            'unit_per_person' => '1 portion/pers',
+            'image_id' => $product_image_id ?: null,
+            'is_active' => $is_active
+        );
+
+        if ($product_id) {
+            // Mise à jour
+            $result = RestaurantBooking_Product::update($product_id, $product_data);
+            $success_param = $result ? 'updated' : 'error';
+        } else {
+            // Création
+            $result = RestaurantBooking_Product::create($product_data);
+            $success_param = $result ? 'created' : 'error';
+        }
+
+        // Redirection
+        $redirect_url = admin_url('admin.php?page=restaurant-booking-products-buffet-sucre&message=' . $success_param);
+        wp_redirect($redirect_url);
+        exit;
+    }
 
     /**
      * Obtenir les produits de buffet sucré depuis la base de données
@@ -494,12 +601,55 @@ class RestaurantBooking_Products_BuffetSucre_Admin
             ORDER BY p.display_order ASC, p.name ASC
         ", 'buffet_sucre'), ARRAY_A);
 
-        // Convertir les types
+        // Convertir les types et ajouter l'URL de l'image
         foreach ($products as &$product) {
             $product['price'] = (float) $product['price'];
             $product['is_active'] = (bool) $product['is_active'];
+            $product['image_url'] = $product['image_id'] ? wp_get_attachment_image_url($product['image_id'], 'thumbnail') : '';
         }
 
         return $products ?: array();
+    }
+
+    /**
+     * Gérer les actions (suppression, etc.)
+     */
+    public function handle_actions()
+    {
+        if (!isset($_GET['action']) || !isset($_GET['product_id'])) {
+            return;
+        }
+
+        $action = sanitize_text_field($_GET['action']);
+        $product_id = (int) $_GET['product_id'];
+
+        switch ($action) {
+            case 'delete':
+                $this->delete_buffet_sucre($product_id);
+                break;
+        }
+    }
+
+    /**
+     * Supprimer un buffet sucré
+     */
+    private function delete_buffet_sucre($product_id)
+    {
+        if (!wp_verify_nonce($_GET['_wpnonce'], 'delete_buffet_sucre_' . $product_id)) {
+            wp_die(__('Action non autorisée.', 'restaurant-booking'));
+        }
+
+        if (!current_user_can('manage_restaurant_quotes')) {
+            wp_die(__('Permissions insuffisantes.', 'restaurant-booking'));
+        }
+
+        $result = RestaurantBooking_Product::delete($product_id);
+        
+        if (is_wp_error($result)) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-products-buffet-sucre&message=error&error=' . urlencode($result->get_error_message())));
+        } else {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-products-buffet-sucre&message=deleted'));
+        }
+        exit;
     }
 }

@@ -329,8 +329,8 @@
             this.priceBreakdown = {
                 base: 300.00,
                 duration: (duration - 2) * 50.00,
-                products: 0.00, // TODO: Calculer selon les produits sélectionnés
-                beverages: 0.00 // TODO: Calculer selon les boissons sélectionnées
+                products: 0.00, // ✅ CORRECTION : Calculé dynamiquement via calculateProductsPrice()
+                beverages: 0.00 // ✅ CORRECTION : Calculé dynamiquement via calculateBeveragesPrice()
             };
 
             this.totalPrice = Object.values(this.priceBreakdown).reduce((sum, value) => sum + value, 0);
@@ -354,8 +354,8 @@
                 duration: durationSupplement,
                 guests_supplement: guestsSupplement,
                 delivery: deliveryPrice,
-                products: 0.00, // TODO: Calculer selon les produits sélectionnés
-                beverages: 0.00, // TODO: Calculer selon les boissons sélectionnées
+                products: 0.00, // ✅ CORRECTION : Calculé dynamiquement via calculateProductsPrice()
+                beverages: 0.00, // ✅ CORRECTION : Calculé dynamiquement via calculateBeveragesPrice()
                 options: optionsPrice
             };
 

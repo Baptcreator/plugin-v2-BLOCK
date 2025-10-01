@@ -91,7 +91,7 @@ class RestaurantBooking_Quote
             'supplements_total' => $price_calculation['supplements_total'],
             'products_total' => $price_calculation['products_total'],
             'total_price' => $price_calculation['total_price'],
-            'status' => 'draft',
+            'status' => 'sent',
             'created_at' => current_time('mysql')
         );
 
@@ -118,6 +118,11 @@ class RestaurantBooking_Quote
             'service_type' => $data['service_type'],
             'total_price' => $price_calculation['total_price']
         ));
+
+        // Envoyer la notification admin automatiquement
+        if (class_exists('RestaurantBooking_Email')) {
+            RestaurantBooking_Email::send_admin_notification($quote_id);
+        }
 
         return $quote_id;
     }

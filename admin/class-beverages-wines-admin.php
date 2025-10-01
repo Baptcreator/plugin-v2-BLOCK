@@ -13,13 +13,16 @@ if (!defined('ABSPATH')) {
 class RestaurantBooking_Beverages_Wines_Admin
 {
     /**
-     * Afficher la liste des vins avec filtrage par catégories
+     * Afficher la liste des vins avec filtrage par types
      */
     public function display_list()
     {
-        $category_filter = isset($_GET['wine_category']) ? sanitize_text_field($_GET['wine_category']) : '';
-        $products = $this->get_wines($category_filter);
-        $categories = $this->get_wine_categories();
+        // Gérer les actions (suppression, etc.)
+        $this->handle_actions();
+        
+        $type_filter = isset($_GET['wine_type']) ? sanitize_text_field($_GET['wine_type']) : '';
+        $products = $this->get_wines($type_filter);
+        $wine_types = $this->get_wine_types();
         
         ?>
         <div class="wrap">
@@ -29,30 +32,30 @@ class RestaurantBooking_Beverages_Wines_Admin
             </a>
             <hr class="wp-header-end">
 
-            <!-- Filtres par catégories -->
-            <div class="wine-categories-filter">
-                <h3><?php _e('Filtrer par catégorie', 'restaurant-booking'); ?></h3>
-                <div class="category-buttons">
+            <!-- Filtres par types -->
+            <div class="wine-types-filter">
+                <h3><?php _e('Filtrer par type de vin', 'restaurant-booking'); ?></h3>
+                <div class="type-buttons">
                     <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-wines'); ?>" 
-                       class="button <?php echo empty($category_filter) ? 'button-primary' : ''; ?>">
+                       class="button <?php echo empty($type_filter) ? 'button-primary' : ''; ?>">
                         <?php _e('Tous les vins', 'restaurant-booking'); ?>
                     </a>
-                    <?php foreach ($categories as $category): ?>
-                        <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-wines&wine_category=' . urlencode($category)); ?>" 
-                           class="button <?php echo $category_filter === $category ? 'button-primary' : ''; ?>">
-                            <?php echo esc_html($category); ?>
+                    <?php foreach ($wine_types as $type): ?>
+                        <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-wines&wine_type=' . urlencode($type['type'])); ?>" 
+                           class="button <?php echo $type_filter === $type['type'] ? 'button-primary' : ''; ?>">
+                            <?php echo esc_html($type['name']); ?>
                         </a>
                     <?php endforeach; ?>
                 </div>
             </div>
 
             <div class="restaurant-booking-info-card">
-                <h3><?php _e('Système de catégories des vins', 'restaurant-booking'); ?></h3>
+                <h3><?php _e('Système de gestion des vins', 'restaurant-booking'); ?></h3>
                 <ul>
-                    <li><?php _e('✓ Filtrage par régions et appellations', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✓ Filtrage par types de vins (Blanc, Rouge, Rosé, Crémant...)', 'restaurant-booking'); ?></li>
                     <li><?php _e('✓ Système "Nos suggestions" pour mise en avant', 'restaurant-booking'); ?></li>
-                    <li><?php _e('✓ Différentes contenances et degrés d\'alcool', 'restaurant-booking'); ?></li>
-                    <li><?php _e('✓ Sélection optionnelle', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✓ Volumes personnalisables en centilitres', 'restaurant-booking'); ?></li>
+                    <li><?php _e('✓ Ajout de nouveaux types de vins possible', 'restaurant-booking'); ?></li>
                 </ul>
             </div>
 
@@ -61,7 +64,7 @@ class RestaurantBooking_Beverages_Wines_Admin
                 <div class="stats-grid">
                     <div class="stat-card">
                         <h3><?php echo count($products); ?></h3>
-                        <p><?php _e('Vins', 'restaurant-booking'); ?> <?php echo $category_filter ? '(' . esc_html($category_filter) . ')' : ''; ?></p>
+                        <p><?php _e('Vins', 'restaurant-booking'); ?> <?php echo $type_filter ? '(' . esc_html($this->get_wine_type_name($type_filter)) . ')' : ''; ?></p>
                     </div>
                     <div class="stat-card">
                         <h3><?php echo count(array_filter($products, function($p) { return $p['is_active']; })); ?></h3>
@@ -72,102 +75,152 @@ class RestaurantBooking_Beverages_Wines_Admin
                         <p><?php _e('En suggestion', 'restaurant-booking'); ?></p>
                     </div>
                     <div class="stat-card">
-                        <h3><?php echo count($categories); ?></h3>
-                        <p><?php _e('Catégories', 'restaurant-booking'); ?></p>
+                        <h3><?php echo count($wine_types); ?></h3>
+                        <p><?php _e('Types de vins', 'restaurant-booking'); ?></p>
                     </div>
                 </div>
             </div>
 
-            <!-- Tableau des vins -->
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th class="manage-column"><?php _e('Vin', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Catégorie', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Degré/Volume', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Prix', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Suggestion', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Statut', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Actions', 'restaurant-booking'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($products)): ?>
+            <form method="post" id="wines-filter">
+                <?php wp_nonce_field('restaurant_booking_wines_action'); ?>
+                
+                <div class="tablenav top">
+                    <div class="alignleft actions bulkactions">
+                        <select name="action" id="bulk-action-selector-top">
+                            <option value="-1"><?php _e('Actions groupées', 'restaurant-booking'); ?></option>
+                            <option value="activate"><?php _e('Activer', 'restaurant-booking'); ?></option>
+                            <option value="deactivate"><?php _e('Désactiver', 'restaurant-booking'); ?></option>
+                            <option value="delete"><?php _e('Supprimer', 'restaurant-booking'); ?></option>
+                        </select>
+                        <?php submit_button(__('Appliquer', 'restaurant-booking'), 'action', '', false, array('id' => 'doaction')); ?>
+                    </div>
+                </div>
+
+                <!-- Tableau des vins -->
+                <table class="wp-list-table widefat fixed striped">
+                    <thead>
                         <tr>
-                            <td colspan="7" style="text-align: center; padding: 40px;">
-                                <p><?php _e('Aucun vin trouvé pour cette catégorie.', 'restaurant-booking'); ?></p>
-                                <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-wines&action=add'); ?>" class="button button-primary">
-                                    <?php _e('Ajouter un vin', 'restaurant-booking'); ?>
-                                </a>
+                            <td class="manage-column column-cb check-column">
+                                <input id="cb-select-all-1" type="checkbox">
                             </td>
+                            <th scope="col" class="manage-column column-image"><?php _e('Image', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-name column-primary"><?php _e('Nom', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-description"><?php _e('Description', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-type"><?php _e('Type', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-degree"><?php _e('Degré/Volume', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-price"><?php _e('Prix', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-suggestion"><?php _e('Suggestion', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-order"><?php _e('Ordre', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-status"><?php _e('Statut', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-date"><?php _e('Date de création', 'restaurant-booking'); ?></th>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($products as $product): ?>
-                            <tr>
-                                <td>
-                                    <div class="product-info">
-                                        <div>
-                                            <strong><?php echo esc_html($product['name']); ?></strong>
-                                            <?php if ($product['description']): ?>
-                                                <br><small class="description"><?php echo esc_html(wp_trim_words($product['description'], 15)); ?></small>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="wine-category-badge">
-                                        <?php echo esc_html($product['wine_category'] ?: __('Non classé', 'restaurant-booking')); ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <strong><?php echo $product['alcohol_degree']; ?>°</strong>
-                                    <br><small><?php echo $product['volume_cl']; ?> cl</small>
-                                </td>
-                                <td>
-                                    <strong><?php echo number_format($product['price'], 2, ',', ' '); ?> €</strong>
-                                    <br><small><?php echo esc_html($product['unit_label']); ?></small>
-                                </td>
-                                <td>
-                                    <?php if ($product['suggested_beverage']): ?>
-                                        <span class="suggestion-yes">⭐ <?php _e('Nos suggestions', 'restaurant-booking'); ?></span>
-                                    <?php else: ?>
-                                        <span class="suggestion-no">—</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <span class="product-status status-<?php echo $product['is_active'] ? 'active' : 'inactive'; ?>">
-                                        <?php echo $product['is_active'] ? __('Actif', 'restaurant-booking') : __('Inactif', 'restaurant-booking'); ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-wines&action=edit&product_id=' . $product['id']); ?>" 
-                                       class="button button-small">
-                                        <?php _e('Modifier', 'restaurant-booking'); ?>
-                                    </a>
-                                    <a href="#" class="button button-small button-link-delete" 
-                                       onclick="return confirm('<?php _e('Êtes-vous sûr de vouloir supprimer ce vin ?', 'restaurant-booking'); ?>')">
-                                        <?php _e('Supprimer', 'restaurant-booking'); ?>
-                                    </a>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($products)): ?>
+                            <tr class="no-items">
+                                <td class="colspanchange" colspan="11">
+                                    <?php _e('Aucun vin trouvé.', 'restaurant-booking'); ?>
                                 </td>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                        <?php else: ?>
+                            <?php foreach ($products as $product): ?>
+                                <tr>
+                                    <th scope="row" class="check-column">
+                                        <input id="cb-select-<?php echo $product['id']; ?>" type="checkbox" name="wine_ids[]" value="<?php echo $product['id']; ?>">
+                                    </th>
+                                    <td class="column-image">
+                                        <?php if (!empty($product['image_url'])): ?>
+                                            <img src="<?php echo esc_url($product['image_url']); ?>" alt="<?php echo esc_attr($product['name']); ?>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                        <?php else: ?>
+                                            <div style="width: 50px; height: 50px; background: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #666;">
+                                                <span class="dashicons dashicons-format-image"></span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-name column-primary">
+                                        <strong>
+                                            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-wines&action=edit&product_id=' . $product['id']); ?>">
+                                                <?php echo esc_html($product['name']); ?>
+                                            </a>
+                                        </strong>
+                                        <div class="row-actions">
+                                            <span class="edit">
+                                                <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-wines&action=edit&product_id=' . $product['id']); ?>">
+                                                    <?php _e('Modifier', 'restaurant-booking'); ?>
+                                                </a> |
+                                            </span>
+                                            <span class="toggle-status">
+                                                <a href="#" class="toggle-wine-status" data-product-id="<?php echo $product['id']; ?>" data-current-status="<?php echo $product['is_active'] ? 1 : 0; ?>">
+                                                    <?php echo $product['is_active'] ? __('Désactiver', 'restaurant-booking') : __('Activer', 'restaurant-booking'); ?>
+                                                </a> |
+                                            </span>
+                                            <span class="delete">
+                                                <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=restaurant-booking-beverages-wines&action=delete&product_id=' . $product['id']), 'delete_wine_' . $product['id']); ?>" 
+                                                   class="button button-small button-link-delete" 
+                                                   onclick="return confirm('<?php _e('Êtes-vous sûr de vouloir supprimer ce vin ?', 'restaurant-booking'); ?>')">
+                                                    <?php _e('Supprimer', 'restaurant-booking'); ?>
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="column-description">
+                                        <?php echo esc_html(wp_trim_words($product['description'] ?? '', 10)); ?>
+                                    </td>
+                                    <td class="column-type">
+                                        <span class="wine-type-badge">
+                                            <?php echo esc_html($this->get_wine_type_name($product['category_type'])); ?>
+                                        </span>
+                                    </td>
+                                    <td class="column-degree">
+                                        <strong><?php echo $product['alcohol_degree']; ?>°</strong>
+                                        <br><small><?php echo $product['volume_cl']; ?> cl</small>
+                                    </td>
+                                    <td class="column-price">
+                                        <strong><?php echo number_format($product['price'], 2, ',', ' '); ?> €</strong>
+                                    </td>
+                                    <td class="column-suggestion">
+                                        <?php if ($product['suggested_beverage']): ?>
+                                            <span class="suggestion-yes">⭐ <?php _e('Oui', 'restaurant-booking'); ?></span>
+                                        <?php else: ?>
+                                            <span class="suggestion-no">—</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-order">
+                                        <input type="number" class="small-text wine-order-input" 
+                                               value="<?php echo $product['display_order'] ?? 0; ?>" 
+                                               data-product-id="<?php echo $product['id']; ?>"
+                                               min="0" max="999">
+                                    </td>
+                                    <td class="column-status">
+                                        <?php if ($product['is_active']): ?>
+                                            <span class="status-active"><?php _e('Actif', 'restaurant-booking'); ?></span>
+                                        <?php else: ?>
+                                            <span class="status-inactive"><?php _e('Inactif', 'restaurant-booking'); ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-date">
+                                        <?php echo date_i18n(get_option('date_format'), strtotime($product['created_at'] ?? 'now')); ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </form>
         </div>
 
         <style>
-        .wine-categories-filter {
+        .wine-types-filter {
             margin: 20px 0;
             padding: 15px;
             background: #f9f9f9;
             border-radius: 4px;
         }
-        .wine-categories-filter h3 {
+        .wine-types-filter h3 {
             margin-top: 0;
             margin-bottom: 10px;
         }
-        .category-buttons {
+        .type-buttons {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
@@ -218,7 +271,7 @@ class RestaurantBooking_Beverages_Wines_Admin
             color: #666;
             font-style: italic;
         }
-        .wine-category-badge {
+        .wine-type-badge {
             background: #e1f5fe;
             color: #0277bd;
             padding: 3px 8px;
@@ -231,15 +284,17 @@ class RestaurantBooking_Beverages_Wines_Admin
             font-weight: bold;
         }
         .suggestion-no { color: #666; }
-        .product-status {
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .status-active { background: #d4edda; color: #155724; }
-        .status-inactive { background: #f8d7da; color: #721c24; }
+        .status-active { color: #46b450; font-weight: 600; }
+        .status-inactive { color: #dc3232; font-weight: 600; }
+        .wine-order-input { width: 60px; }
+        .column-image { width: 70px; }
+        .column-price { width: 100px; text-align: center; }
+        .column-type { width: 100px; }
+        .column-degree { width: 100px; }
+        .column-suggestion { width: 100px; }
+        .column-order { width: 80px; }
+        .column-status { width: 80px; }
+        .column-date { width: 120px; }
         </style>
         <?php
     }
@@ -296,42 +351,28 @@ class RestaurantBooking_Beverages_Wines_Admin
                         <td>
                             <select id="wine_type" name="wine_type" required>
                                 <option value=""><?php _e('Sélectionner un type...', 'restaurant-booking'); ?></option>
-                                <option value="vin_blanc" <?php selected($product['category_type'] ?? '', 'vin_blanc'); ?>>
-                                    <?php _e('Vin Blanc', 'restaurant-booking'); ?>
-                                </option>
-                                <option value="vin_rouge" <?php selected($product['category_type'] ?? '', 'vin_rouge'); ?>>
-                                    <?php _e('Vin Rouge', 'restaurant-booking'); ?>
-                                </option>
-                                <option value="vin_rose" <?php selected($product['category_type'] ?? '', 'vin_rose'); ?>>
-                                    <?php _e('Vin Rosé', 'restaurant-booking'); ?>
-                                </option>
-                                <option value="cremant" <?php selected($product['category_type'] ?? '', 'cremant'); ?>>
-                                    <?php _e('Crémant', 'restaurant-booking'); ?>
-                                </option>
+                                <?php 
+                                $wine_types = $this->get_wine_types();
+                                foreach ($wine_types as $type): ?>
+                                    <option value="<?php echo esc_attr($type['type']); ?>" <?php selected($product['category_type'] ?? '', $type['type']); ?>>
+                                        <?php echo esc_html($type['name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
+                            <p class="description"><?php _e('Sélectionnez le type de vin. Vous pouvez ajouter de nouveaux types ci-dessous.', 'restaurant-booking'); ?></p>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <th scope="row">
+                            <label for="new_wine_type"><?php _e('Nouveau type de vin', 'restaurant-booking'); ?></label>
+                        </th>
+                        <td>
+                            <input type="text" id="new_wine_type" name="new_wine_type" class="regular-text" placeholder="<?php _e('Ex: Champagne, Moscato...', 'restaurant-booking'); ?>">
+                            <p class="description"><?php _e('Si vous saisissez un nouveau type, il sera créé automatiquement et sélectionné.', 'restaurant-booking'); ?></p>
                         </td>
                     </tr>
 
-                    <tr>
-                        <th scope="row">
-                            <label for="wine_category"><?php _e('Catégorie/Région', 'restaurant-booking'); ?></label>
-                        </th>
-                        <td>
-                            <input type="text" id="wine_category" name="wine_category" 
-                                   value="<?php echo $product ? esc_attr($product['wine_category']) : ''; ?>" 
-                                   class="regular-text" list="wine_categories">
-                            <datalist id="wine_categories">
-                                <option value="Loire">
-                                <option value="Bourgogne">
-                                <option value="Bordeaux">
-                                <option value="Alsace">
-                                <option value="Rhône">
-                                <option value="Provence">
-                                <option value="Languedoc">
-                            </datalist>
-                            <p class="description"><?php _e('Ex: Loire, Bourgogne, Bordeaux... (utilisé pour le filtrage).', 'restaurant-booking'); ?></p>
-                        </td>
-                    </tr>
                     
                     <tr>
                         <th scope="row">
@@ -361,11 +402,10 @@ class RestaurantBooking_Beverages_Wines_Admin
                             <label for="volume_cl"><?php _e('Volume', 'restaurant-booking'); ?> *</label>
                         </th>
                         <td>
-                            <select id="volume_cl" name="volume_cl" required>
-                                <option value="37.5" <?php selected($product['volume_cl'] ?? '', '37.5'); ?>>37,5 cl (demi-bouteille)</option>
-                                <option value="75" <?php selected($product['volume_cl'] ?? '75', '75'); ?>>75 cl (bouteille standard)</option>
-                                <option value="150" <?php selected($product['volume_cl'] ?? '', '150'); ?>>1,5 L (magnum)</option>
-                            </select>
+                            <input type="number" id="volume_cl" name="volume_cl" 
+                                   value="<?php echo $product ? esc_attr($product['volume_cl']) : '75'; ?>" 
+                                   min="1" max="5000" step="0.1" class="small-text" required> cl
+                            <p class="description"><?php _e('Volume en centilitres (ex: 75 pour une bouteille standard, 150 pour un magnum).', 'restaurant-booking'); ?></p>
                         </td>
                     </tr>
 
@@ -464,27 +504,102 @@ class RestaurantBooking_Beverages_Wines_Admin
         </script>
         <?php
     }
+    
+    /**
+     * Gérer la sauvegarde d'un vin
+     */
+    public function handle_save_wine()
+    {
+        // Vérifier le nonce
+        if (!wp_verify_nonce($_POST['beverage_wine_nonce'], 'restaurant_booking_beverage_wine')) {
+            wp_die(__('Erreur de sécurité', 'restaurant-booking'));
+        }
+
+        // Récupérer les données
+        $product_id = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
+        $product_name = sanitize_text_field($_POST['product_name']);
+        $product_description = sanitize_textarea_field($_POST['product_description']);
+        $wine_type = sanitize_text_field($_POST['wine_type']);
+        $new_wine_type = sanitize_text_field($_POST['new_wine_type']);
+        $alcohol_degree = floatval($_POST['alcohol_degree']);
+        $volume_cl = floatval($_POST['volume_cl']);
+        $product_price = floatval($_POST['product_price']);
+        $product_image_id = intval($_POST['product_image_id']);
+        $suggested_beverage = isset($_POST['suggested_beverage']) ? 1 : 0;
+        $is_active = isset($_POST['is_active']) ? 1 : 0;
+        
+        // Gérer le nouveau type de vin si fourni
+        if (!empty($new_wine_type)) {
+            $wine_type = $this->create_new_wine_type($new_wine_type);
+        }
+
+        // Validation
+        if (empty($product_name) || empty($wine_type) || $product_price <= 0 || $alcohol_degree <= 0 || $volume_cl <= 0) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-wines&action=add&error=validation'));
+            exit;
+        }
+
+        // Obtenir la catégorie
+        $category = RestaurantBooking_Category::get_by_type($wine_type);
+        if (!$category) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-wines&action=add&error=no_category'));
+            exit;
+        }
+
+        // Préparer les données du produit
+        $product_data = array(
+            'category_id' => $category['id'],
+            'name' => $product_name,
+            'description' => $product_description,
+            'price' => $product_price,
+            'unit_type' => 'bouteille',
+            'unit_label' => '/bouteille ' . $volume_cl . 'cl',
+            'volume_cl' => $volume_cl,
+            'alcohol_degree' => $alcohol_degree,
+            'image_id' => $product_image_id ?: null,
+            'suggested_beverage' => $suggested_beverage,
+            'is_active' => $is_active
+        );
+
+        if ($product_id) {
+            // Mise à jour
+            $result = RestaurantBooking_Product::update($product_id, $product_data);
+            $success_param = $result ? 'updated' : 'error';
+        } else {
+            // Création
+            $result = RestaurantBooking_Product::create($product_data);
+            $success_param = $result ? 'created' : 'error';
+        }
+
+        // Redirection
+        $redirect_url = admin_url('admin.php?page=restaurant-booking-beverages-wines&message=' . $success_param);
+        wp_redirect($redirect_url);
+        exit;
+    }
 
     /**
-     * Obtenir les vins avec filtrage optionnel par catégorie
+     * Obtenir les vins avec filtrage optionnel par type
      */
-    private function get_wines($category_filter = '')
+    private function get_wines($type_filter = '')
     {
         global $wpdb;
 
-        $where_clause = "WHERE c.type IN ('vin_blanc', 'vin_rouge', 'vin_rose', 'cremant')";
+        $wine_types = $this->get_wine_types();
+        $wine_type_codes = array_column($wine_types, 'type');
+        
+        $where_clause = "WHERE c.type IN ('" . implode("', '", array_map('esc_sql', $wine_type_codes)) . "')";
         $params = array();
 
-        if (!empty($category_filter)) {
-            $where_clause .= " AND p.wine_category = %s";
-            $params[] = $category_filter;
+        if (!empty($type_filter)) {
+            $where_clause .= " AND c.type = %s";
+            $params[] = $type_filter;
         }
 
         $sql = "SELECT p.*, c.service_type, c.type as category_type
                 FROM {$wpdb->prefix}restaurant_products p
                 INNER JOIN {$wpdb->prefix}restaurant_categories c ON p.category_id = c.id
                 $where_clause
-                ORDER BY p.suggested_beverage DESC, p.wine_category ASC, p.name ASC";
+                ORDER BY p.suggested_beverage DESC, c.type ASC, p.name ASC";
 
         if (!empty($params)) {
             $sql = $wpdb->prepare($sql, $params);
@@ -492,35 +607,162 @@ class RestaurantBooking_Beverages_Wines_Admin
 
         $products = $wpdb->get_results($sql, ARRAY_A);
 
-        // Convertir les types
+        // Convertir les types et ajouter l'URL de l'image
         foreach ($products as &$product) {
             $product['price'] = (float) $product['price'];
             $product['alcohol_degree'] = (float) $product['alcohol_degree'];
             $product['volume_cl'] = (int) $product['volume_cl'];
             $product['suggested_beverage'] = (bool) $product['suggested_beverage'];
             $product['is_active'] = (bool) $product['is_active'];
+            $product['image_url'] = $product['image_id'] ? wp_get_attachment_image_url($product['image_id'], 'thumbnail') : '';
         }
 
         return $products ?: array();
     }
 
     /**
-     * Obtenir toutes les catégories de vins existantes
+     * Obtenir tous les types de vins existants
      */
-    private function get_wine_categories()
+    private function get_wine_types()
     {
         global $wpdb;
 
-        $categories = $wpdb->get_col("
-            SELECT DISTINCT p.wine_category 
-            FROM {$wpdb->prefix}restaurant_products p
-            INNER JOIN {$wpdb->prefix}restaurant_categories c ON p.category_id = c.id
-            WHERE c.type IN ('vin_blanc', 'vin_rouge', 'vin_rose', 'cremant')
-            AND p.wine_category IS NOT NULL 
-            AND p.wine_category != ''
-            ORDER BY p.wine_category ASC
-        ");
+        $types = $wpdb->get_results("
+            SELECT c.type, c.name 
+            FROM {$wpdb->prefix}restaurant_categories c
+            WHERE c.type LIKE 'vin_%' OR c.type = 'cremant'
+            ORDER BY c.name ASC
+        ", ARRAY_A);
 
-        return $categories ?: array();
+        return $types ?: array();
+    }
+    
+    /**
+     * Obtenir le nom d'un type de vin
+     */
+    private function get_wine_type_name($type)
+    {
+        global $wpdb;
+        
+        $name = $wpdb->get_var($wpdb->prepare("
+            SELECT name FROM {$wpdb->prefix}restaurant_categories 
+            WHERE type = %s
+        ", $type));
+        
+        return $name ?: $type;
+    }
+    
+    /**
+     * Créer un nouveau type de vin
+     */
+    private function create_new_wine_type($type_name)
+    {
+        global $wpdb;
+        
+        // Générer un code unique pour le type
+        $type_code = 'vin_' . sanitize_title($type_name);
+        
+        // Vérifier si le type existe déjà
+        $existing = $wpdb->get_var($wpdb->prepare("
+            SELECT id FROM {$wpdb->prefix}restaurant_categories 
+            WHERE type = %s
+        ", $type_code));
+        
+        if ($existing) {
+            return $type_code;
+        }
+        
+        // Créer la nouvelle catégorie
+        $result = $wpdb->insert(
+            $wpdb->prefix . 'restaurant_categories',
+            array(
+                'name' => $type_name,
+                'slug' => sanitize_title($type_name),
+                'type' => $type_code,
+                'service_type' => 'both',
+                'description' => 'Type de vin créé automatiquement',
+                'is_required' => 0,
+                'max_selections' => 0,
+                'image_id' => null,
+                'display_order' => 0
+            ),
+            array('%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d')
+        );
+        
+        if ($result) {
+            // Mettre à jour l'ENUM de la base de données
+            $this->update_category_enum($type_code);
+            return $type_code;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Mettre à jour l'ENUM des types de catégories
+     */
+    private function update_category_enum($new_type)
+    {
+        global $wpdb;
+        
+        // Récupérer les types existants
+        $existing_types = array(
+            'plat_signature_dog', 'plat_signature_croq', 'mini_boss', 'accompagnement', 
+            'buffet_sale', 'buffet_sucre', 'soft', 'vin_blanc', 'vin_rouge', 'vin_rose', 
+            'cremant', 'biere_bouteille', 'fut', 'jeu', 'option_restaurant', 'option_remorque'
+        );
+        
+        // Ajouter le nouveau type s'il n'existe pas
+        if (!in_array($new_type, $existing_types)) {
+            $existing_types[] = $new_type;
+        }
+        
+        // Créer le nouvel ENUM
+        $new_enum = "enum('" . implode("', '", array_map('esc_sql', $existing_types)) . "') NOT NULL";
+        
+        // Mettre à jour la table
+        $wpdb->query("ALTER TABLE {$wpdb->prefix}restaurant_categories MODIFY COLUMN type $new_enum");
+    }
+
+    /**
+     * Gérer les actions (suppression, etc.)
+     */
+    public function handle_actions()
+    {
+        if (!isset($_GET['action']) || !isset($_GET['product_id'])) {
+            return;
+        }
+
+        $action = sanitize_text_field($_GET['action']);
+        $product_id = (int) $_GET['product_id'];
+
+        switch ($action) {
+            case 'delete':
+                $this->delete_wine($product_id);
+                break;
+        }
+    }
+
+    /**
+     * Supprimer un vin
+     */
+    private function delete_wine($product_id)
+    {
+        if (!wp_verify_nonce($_GET['_wpnonce'], 'delete_wine_' . $product_id)) {
+            wp_die(__('Action non autorisée.', 'restaurant-booking'));
+        }
+
+        if (!current_user_can('manage_restaurant_quotes')) {
+            wp_die(__('Permissions insuffisantes.', 'restaurant-booking'));
+        }
+
+        $result = RestaurantBooking_Product::delete($product_id);
+        
+        if (is_wp_error($result)) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-wines&message=error&error=' . urlencode($result->get_error_message())));
+        } else {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-wines&message=deleted'));
+        }
+        exit;
     }
 }

@@ -81,15 +81,48 @@ class RestaurantBooking_Quote_Calculator_V2
             }
 
             // 4. Supplément distance (remorque uniquement)
-            if ($service_type === 'remorque' && isset($form_data['postal_code'])) {
-                $distance_supplement = $this->calculate_distance_supplement($form_data['postal_code']);
-                $calculation['distance_supplement'] = $distance_supplement['amount'];
+            if ($service_type === 'remorque') {
+                $distance_supplement_amount = 0;
+                $zone_name = 'Zone locale';
                 
-                if ($distance_supplement['amount'] > 0) {
+                // Debug: Logger les données reçues
+                RestaurantBooking_Logger::info('Calcul distance - données reçues', array(
+                    'form_data_keys' => array_keys($form_data),
+                    'delivery_supplement' => $form_data['delivery_supplement'] ?? 'non défini',
+                    'delivery_zone' => $form_data['delivery_zone'] ?? 'non défini',
+                    'postal_code' => $form_data['postal_code'] ?? 'non défini'
+                ));
+                
+                // Utiliser les données déjà calculées côté client si disponibles
+                if (isset($form_data['delivery_supplement']) && isset($form_data['delivery_zone'])) {
+                    $distance_supplement_amount = (float) $form_data['delivery_supplement'];
+                    $zone_name = $form_data['delivery_zone'];
+                    RestaurantBooking_Logger::info('Utilisation données client', array(
+                        'supplement' => $distance_supplement_amount,
+                        'zone' => $zone_name
+                    ));
+                } elseif (isset($form_data['postal_code'])) {
+                    // Fallback : recalculer côté serveur
+                    $distance_supplement = $this->calculate_distance_supplement($form_data['postal_code']);
+                    $distance_supplement_amount = $distance_supplement['amount'];
+                    $zone_name = $distance_supplement['zone_name'];
+                    RestaurantBooking_Logger::info('Recalcul côté serveur', array(
+                        'supplement' => $distance_supplement_amount,
+                        'zone' => $zone_name
+                    ));
+                }
+                
+                $calculation['distance_supplement'] = $distance_supplement_amount;
+                
+                if ($distance_supplement_amount > 0) {
                     $calculation['breakdown'][] = array(
-                        'label' => 'Supplément livraison (' . $distance_supplement['zone_name'] . ')',
-                        'amount' => $distance_supplement['amount']
+                        'label' => 'Supplément livraison (' . $zone_name . ')',
+                        'amount' => $distance_supplement_amount
                     );
+                    RestaurantBooking_Logger::info('Supplément ajouté au breakdown', array(
+                        'label' => 'Supplément livraison (' . $zone_name . ')',
+                        'amount' => $distance_supplement_amount
+                    ));
                 }
             }
 
@@ -208,24 +241,28 @@ class RestaurantBooking_Quote_Calculator_V2
     private function calculate_distance_supplement($postal_code)
     {
         try {
-            $distance_calculator = RestaurantBooking_Distance_Calculator::get_instance();
-            $distance = RestaurantBooking_Distance_Calculator::calculate_distance_from_restaurant($postal_code);
+            // Utiliser le nouveau service Google Maps
+            $google_maps = RestaurantBooking_Google_Maps_Service::get_instance();
+            $distance_result = $google_maps->calculate_distance_from_restaurant($postal_code);
             
-            if (is_wp_error($distance)) {
-                throw new Exception($distance->get_error_message());
+            if (is_wp_error($distance_result)) {
+                throw new Exception($distance_result->get_error_message());
             }
             
-            $delivery_info = RestaurantBooking_Distance_Calculator::get_delivery_supplement($distance);
+            $distance_km = $distance_result['distance_km'];
             
-            if (is_wp_error($delivery_info)) {
-                throw new Exception($delivery_info->get_error_message());
+            // Calculer le supplément selon les zones configurées en base de données
+            $zone_info = $this->get_delivery_zone_for_distance($distance_km);
+            if ($zone_info) {
+                return [
+                    'amount' => (float) $zone_info['delivery_price'],
+                    'zone_name' => $zone_info['zone_name'] . ' (' . $zone_info['distance_min'] . '-' . $zone_info['distance_max'] . 'km)'
+                ];
+            } else {
+                // Aucune zone trouvée = distance trop importante
+                $max_distance = $this->get_max_delivery_distance();
+                throw new Exception(sprintf('Distance trop importante (max %dkm)', $max_distance));
             }
-            
-            return array(
-                'amount' => $delivery_info['supplement'],
-                'distance' => $distance,
-                'zone_name' => $delivery_info['zone_name']
-            );
             
         } catch (Exception $e) {
             // En cas d'erreur, retourner 0 mais logger l'erreur
@@ -234,11 +271,7 @@ class RestaurantBooking_Quote_Calculator_V2
                 'error' => $e->getMessage()
             ));
             
-            return array(
-                'amount' => 0,
-                'distance' => 0,
-                'zone_name' => 'Erreur calcul'
-            );
+            return ['amount' => 0, 'zone_name' => 'Erreur calcul'];
         }
     }
 
@@ -600,5 +633,41 @@ class RestaurantBooking_Quote_Calculator_V2
     private function format_price($price)
     {
         return number_format($price, 2, ',', ' ') . ' €';
+    }
+
+    /**
+     * Obtenir la zone de livraison pour une distance donnée
+     */
+    private function get_delivery_zone_for_distance($distance_km)
+    {
+        global $wpdb;
+        
+        $zone = $wpdb->get_row($wpdb->prepare("
+            SELECT zone_name, distance_min, distance_max, delivery_price
+            FROM {$wpdb->prefix}restaurant_delivery_zones
+            WHERE is_active = 1 
+            AND %f >= distance_min 
+            AND %f <= distance_max
+            ORDER BY distance_min ASC
+            LIMIT 1
+        ", $distance_km, $distance_km), ARRAY_A);
+        
+        return $zone;
+    }
+
+    /**
+     * Obtenir la distance maximale de livraison
+     */
+    private function get_max_delivery_distance()
+    {
+        global $wpdb;
+        
+        $max_distance = $wpdb->get_var("
+            SELECT MAX(distance_max) 
+            FROM {$wpdb->prefix}restaurant_delivery_zones
+            WHERE is_active = 1
+        ");
+        
+        return $max_distance ? (int) $max_distance : 150; // Fallback à 150km si pas de données
     }
 }

@@ -109,22 +109,7 @@ class RestaurantBooking_Migration_V2
         global $wpdb;
         $charset_collate = $wpdb->get_charset_collate();
 
-        // Table des jeux
-        $table_games = $wpdb->prefix . 'restaurant_games';
-        $sql_games = "CREATE TABLE $table_games (
-            id int(11) NOT NULL AUTO_INCREMENT,
-            name varchar(255) NOT NULL,
-            description text,
-            price decimal(10,2) NOT NULL DEFAULT 70.00,
-            image_id bigint(20) DEFAULT NULL,
-            display_order int(11) NOT NULL DEFAULT 0,
-            is_active tinyint(1) NOT NULL DEFAULT 1,
-            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY is_active (is_active),
-            KEY display_order (display_order)
-        ) $charset_collate;";
+        // Table des jeux - SUPPRIMÉE (les jeux sont maintenant dans restaurant_products)
 
         // Table des suppléments de produits
         $table_supplements = $wpdb->prefix . 'restaurant_product_supplements';
@@ -162,7 +147,6 @@ class RestaurantBooking_Migration_V2
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
         // Exécuter les créations
-        dbDelta($sql_games);
         dbDelta($sql_supplements);
         dbDelta($sql_beverage_sizes);
 
@@ -331,26 +315,7 @@ class RestaurantBooking_Migration_V2
             }
         }
 
-        // Jeux par défaut
-        $default_games = array(
-            array('Château gonflable', 'Château gonflable pour enfants de 3 à 12 ans', 70.00, 1),
-            array('Toboggan géant', 'Toboggan gonflable de 5 mètres', 70.00, 2),
-            array('Parcours d\'obstacles', 'Parcours gonflable avec obstacles', 70.00, 3),
-        );
-
-        foreach ($default_games as $game) {
-            $wpdb->insert(
-                $wpdb->prefix . 'restaurant_games',
-                array(
-                    'name' => $game[0],
-                    'description' => $game[1],
-                    'price' => $game[2],
-                    'display_order' => $game[3],
-                    'is_active' => 1
-                ),
-                array('%s', '%s', '%f', '%d', '%d')
-            );
-        }
+        // Jeux par défaut - SUPPRIMÉ (les jeux sont maintenant dans restaurant_products via la catégorie 'jeu')
 
         RestaurantBooking_Logger::info('Nouvelles données par défaut v2 insérées');
     }

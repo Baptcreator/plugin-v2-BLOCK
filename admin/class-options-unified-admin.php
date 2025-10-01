@@ -27,10 +27,10 @@ class RestaurantBooking_Options_Unified_Admin
         'buffet_sucre_text' => 'min 1/personne et min 1 plat',
         
         'accompaniment_min_per_person' => 1,
-        'accompaniment_text' => 'mini 1/personne',
+        'accompaniment_text' => 'exactement 1/personne',
         
         'signature_dish_min_per_person' => 1,
-        'signature_dish_text' => 'minimum 1 plat par personne',
+        'signature_dish_text' => 'exactement 1 plat par personne',
         
         // Limites privatisation restaurant
         'restaurant_min_guests' => 10,
@@ -91,6 +91,10 @@ class RestaurantBooking_Options_Unified_Admin
         // Messages système
         'success_message' => 'Votre devis est d\'ores et déjà disponible dans votre boîte mail',
         'loading_message' => 'Génération de votre devis en cours...',
+        
+        // Prix de base des forfaits
+        'restaurant_base_price' => 300,
+        'remorque_base_price' => 350,
         
         // Descriptions forfaits
         'restaurant_forfait_description' => 'Mise à disposition des murs de Block|Notre équipe salle + cuisine assurant la prestation|Présentation + mise en place buffets, selon vos choix|Mise à disposition vaisselle + verrerie|Entretien + nettoyage',
@@ -301,6 +305,20 @@ class RestaurantBooking_Options_Unified_Admin
                         </div>
 
                         <div class="options-group">
+                            <h3><?php _e('Prix de base', 'restaurant-booking'); ?></h3>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php _e('Prix forfait restaurant', 'restaurant-booking'); ?></th>
+                                    <td>
+                                        <input type="number" name="restaurant_base_price" value="<?php echo esc_attr($options['restaurant_base_price']); ?>" min="0" step="0.01" class="small-text" />
+                                        <span>€</span>
+                                        <p class="description"><?php _e('Prix de base pour la privatisation du restaurant', 'restaurant-booking'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="options-group">
                             <h3><?php _e('Description forfait', 'restaurant-booking'); ?></h3>
                             <table class="form-table">
                                 <tr>
@@ -453,6 +471,20 @@ class RestaurantBooking_Options_Unified_Admin
                         </div>
 
                         <div class="options-group">
+                            <h3><?php _e('Prix de base', 'restaurant-booking'); ?></h3>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php _e('Prix forfait remorque', 'restaurant-booking'); ?></th>
+                                    <td>
+                                        <input type="number" name="remorque_base_price" value="<?php echo esc_attr($options['remorque_base_price']); ?>" min="0" step="0.01" class="small-text" />
+                                        <span>€</span>
+                                        <p class="description"><?php _e('Prix de base pour la privatisation de la remorque', 'restaurant-booking'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="options-group">
                             <h3><?php _e('Description forfait', 'restaurant-booking'); ?></h3>
                             <table class="form-table">
                                 <tr>
@@ -493,7 +525,7 @@ class RestaurantBooking_Options_Unified_Admin
                     <!-- Section 5: Textes du Formulaire (Shortcode) -->
                     <div class="options-section">
                         <h2>📝 <?php _e('Textes du Formulaire de Devis', 'restaurant-booking'); ?></h2>
-                        <p class="description"><?php _e('Ces textes sont utilisés dans le shortcode [restaurant_booking_form]', 'restaurant-booking'); ?></p>
+                        <p class="description"><?php _e('Ces textes sont utilisés dans le shortcode [restaurant_booking_form_v3]', 'restaurant-booking'); ?></p>
                         
                         <div class="options-group">
                             <h3><?php _e('En-tête du formulaire', 'restaurant-booking'); ?></h3>
@@ -586,6 +618,7 @@ class RestaurantBooking_Options_Unified_Admin
                         </div>
                     </div>
 
+
                 </div>
 
                 <p class="submit">
@@ -657,6 +690,10 @@ class RestaurantBooking_Options_Unified_Admin
             }
         }
         
+        // Récupérer les prix de base depuis la table restaurant_settings
+        $saved_options['restaurant_base_price'] = RestaurantBooking_Settings::get('restaurant_base_price', 300);
+        $saved_options['remorque_base_price'] = RestaurantBooking_Settings::get('remorque_base_price', 350);
+        
         return array_merge($this->default_options, $saved_options);
     }
 
@@ -675,12 +712,30 @@ class RestaurantBooking_Options_Unified_Admin
                 // Conversion des types pour les valeurs numériques
                 if (is_numeric($default_value)) {
                     $options[$key] = floatval($value);
+                } elseif (is_bool($default_value)) {
+                    // Gestion des checkboxes
+                    $options[$key] = ($value === '1');
                 } else {
                     // Nettoyer les échappements multiples pour les textes
                     $value = $this->clean_escaped_quotes($value);
                     $options[$key] = $value;
                 }
+            } else {
+                // Pour les checkboxes non cochées, elles ne sont pas dans $_POST
+                if (is_bool($default_value)) {
+                    $options[$key] = false;
+                } else {
+                    $options[$key] = $default_value;
+                }
             }
+        }
+        
+        // Sauvegarder les prix de base dans la table restaurant_settings
+        if (isset($options['restaurant_base_price'])) {
+            RestaurantBooking_Settings::set('restaurant_base_price', $options['restaurant_base_price']);
+        }
+        if (isset($options['remorque_base_price'])) {
+            RestaurantBooking_Settings::set('remorque_base_price', $options['remorque_base_price']);
         }
         
         update_option('restaurant_booking_unified_options', $options);

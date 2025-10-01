@@ -7,6 +7,20 @@
 
 (function($) {
     'use strict';
+    
+    // Vérifier que jQuery est disponible
+    if (typeof $ === 'undefined') {
+        console.error('Restaurant Booking: jQuery n\'est pas chargé');
+        
+        // Essayer de charger jQuery depuis WordPress
+        if (typeof jQuery !== 'undefined') {
+            window.$ = jQuery;
+            console.log('Restaurant Booking: jQuery restauré depuis window.jQuery');
+        } else {
+            console.error('Restaurant Booking: jQuery complètement indisponible');
+            return;
+        }
+    }
 
     // Variables globales
     var RestaurantBookingAdmin = {
@@ -36,6 +50,8 @@
             
             // Formulaires
             $(document).on('submit', '.restaurant-booking-form', this.handleFormSubmit);
+            
+            // Note: Les suppressions de produits utilisent maintenant des liens GET directs
         },
 
         initComponents: function() {
@@ -478,6 +494,9 @@
             });
         }
     };
+
+    // Note: Les gestionnaires de suppression de produits ont été supprimés
+    // car les suppressions utilisent maintenant des liens GET directs
 
     // === INITIALISATION ===
     $(document).ready(function() {

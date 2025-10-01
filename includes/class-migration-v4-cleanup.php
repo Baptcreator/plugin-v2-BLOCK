@@ -132,6 +132,7 @@ class RestaurantBooking_Migration_V4_Cleanup
             'has_chimichurri',             // Remplacée par système d'options
             'sauce_options',               // Remplacée par tables d'options
             'accompaniment_type'           // Redondante avec nouveau système
+            // NOTE: wine_category est maintenant utilisée par la nouvelle structure unifiée
         );
         
         foreach ($columns_to_remove as $column) {

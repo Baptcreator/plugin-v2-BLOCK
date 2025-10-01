@@ -17,6 +17,9 @@ class RestaurantBooking_Beverages_Soft_Admin
      */
     public function display_list()
     {
+        // Gérer les actions (suppression, etc.)
+        $this->handle_actions();
+        
         $products = $this->get_soft_beverages();
         
         ?>
@@ -59,81 +62,227 @@ class RestaurantBooking_Beverages_Soft_Admin
                 </div>
             </div>
 
-            <!-- Tableau des produits -->
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th class="manage-column"><?php _e('Boisson', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Contenance', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Prix', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Suggestion', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Statut', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Actions', 'restaurant-booking'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($products)): ?>
+            <form method="post" id="soft-beverages-filter">
+                <?php wp_nonce_field('restaurant_booking_soft_beverages_action'); ?>
+                
+                <div class="tablenav top">
+                    <div class="alignleft actions bulkactions">
+                        <select name="action" id="bulk-action-selector-top">
+                            <option value="-1"><?php _e('Actions groupées', 'restaurant-booking'); ?></option>
+                            <option value="activate"><?php _e('Activer', 'restaurant-booking'); ?></option>
+                            <option value="deactivate"><?php _e('Désactiver', 'restaurant-booking'); ?></option>
+                            <option value="delete"><?php _e('Supprimer', 'restaurant-booking'); ?></option>
+                        </select>
+                        <?php submit_button(__('Appliquer', 'restaurant-booking'), 'action', '', false, array('id' => 'doaction')); ?>
+                    </div>
+                </div>
+
+                <!-- Tableau des produits -->
+                <table class="wp-list-table widefat fixed striped">
+                    <thead>
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 40px;">
-                                <p><?php _e('Aucune boisson soft configurée.', 'restaurant-booking'); ?></p>
-                                <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-soft&action=add'); ?>" class="button button-primary">
-                                    <?php _e('Créer la première boisson soft', 'restaurant-booking'); ?>
-                                </a>
+                            <td class="manage-column column-cb check-column">
+                                <input id="cb-select-all-1" type="checkbox">
                             </td>
+                            <th scope="col" class="manage-column column-image"><?php _e('Image', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-name column-primary"><?php _e('Nom', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-description"><?php _e('Description', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-size"><?php _e('Contenance', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-price"><?php _e('Prix', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-suggestion"><?php _e('Suggestion', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-order"><?php _e('Ordre', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-status"><?php _e('Statut', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-date"><?php _e('Date de création', 'restaurant-booking'); ?></th>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($products as $product): ?>
-                            <tr>
-                                <td>
-                                    <div class="product-info">
-                                        <?php if ($product['image_url']): ?>
-                                            <img src="<?php echo esc_url($product['image_url']); ?>" 
-                                                 alt="<?php echo esc_attr($product['name']); ?>" 
-                                                 class="product-thumb">
-                                        <?php endif; ?>
-                                        <div>
-                                            <strong><?php echo esc_html($product['name']); ?></strong>
-                                            <?php if ($product['description']): ?>
-                                                <br><small class="description"><?php echo esc_html(wp_trim_words($product['description'], 15)); ?></small>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <strong><?php echo esc_html($product['size_label']); ?></strong>
-                                    <br><small><?php echo $product['size_cl']; ?> cl</small>
-                                </td>
-                                <td>
-                                    <strong><?php echo number_format($product['price'], 2, ',', ' '); ?> €</strong>
-                                    <br><small><?php echo esc_html($product['unit_label']); ?></small>
-                                </td>
-                                <td>
-                                    <?php if ($product['suggested_beverage']): ?>
-                                        <span class="suggestion-yes">⭐ <?php _e('Nos suggestions', 'restaurant-booking'); ?></span>
-                                    <?php else: ?>
-                                        <span class="suggestion-no">—</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <span class="product-status status-<?php echo $product['is_active'] ? 'active' : 'inactive'; ?>">
-                                        <?php echo $product['is_active'] ? __('Active', 'restaurant-booking') : __('Inactive', 'restaurant-booking'); ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-soft&action=edit&product_id=' . $product['id']); ?>" 
-                                       class="button button-small">
-                                        <?php _e('Modifier', 'restaurant-booking'); ?>
-                                    </a>
-                                    <a href="#" class="button button-small button-link-delete" 
-                                       onclick="return confirm('<?php _e('Êtes-vous sûr de vouloir supprimer cette boisson ?', 'restaurant-booking'); ?>')">
-                                        <?php _e('Supprimer', 'restaurant-booking'); ?>
-                                    </a>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($products)): ?>
+                            <tr class="no-items">
+                                <td class="colspanchange" colspan="10">
+                                    <?php _e('Aucune boisson soft trouvée.', 'restaurant-booking'); ?>
                                 </td>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                        <?php else: ?>
+                            <?php foreach ($products as $beverage): ?>
+                                <!-- Ligne principale de la boisson -->
+                                <tr class="soft-main-row" data-beverage-id="<?php echo $beverage['id']; ?>">
+                                    <th scope="row" class="check-column">
+                                        <input id="cb-select-<?php echo $beverage['id']; ?>" type="checkbox" name="soft_beverage_ids[]" value="<?php echo $beverage['id']; ?>">
+                                    </th>
+                                    <td class="column-image">
+                                        <?php if (!empty($beverage['image_url'])): ?>
+                                            <img src="<?php echo esc_url($beverage['image_url']); ?>" alt="<?php echo esc_attr($beverage['name']); ?>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                        <?php else: ?>
+                                            <div style="width: 50px; height: 50px; background: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #666;">
+                                                <span class="dashicons dashicons-format-image"></span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-name column-primary">
+                                        <strong>
+                                            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-soft&action=edit&product_id=' . $beverage['id']); ?>">
+                                                🥤 <?php echo esc_html($beverage['name']); ?>
+                                            </a>
+                                        </strong>
+                                        <?php if ($beverage['has_multiple_sizes'] && !empty($beverage['sizes'])): ?>
+                                            <small class="soft-sizes-info">(<?php echo count($beverage['sizes']); ?> contenances disponibles)</small>
+                                        <?php elseif (isset($beverage['needs_configuration'])): ?>
+                                            <small class="soft-needs-config" style="color: #d63638;">(Configuration requise)</small>
+                                        <?php endif; ?>
+                                        <div class="row-actions">
+                                            <span class="edit">
+                                                <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-soft&action=edit&product_id=' . $beverage['id']); ?>">
+                                                    <?php _e('Modifier', 'restaurant-booking'); ?>
+                                                </a> |
+                                            </span>
+                                            <?php if ($beverage['has_multiple_sizes'] && !empty($beverage['sizes'])): ?>
+                                                <span class="toggle-sizes">
+                                                    <a href="#" class="toggle-soft-sizes" data-beverage-id="<?php echo $beverage['id']; ?>">
+                                                        <?php _e('Voir contenances', 'restaurant-booking'); ?>
+                                                    </a> |
+                                                </span>
+                                            <?php endif; ?>
+                                            <span class="toggle-status">
+                                                <a href="#" class="toggle-soft-beverage-status" data-product-id="<?php echo $beverage['id']; ?>" data-current-status="<?php echo $beverage['is_active'] ? 1 : 0; ?>">
+                                                    <?php echo $beverage['is_active'] ? __('Désactiver', 'restaurant-booking') : __('Activer', 'restaurant-booking'); ?>
+                                                </a> |
+                                            </span>
+                                            <span class="delete">
+                                                <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=restaurant-booking-beverages-soft&action=delete&product_id=' . $beverage['id']), 'delete_soft_beverage_' . $beverage['id']); ?>" 
+                                                   class="button button-small button-link-delete" 
+                                                   onclick="return confirm('<?php _e('Êtes-vous sûr de vouloir supprimer cette boisson ?', 'restaurant-booking'); ?>')">
+                                                    <?php _e('Supprimer', 'restaurant-booking'); ?>
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="column-description">
+                                        <?php echo esc_html(wp_trim_words($beverage['description'] ?? '', 10)); ?>
+                                    </td>
+                                    <td class="column-size">
+                                        <?php if ($beverage['has_multiple_sizes'] && !empty($beverage['sizes'])): ?>
+                                            <strong><?php echo count($beverage['sizes']); ?> tailles</strong>
+                                            <br><small>
+                                                <?php 
+                                                $size_labels = array_map(function($size) { return $size['size_label']; }, $beverage['sizes']);
+                                                echo esc_html(implode(', ', $size_labels)); 
+                                                ?>
+                                            </small>
+                                        <?php elseif (isset($beverage['legacy_data'])): ?>
+                                            <strong><?php echo $beverage['legacy_data']['size_label']; ?></strong>
+                                            <br><small><?php echo $beverage['legacy_data']['size_cl']; ?> cl</small>
+                                        <?php else: ?>
+                                            <span style="color: #d63638;">Non configuré</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-price">
+                                        <?php if ($beverage['has_multiple_sizes'] && !empty($beverage['sizes'])): ?>
+                                            <?php 
+                                            $prices = array_map(function($size) { return $size['price']; }, $beverage['sizes']);
+                                            $min_price = min($prices);
+                                            $max_price = max($prices);
+                                            ?>
+                                            <?php if ($min_price === $max_price): ?>
+                                                <strong><?php echo number_format($min_price, 2, ',', ' '); ?> €</strong>
+                                            <?php else: ?>
+                                                <strong><?php echo number_format($min_price, 2, ',', ' '); ?> - <?php echo number_format($max_price, 2, ',', ' '); ?> €</strong>
+                                            <?php endif; ?>
+                                        <?php elseif (isset($beverage['legacy_data'])): ?>
+                                            <strong><?php echo number_format($beverage['legacy_data']['price'], 2, ',', ' '); ?> €</strong>
+                                        <?php else: ?>
+                                            <span style="color: #d63638;">—</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-suggestion">
+                                        <?php if ($beverage['suggested_beverage']): ?>
+                                            <span class="dashicons dashicons-star-filled" style="color: #ffb900;" title="<?php _e('En suggestion', 'restaurant-booking'); ?>"></span>
+                                            <small><?php _e('Oui', 'restaurant-booking'); ?></small>
+                                        <?php else: ?>
+                                            <span class="dashicons dashicons-star-empty" style="color: #ddd;"></span>
+                                            <small><?php _e('Non', 'restaurant-booking'); ?></small>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-order">
+                                        <input type="number" class="small-text soft-beverage-order-input" 
+                                               value="<?php echo $beverage['display_order'] ?? 0; ?>" 
+                                               data-product-id="<?php echo $beverage['id']; ?>"
+                                               min="0" max="999">
+                                    </td>
+                                    <td class="column-status">
+                                        <?php if ($beverage['is_active']): ?>
+                                            <span class="status-active"><?php _e('Actif', 'restaurant-booking'); ?></span>
+                                        <?php else: ?>
+                                            <span class="status-inactive"><?php _e('Inactif', 'restaurant-booking'); ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-date">
+                                        <?php echo date_i18n(get_option('date_format'), strtotime($beverage['created_at'] ?? 'now')); ?>
+                                    </td>
+                                </tr>
+
+                                <!-- Lignes des contenances (cachées par défaut) -->
+                                <?php if ($beverage['has_multiple_sizes'] && !empty($beverage['sizes'])): ?>
+                                    <?php foreach ($beverage['sizes'] as $size): ?>
+                                        <tr class="soft-size-row" data-beverage-id="<?php echo $beverage['id']; ?>" style="display: none;">
+                                            <td class="check-column"></td>
+                                            <td class="column-image">
+                                                <?php if (!empty($size['image_url'])): ?>
+                                                    <img src="<?php echo esc_url($size['image_url']); ?>" alt="<?php echo esc_attr($beverage['name'] . ' ' . $size['size_label']); ?>" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; opacity: 0.8;">
+                                                <?php else: ?>
+                                                    <div style="width: 40px; height: 40px; background: #f9f9f9; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #999;">
+                                                        <span class="dashicons dashicons-admin-generic" style="font-size: 16px;"></span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="column-name column-primary">
+                                                <span style="padding-left: 20px; color: #666;">
+                                                    ├─ <strong><?php echo esc_html($size['size_label']); ?></strong>
+                                                </span>
+                                                <div class="row-actions" style="padding-left: 20px;">
+                                                    <span class="edit">
+                                                        <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-soft&action=edit&product_id=' . $beverage['id'] . '#size-' . $size['size_id']); ?>">
+                                                            <?php _e('Modifier cette contenance', 'restaurant-booking'); ?>
+                                                        </a>
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td class="column-description">
+                                                <small style="color: #666;">Contenance: <?php echo $size['size_cl']; ?> cl</small>
+                                            </td>
+                                            <td class="column-size">
+                                                <strong><?php echo $size['size_label']; ?></strong>
+                                            </td>
+                                            <td class="column-price">
+                                                <strong><?php echo number_format($size['price'], 2, ',', ' '); ?> €</strong>
+                                            </td>
+                                            <td class="column-suggestion">
+                                                <?php if ($size['is_featured']): ?>
+                                                    <span class="dashicons dashicons-star-filled" style="color: #ffb900;" title="<?php _e('Contenance mise en avant', 'restaurant-booking'); ?>"></span>
+                                                <?php else: ?>
+                                                    <span class="dashicons dashicons-star-empty" style="color: #ddd;"></span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="column-order">
+                                                <small><?php echo $size['display_order']; ?></small>
+                                            </td>
+                                            <td class="column-status">
+                                                <?php if ($size['is_active']): ?>
+                                                    <small class="status-active"><?php _e('Actif', 'restaurant-booking'); ?></small>
+                                                <?php else: ?>
+                                                    <small class="status-inactive"><?php _e('Inactif', 'restaurant-booking'); ?></small>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="column-date">
+                                                <small style="color: #666;">—</small>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </form>
         </div>
 
         <style>
@@ -197,16 +346,112 @@ class RestaurantBooking_Beverages_Soft_Admin
             font-weight: bold;
         }
         .suggestion-no { color: #666; }
-        .product-status {
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
+        .status-active { color: #46b450; font-weight: 600; }
+        .status-inactive { color: #dc3232; font-weight: 600; }
+        .soft-beverage-order-input { width: 60px; }
+        .column-image { width: 70px; }
+        .column-price { width: 100px; text-align: center; }
+        .column-size { width: 100px; }
+        .column-suggestion { width: 100px; }
+        .column-order { width: 80px; }
+        .column-status { width: 80px; }
+        .column-date { width: 120px; }
+        
+        /* Styles pour l'affichage hiérarchique des boissons soft */
+        .soft-main-row {
+            background-color: #fff;
         }
-        .status-active { background: #d4edda; color: #155724; }
-        .status-inactive { background: #f8d7da; color: #721c24; }
+        
+        .soft-main-row:hover {
+            background-color: #f6f7f7;
+        }
+        
+        .soft-size-row {
+            background-color: #f9f9f9;
+            border-left: 3px solid #4caf50;
+        }
+        
+        .soft-size-row:hover {
+            background-color: #f0f0f1;
+        }
+        
+        .soft-sizes-info {
+            color: #4caf50;
+            font-weight: 500;
+        }
+        
+        .soft-needs-config {
+            background: #fff2f2;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #ffb2b2;
+        }
+        
+        .toggle-soft-sizes {
+            color: #4caf50;
+            text-decoration: none;
+        }
+        
+        .toggle-soft-sizes:hover {
+            color: #2e7d32;
+        }
+        
+        .toggle-soft-sizes.expanded:after {
+            content: ' ▲';
+        }
+        
+        .toggle-soft-sizes:not(.expanded):after {
+            content: ' ▼';
+        }
         </style>
+        
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            // Gérer l'affichage/masquage des contenances
+            $('.toggle-soft-sizes').on('click', function(e) {
+                e.preventDefault();
+                
+                var beverageId = $(this).data('beverage-id');
+                var sizeRows = $('.soft-size-row[data-beverage-id="' + beverageId + '"]');
+                var isExpanded = $(this).hasClass('expanded');
+                
+                if (isExpanded) {
+                    // Masquer les contenances
+                    sizeRows.fadeOut(200);
+                    $(this).removeClass('expanded').text('<?php _e('Voir contenances', 'restaurant-booking'); ?>');
+                } else {
+                    // Afficher les contenances
+                    sizeRows.fadeIn(200);
+                    $(this).addClass('expanded').text('<?php _e('Masquer contenances', 'restaurant-booking'); ?>');
+                }
+            });
+            
+            // Améliorer l'UX : clic sur la ligne principale pour développer
+            $('.soft-main-row').on('click', function(e) {
+                // Ne pas déclencher si on clique sur un lien ou un input
+                if ($(e.target).is('a, input, button') || $(e.target).closest('a, input, button').length > 0) {
+                    return;
+                }
+                
+                var beverageId = $(this).data('beverage-id');
+                var toggleLink = $('.toggle-soft-sizes[data-beverage-id="' + beverageId + '"]');
+                
+                if (toggleLink.length > 0) {
+                    toggleLink.trigger('click');
+                }
+            });
+            
+            // Ajouter un curseur pointer sur les lignes cliquables
+            $('.soft-main-row').each(function() {
+                var beverageId = $(this).data('beverage-id');
+                var hasToggle = $('.toggle-soft-sizes[data-beverage-id="' + beverageId + '"]').length > 0;
+                
+                if (hasToggle) {
+                    $(this).css('cursor', 'pointer').attr('title', 'Cliquer pour voir les contenances');
+                }
+            });
+        });
+        </script>
         <?php
     }
 
@@ -268,6 +513,28 @@ class RestaurantBooking_Beverages_Soft_Admin
 
                     <tr>
                         <th scope="row">
+                            <label for="soft_image"><?php _e('Image de la boisson', 'restaurant-booking'); ?></label>
+                        </th>
+                        <td>
+                            <input type="hidden" id="soft_image_id" name="soft_image_id" value="<?php echo $product ? esc_attr($product['image_id']) : ''; ?>">
+                            <div id="soft_image_preview">
+                                <?php if ($product && $product['image_id']): ?>
+                                    <?php $image_url = wp_get_attachment_image_url($product['image_id'], 'medium'); ?>
+                                    <?php if ($image_url): ?>
+                                        <img src="<?php echo esc_url($image_url); ?>" alt="" style="max-width: 200px;">
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
+                            <p>
+                                <button type="button" id="upload_soft_image" class="button"><?php _e('Choisir une image', 'restaurant-booking'); ?></button>
+                                <button type="button" id="remove_soft_image" class="button" <?php echo (!$product || !$product['image_id']) ? 'style="display:none;"' : ''; ?>><?php _e('Supprimer l\'image', 'restaurant-booking'); ?></button>
+                            </p>
+                            <p class="description"><?php _e('Image principale de la boisson (recommandé 300x300px).', 'restaurant-booking'); ?></p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th scope="row">
                             <label><?php _e('Contenances disponibles', 'restaurant-booking'); ?></label>
                         </th>
                         <td>
@@ -277,29 +544,40 @@ class RestaurantBooking_Beverages_Soft_Admin
                                 <div id="sizes_list">
                                     <?php if ($product): ?>
                                         <?php $sizes = RestaurantBooking_Beverage_Size_Manager::get_product_sizes($product['id']); ?>
-                                        <?php foreach ($sizes as $size): ?>
-                                            <div class="size-item" data-size-id="<?php echo $size->id; ?>">
-                                                <div class="size-info">
-                                                    <h4><?php echo $size->size_cl; ?>cl (<?php echo $size->size_label; ?>) - <?php echo number_format($size->price, 2); ?>€</h4>
-                                                    <?php if ($size->image_id): ?>
-                                                        <div class="size-image">
-                                                            <?php echo wp_get_attachment_image($size->image_id, 'thumbnail'); ?>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                    <?php if ($size->is_featured): ?>
-                                                        <span class="featured-badge"><?php _e('Mise en avant', 'restaurant-booking'); ?></span>
-                                                    <?php endif; ?>
+                                        <?php if (!empty($sizes)): ?>
+                                            <?php foreach ($sizes as $size): ?>
+                                                <div class="size-item" data-size-id="<?php echo $size->id; ?>">
+                                                    <div class="size-info">
+                                                        <h4><?php echo $size->size_cl; ?>cl (<?php echo $size->size_label; ?>) - <?php echo number_format($size->price, 2); ?>€</h4>
+                                                        <?php if ($size->image_id): ?>
+                                                            <div class="size-image">
+                                                                <?php echo wp_get_attachment_image($size->image_id, 'thumbnail'); ?>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                        <?php if ($size->is_featured): ?>
+                                                            <span class="featured-badge"><?php _e('Mise en avant', 'restaurant-booking'); ?></span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <div class="size-actions">
+                                                        <button type="button" class="button button-small edit-size" data-size-id="<?php echo $size->id; ?>" 
+                                                                data-size-cl="<?php echo $size->size_cl; ?>"
+                                                                data-size-label="<?php echo esc_attr($size->size_label); ?>"
+                                                                data-price="<?php echo $size->price; ?>"
+                                                                data-image-id="<?php echo $size->image_id; ?>"
+                                                                data-is-featured="<?php echo $size->is_featured ? '1' : '0'; ?>">
+                                                            <?php _e('Modifier', 'restaurant-booking'); ?>
+                                                        </button>
+                                                        <button type="button" class="button button-small delete-size" data-size-id="<?php echo $size->id; ?>">
+                                                            <?php _e('Supprimer', 'restaurant-booking'); ?>
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <div class="size-actions">
-                                                    <button type="button" class="button button-small edit-size" data-size-id="<?php echo $size->id; ?>">
-                                                        <?php _e('Modifier', 'restaurant-booking'); ?>
-                                                    </button>
-                                                    <button type="button" class="button button-small delete-size" data-size-id="<?php echo $size->id; ?>">
-                                                        <?php _e('Supprimer', 'restaurant-booking'); ?>
-                                                    </button>
-                                                </div>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <div class="no-sizes-message">
+                                                <p><em><?php _e('Aucune contenance configurée. Ajoutez au moins une contenance pour cette boisson.', 'restaurant-booking'); ?></em></p>
                                             </div>
-                                        <?php endforeach; ?>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </div>
                                 
@@ -385,7 +663,41 @@ class RestaurantBooking_Beverages_Soft_Admin
 
         <script>
         jQuery(document).ready(function($) {
-            var mediaUploader;
+            var mediaUploader, softImageUploader;
+            
+            // Sélecteur d'images WordPress pour l'image principale
+            $('#upload_soft_image').on('click', function(e) {
+                e.preventDefault();
+                
+                if (softImageUploader) {
+                    softImageUploader.open();
+                    return;
+                }
+                
+                softImageUploader = wp.media({
+                    title: '<?php _e('Choisir une image pour la boisson', 'restaurant-booking'); ?>',
+                    button: {
+                        text: '<?php _e('Utiliser cette image', 'restaurant-booking'); ?>'
+                    },
+                    multiple: false
+                });
+                
+                softImageUploader.on('select', function() {
+                    var attachment = softImageUploader.state().get('selection').first().toJSON();
+                    $('#soft_image_id').val(attachment.id);
+                    $('#soft_image_preview').html('<img src="' + attachment.sizes.medium.url + '" alt="" style="max-width: 200px;">');
+                    $('#remove_soft_image').show();
+                });
+                
+                softImageUploader.open();
+            });
+            
+            $('#remove_soft_image').on('click', function(e) {
+                e.preventDefault();
+                $('#soft_image_id').val('');
+                $('#soft_image_preview').empty();
+                $(this).hide();
+            });
             
             // Sélecteur d'images WordPress pour les tailles
             $('#upload_size_image_button').click(function(e) {
@@ -413,24 +725,52 @@ class RestaurantBooking_Beverages_Soft_Admin
                 mediaUploader.open();
             });
             
-            // Gestion des tailles de boissons
-            $('#add_size_button').click(function() {
-                $('#size_modal_title').text('<?php _e('Ajouter une contenance', 'restaurant-booking'); ?>');
-                $('#size_form')[0].reset();
-                $('#size_image_preview').empty();
+            
+            var currentEditingSizeId = null; // Variable pour tracker l'édition
+            
+            // Ouvrir le modal en mode édition
+            $(document).on('click', '.edit-size', function() {
+                var sizeId = $(this).data('size-id');
+                var sizeCl = $(this).data('size-cl');
+                var sizeLabel = $(this).data('size-label');
+                var price = $(this).data('price');
+                var imageId = $(this).data('image-id');
+                var isFeatured = $(this).data('is-featured');
+                
+                // Remplir le formulaire avec les données existantes
+                $('#size_cl').val(sizeCl);
+                $('#size_label').val(sizeLabel);
+                $('#size_price').val(price);
+                $('#size_image_id').val(imageId);
+                $('#is_featured').prop('checked', isFeatured == '1');
+                
+                // Afficher l'image si elle existe
+                if (imageId) {
+                    // Récupérer l'image depuis l'élément existant
+                    var existingImage = $(this).closest('.size-item').find('.size-image img');
+                    if (existingImage.length > 0) {
+                        $('#size_image_preview').html('<img src="' + existingImage.attr('src') + '" alt="" style="max-width: 100px;">');
+                    }
+                } else {
+                    $('#size_image_preview').empty();
+                }
+                
+                // Changer le titre du modal et tracker l'ID
+                $('#size_modal_title').text('<?php _e('Modifier la contenance', 'restaurant-booking'); ?>');
+                currentEditingSizeId = sizeId;
+                
                 $('#size_modal').show();
             });
             
-            $('#cancel_size').click(function() {
-                $('#size_modal').hide();
-            });
-            
-            // Soumettre le formulaire de taille
+            // Soumettre le formulaire de taille (ajout ou modification)
             $('#size_form').on('submit', function(e) {
                 e.preventDefault();
                 
+                var isEdit = currentEditingSizeId !== null;
+                var action = isEdit ? 'restaurant_update_beverage_size' : 'restaurant_add_beverage_size';
+                
                 var formData = {
-                    action: 'restaurant_add_beverage_size',
+                    action: action,
                     nonce: '<?php echo wp_create_nonce('restaurant_booking_admin'); ?>',
                     product_id: <?php echo $product ? $product['id'] : 'null'; ?>,
                     size_cl: $('#size_cl').val(),
@@ -440,12 +780,19 @@ class RestaurantBooking_Beverages_Soft_Admin
                     is_featured: $('#is_featured').is(':checked') ? 1 : 0
                 };
                 
+                // Ajouter l'ID de la taille si on modifie
+                if (isEdit) {
+                    formData.size_id = currentEditingSizeId;
+                }
+                
                 $.post(ajaxurl, formData, function(response) {
                     if (response.success) {
-                        location.reload(); // Recharger pour voir les nouvelles tailles
+                        location.reload(); // Recharger pour voir les modifications
                     } else {
                         alert('Erreur: ' + response.data);
                     }
+                }).fail(function() {
+                    alert('Erreur de communication avec le serveur');
                 });
             });
             
@@ -461,12 +808,35 @@ class RestaurantBooking_Beverages_Soft_Admin
                         size_id: sizeId
                     }, function(response) {
                         if (response.success) {
-                            $item.remove();
+                            $item.fadeOut(300, function() {
+                                $(this).remove();
+                                // Vérifier s'il reste des contenances
+                                if ($('#sizes_list .size-item').length === 0) {
+                                    $('#sizes_list').append('<div class="no-sizes-message"><p><em><?php _e('Aucune contenance configurée. Ajoutez au moins une contenance pour cette boisson.', 'restaurant-booking'); ?></em></p></div>');
+                                }
+                            });
                         } else {
                             alert('Erreur: ' + response.data);
                         }
+                    }).fail(function() {
+                        alert('Erreur de communication avec le serveur');
                     });
                 }
+            });
+            
+            // Réinitialiser le modal quand on l'ouvre pour ajouter
+            $('#add_size_button').click(function() {
+                $('#size_modal_title').text('<?php _e('Ajouter une contenance', 'restaurant-booking'); ?>');
+                $('#size_form')[0].reset();
+                $('#size_image_preview').empty();
+                currentEditingSizeId = null;
+                $('#size_modal').show();
+            });
+            
+            // Fermer le modal
+            $('#cancel_size').click(function() {
+                $('#size_modal').hide();
+                currentEditingSizeId = null;
             });
         });
         </script>
@@ -525,6 +895,66 @@ class RestaurantBooking_Beverages_Soft_Admin
         
         <?php
     }
+    
+    /**
+     * Gérer la sauvegarde d'une boisson soft
+     */
+    public function handle_save_soft()
+    {
+        // Vérifier le nonce
+        if (!wp_verify_nonce($_POST['beverage_soft_nonce'], 'restaurant_booking_beverage_soft')) {
+            wp_die(__('Erreur de sécurité', 'restaurant-booking'));
+        }
+
+        // Récupérer les données
+        $product_id = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
+        $product_name = sanitize_text_field($_POST['product_name']);
+        $product_description = sanitize_textarea_field($_POST['product_description']);
+        $soft_image_id = isset($_POST['soft_image_id']) ? intval($_POST['soft_image_id']) : 0;
+        $is_active = isset($_POST['is_active']) ? 1 : 0;
+
+        // Validation
+        if (empty($product_name)) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-soft&action=add&error=validation'));
+            exit;
+        }
+
+        // Obtenir la catégorie
+        $category = RestaurantBooking_Category::get_by_type('soft');
+        if (!$category) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-soft&action=add&error=no_category'));
+            exit;
+        }
+
+        // Préparer les données du produit
+        $product_data = array(
+            'category_id' => $category['id'],
+            'name' => $product_name,
+            'description' => $product_description,
+            'price' => 2.50, // Prix par défaut
+            'unit_type' => 'piece',
+            'unit_label' => '/bouteille',
+            'volume_cl' => 33, // Volume par défaut
+            'has_multiple_sizes' => 1, // Activer le système multi-tailles
+            'image_id' => $soft_image_id ?: null,
+            'is_active' => $is_active
+        );
+
+        if ($product_id) {
+            // Mise à jour
+            $result = RestaurantBooking_Product::update($product_id, $product_data);
+            $success_param = $result ? 'updated' : 'error';
+        } else {
+            // Création
+            $result = RestaurantBooking_Product::create($product_data);
+            $success_param = $result ? 'created' : 'error';
+        }
+
+        // Redirection
+        $redirect_url = admin_url('admin.php?page=restaurant-booking-beverages-soft&message=' . $success_param);
+        wp_redirect($redirect_url);
+        exit;
+    }
 
     /**
      * Obtenir les boissons soft depuis la base de données (nouveau système multi-tailles)
@@ -533,7 +963,7 @@ class RestaurantBooking_Beverages_Soft_Admin
     {
         global $wpdb;
 
-        // Récupérer les boissons avec leurs tailles
+        // Récupérer les boissons avec leurs tailles (similaire aux fûts)
         $beverages = array();
         
         $products = $wpdb->get_results($wpdb->prepare("
@@ -546,52 +976,121 @@ class RestaurantBooking_Beverages_Soft_Admin
 
         foreach ($products as $product) {
             if ($product['has_multiple_sizes']) {
-                // Récupérer toutes les tailles pour cette boisson
-                $sizes = $wpdb->get_results($wpdb->prepare("
-                    SELECT * FROM {$wpdb->prefix}restaurant_beverage_sizes 
-                    WHERE product_id = %d
-                    ORDER BY display_order ASC, size_cl ASC
-                ", $product['id']), ARRAY_A);
+                // Nouveau système multi-contenances avec table dédiée
+                $sizes = RestaurantBooking_Beverage_Size_Manager::get_product_sizes($product['id']);
                 
-                foreach ($sizes as $size) {
-                    $beverages[] = array(
-                        'id' => $product['id'],
-                        'size_id' => $size['id'],
-                        'name' => $product['name'],
-                        'description' => $product['description'],
-                        'size_label' => $size['size_label'],
-                        'size_cl' => (int) $size['size_cl'],
-                        'price' => (float) $size['price'],
-                        'image_id' => $size['image_id'],
-                        'image_url' => $size['image_id'] ? wp_get_attachment_image_url($size['image_id'], 'thumbnail') : '',
-                        'is_featured' => (bool) $size['is_featured'],
-                        'suggested_beverage' => (bool) $size['is_featured'], // Utiliser is_featured comme suggestion
-                        'is_active' => (bool) $product['is_active'],
-                        'service_type' => $product['service_type'],
-                        'has_multiple_sizes' => true
-                    );
-                }
-            } else {
-                // Ancien système (compatibilité)
-                $beverages[] = array(
+                // Créer l'entrée principale de la boisson avec toutes ses contenances
+                $beverage_data = array(
                     'id' => $product['id'],
-                    'size_id' => null,
                     'name' => $product['name'],
                     'description' => $product['description'],
-                    'size_label' => $product['volume_cl'] . 'cl',
-                    'size_cl' => (int) $product['volume_cl'],
-                    'price' => (float) $product['price'],
                     'image_id' => $product['image_id'],
                     'image_url' => $product['image_id'] ? wp_get_attachment_image_url($product['image_id'], 'thumbnail') : '',
-                    'is_featured' => false,
                     'suggested_beverage' => (bool) $product['suggested_beverage'],
                     'is_active' => (bool) $product['is_active'],
                     'service_type' => $product['service_type'],
-                    'has_multiple_sizes' => false
+                    'has_multiple_sizes' => true,
+                    'display_order' => (int) $product['display_order'],
+                    'created_at' => $product['created_at'],
+                    'sizes' => array()
+                );
+                
+                if (!empty($sizes)) {
+                    // Ajouter les contenances comme sous-éléments
+                    foreach ($sizes as $size) {
+                        $beverage_data['sizes'][] = array(
+                            'size_id' => $size->id,
+                            'size_cl' => (int) $size->size_cl,
+                            'size_label' => $size->size_label,
+                            'price' => (float) $size->price,
+                            'image_id' => $size->image_id,
+                            'image_url' => $size->image_id ? wp_get_attachment_image_url($size->image_id, 'thumbnail') : '',
+                            'is_featured' => (bool) $size->is_featured,
+                            'display_order' => (int) $size->display_order,
+                            'is_active' => (bool) $size->is_active
+                        );
+                    }
+                    
+                    // Trier les contenances par ordre d'affichage puis par taille
+                    usort($beverage_data['sizes'], function($a, $b) {
+                        if ($a['display_order'] === $b['display_order']) {
+                            return $a['size_cl'] - $b['size_cl'];
+                        }
+                        return $a['display_order'] - $b['display_order'];
+                    });
+                } else {
+                    // Marquer comme nécessitant une configuration
+                    $beverage_data['needs_configuration'] = true;
+                }
+                
+                $beverages[] = $beverage_data;
+            } else {
+                // Ancien système (compatibilité) - traiter comme une boisson simple
+                $beverages[] = array(
+                    'id' => $product['id'],
+                    'name' => $product['name'],
+                    'description' => $product['description'],
+                    'image_id' => $product['image_id'],
+                    'image_url' => $product['image_id'] ? wp_get_attachment_image_url($product['image_id'], 'thumbnail') : '',
+                    'suggested_beverage' => (bool) $product['suggested_beverage'],
+                    'is_active' => (bool) $product['is_active'],
+                    'service_type' => $product['service_type'],
+                    'has_multiple_sizes' => false,
+                    'display_order' => (int) $product['display_order'],
+                    'created_at' => $product['created_at'],
+                    'sizes' => array(),
+                    // Pour compatibilité avec l'ancien affichage
+                    'legacy_data' => array(
+                        'size_label' => $product['volume_cl'] . 'cl',
+                        'size_cl' => (int) $product['volume_cl'],
+                        'price' => (float) $product['price']
+                    )
                 );
             }
         }
 
         return $beverages;
+    }
+
+    /**
+     * Gérer les actions (suppression, etc.)
+     */
+    public function handle_actions()
+    {
+        if (!isset($_GET['action']) || !isset($_GET['product_id'])) {
+            return;
+        }
+
+        $action = sanitize_text_field($_GET['action']);
+        $product_id = (int) $_GET['product_id'];
+
+        switch ($action) {
+            case 'delete':
+                $this->delete_soft_beverage($product_id);
+                break;
+        }
+    }
+
+    /**
+     * Supprimer une boisson soft
+     */
+    private function delete_soft_beverage($product_id)
+    {
+        if (!wp_verify_nonce($_GET['_wpnonce'], 'delete_soft_beverage_' . $product_id)) {
+            wp_die(__('Action non autorisée.', 'restaurant-booking'));
+        }
+
+        if (!current_user_can('manage_restaurant_quotes')) {
+            wp_die(__('Permissions insuffisantes.', 'restaurant-booking'));
+        }
+
+        $result = RestaurantBooking_Product::delete($product_id);
+        
+        if (is_wp_error($result)) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-soft&message=error&error=' . urlencode($result->get_error_message())));
+        } else {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-soft&message=deleted'));
+        }
+        exit;
     }
 }

@@ -97,6 +97,41 @@ class RestaurantBooking_Migration_V3
             KEY display_order (display_order)
         ) $charset_collate;";
         
+        // Table des tailles de fûts (pour les contenances multiples)
+        $table_keg_sizes = $wpdb->prefix . 'restaurant_keg_sizes';
+        $sql_keg_sizes = "CREATE TABLE $table_keg_sizes (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            product_id int(11) NOT NULL,
+            liters int(11) NOT NULL,
+            price decimal(10,2) NOT NULL DEFAULT 0.00,
+            image_id bigint(20) DEFAULT NULL,
+            is_featured tinyint(1) NOT NULL DEFAULT 0,
+            display_order int(11) NOT NULL DEFAULT 0,
+            is_active tinyint(1) NOT NULL DEFAULT 1,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY product_id (product_id),
+            KEY is_active (is_active),
+            KEY display_order (display_order)
+        ) $charset_collate;";
+        
+        // Table des contenances disponibles (pour les fûts)
+        $table_available_containers = $wpdb->prefix . 'restaurant_available_containers';
+        $sql_available_containers = "CREATE TABLE $table_available_containers (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            liters int(11) NOT NULL,
+            label varchar(50) NOT NULL,
+            is_active tinyint(1) NOT NULL DEFAULT 1,
+            display_order int(11) NOT NULL DEFAULT 0,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY liters (liters),
+            KEY is_active (is_active),
+            KEY display_order (display_order)
+        ) $charset_collate;";
+        
         // Table des suppléments multiples (pour plats signature et buffets)
         $table_product_supplements_v2 = $wpdb->prefix . 'restaurant_product_supplements_v2';
         $sql_product_supplements_v2 = "CREATE TABLE $table_product_supplements_v2 (
@@ -121,7 +156,13 @@ class RestaurantBooking_Migration_V3
         dbDelta($sql_accompaniment_options);
         dbDelta($sql_accompaniment_suboptions);
         dbDelta($sql_beverage_sizes);
+        dbDelta($sql_keg_sizes);
+        dbDelta($sql_available_containers);
         dbDelta($sql_product_supplements_v2);
+        
+        // Initialiser les contenances par défaut
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-container-manager.php';
+        RestaurantBooking_Container_Manager::init_default_containers();
         
         RestaurantBooking_Logger::info('Nouvelles tables v3 créées');
     }

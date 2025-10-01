@@ -17,6 +17,9 @@ class RestaurantBooking_Products_Accompaniments_Admin
      */
     public function display_list()
     {
+        // Gérer les actions (suppression, etc.)
+        $this->handle_actions();
+        
         $products = $this->get_accompaniment_products();
         
         ?>
@@ -59,99 +62,113 @@ class RestaurantBooking_Products_Accompaniments_Admin
                 </div>
             </div>
 
-            <!-- Tableau des produits -->
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th class="manage-column"><?php _e('Accompagnement', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Type', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Prix', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Options', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Statut', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Actions', 'restaurant-booking'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($products)): ?>
+            <form method="post" id="accompaniments-filter">
+                <?php wp_nonce_field('restaurant_booking_accompaniments_action'); ?>
+                
+                <div class="tablenav top">
+                    <div class="alignleft actions bulkactions">
+                        <select name="action" id="bulk-action-selector-top">
+                            <option value="-1"><?php _e('Actions groupées', 'restaurant-booking'); ?></option>
+                            <option value="activate"><?php _e('Activer', 'restaurant-booking'); ?></option>
+                            <option value="deactivate"><?php _e('Désactiver', 'restaurant-booking'); ?></option>
+                            <option value="delete"><?php _e('Supprimer', 'restaurant-booking'); ?></option>
+                        </select>
+                        <?php submit_button(__('Appliquer', 'restaurant-booking'), 'action', '', false, array('id' => 'doaction')); ?>
+                    </div>
+                </div>
+
+                <!-- Tableau des produits -->
+                <table class="wp-list-table widefat fixed striped">
+                    <thead>
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 40px;">
-                                <p><?php _e('Aucun accompagnement configuré.', 'restaurant-booking'); ?></p>
-                                <a href="<?php echo admin_url('admin.php?page=restaurant-booking-products-accompaniments&action=add'); ?>" class="button button-primary">
-                                    <?php _e('Créer le premier accompagnement', 'restaurant-booking'); ?>
-                                </a>
+                            <td class="manage-column column-cb check-column">
+                                <input id="cb-select-all-1" type="checkbox">
                             </td>
+                            <th scope="col" class="manage-column column-image"><?php _e('Image', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-name column-primary"><?php _e('Nom', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-description"><?php _e('Description', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-price"><?php _e('Prix', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-order"><?php _e('Ordre', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-status"><?php _e('Statut', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-date"><?php _e('Date de création', 'restaurant-booking'); ?></th>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($products as $product): ?>
-                            <tr>
-                                <td>
-                                    <div class="product-info">
-                                        <div>
-                                            <strong><?php echo esc_html($product['name']); ?></strong>
-                                            <?php if ($product['description']): ?>
-                                                <br><small class="description"><?php echo esc_html(wp_trim_words($product['description'], 10)); ?></small>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="type-badge type-<?php echo esc_attr($product['accompaniment_type']); ?>">
-                                        <?php 
-                                        switch($product['accompaniment_type']) {
-                                            case 'frites': _e('Frites', 'restaurant-booking'); break;
-                                            case 'salade': _e('Salade', 'restaurant-booking'); break;
-                                            default: echo esc_html($product['accompaniment_type']);
-                                        }
-                                        ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <strong>4,00 €</strong>
-                                    <br><small>/portion</small>
-                                </td>
-                                <td>
-                                    <?php if ($product['has_sauce_options']): ?>
-                                        <div class="sauce-options">
-                                            <?php 
-                                            $sauce_options = json_decode($product['sauce_options'], true);
-                                            if ($sauce_options): ?>
-                                                <strong><?php _e('Sauces disponibles:', 'restaurant-booking'); ?></strong>
-                                                <ul class="sauce-list">
-                                                    <?php foreach ($sauce_options as $sauce): ?>
-                                                        <li><?php echo esc_html($sauce['name']); ?></li>
-                                                    <?php endforeach; ?>
-                                                </ul>
-                                                <?php if (isset($sauce_options['chimichurri'])): ?>
-                                                    <small class="chimichurri-option">
-                                                        <?php _e('+ Option Chimichurri: +1€', 'restaurant-booking'); ?>
-                                                    </small>
-                                                <?php endif; ?>
-                                            <?php endif; ?>
-                                        </div>
-                                    <?php else: ?>
-                                        <span class="no-options">—</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <span class="product-status status-<?php echo $product['is_active'] ? 'active' : 'inactive'; ?>">
-                                        <?php echo $product['is_active'] ? __('Actif', 'restaurant-booking') : __('Inactif', 'restaurant-booking'); ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="<?php echo admin_url('admin.php?page=restaurant-booking-products-accompaniments&action=edit&product_id=' . $product['id']); ?>" 
-                                       class="button button-small">
-                                        <?php _e('Modifier', 'restaurant-booking'); ?>
-                                    </a>
-                                    <a href="#" class="button button-small button-link-delete" 
-                                       onclick="return confirm('<?php _e('Êtes-vous sûr de vouloir supprimer cet accompagnement ?', 'restaurant-booking'); ?>')">
-                                        <?php _e('Supprimer', 'restaurant-booking'); ?>
-                                    </a>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($products)): ?>
+                            <tr class="no-items">
+                                <td class="colspanchange" colspan="8">
+                                    <?php _e('Aucun accompagnement trouvé.', 'restaurant-booking'); ?>
                                 </td>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                        <?php else: ?>
+                            <?php foreach ($products as $product): ?>
+                                <tr>
+                                    <th scope="row" class="check-column">
+                                        <input id="cb-select-<?php echo $product['id']; ?>" type="checkbox" name="accompaniment_ids[]" value="<?php echo $product['id']; ?>">
+                                    </th>
+                                    <td class="column-image">
+                                        <?php if (!empty($product['image_url'])): ?>
+                                            <img src="<?php echo esc_url($product['image_url']); ?>" alt="<?php echo esc_attr($product['name']); ?>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                        <?php else: ?>
+                                            <div style="width: 50px; height: 50px; background: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #666;">
+                                                <span class="dashicons dashicons-format-image"></span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-name column-primary">
+                                        <strong>
+                                            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-products-accompaniments&action=edit&product_id=' . $product['id']); ?>">
+                                                <?php echo esc_html($product['name']); ?>
+                                            </a>
+                                        </strong>
+                                        <div class="row-actions">
+                                            <span class="edit">
+                                                <a href="<?php echo admin_url('admin.php?page=restaurant-booking-products-accompaniments&action=edit&product_id=' . $product['id']); ?>">
+                                                    <?php _e('Modifier', 'restaurant-booking'); ?>
+                                                </a> |
+                                            </span>
+                                            <span class="toggle-status">
+                                                <a href="#" class="toggle-accompaniment-status" data-accompaniment-id="<?php echo $product['id']; ?>" data-current-status="<?php echo $product['is_active'] ? 1 : 0; ?>">
+                                                    <?php echo $product['is_active'] ? __('Désactiver', 'restaurant-booking') : __('Activer', 'restaurant-booking'); ?>
+                                                </a> |
+                                            </span>
+                                            <span class="delete">
+                                                <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=restaurant-booking-products-accompaniments&action=delete&accompaniment_id=' . $product['id']), 'delete_accompaniment_' . $product['id']); ?>" 
+                                                   class="button button-small button-link-delete" 
+                                                   onclick="return confirm('<?php _e('Êtes-vous sûr de vouloir supprimer cet accompagnement ?', 'restaurant-booking'); ?>')">
+                                                    <?php _e('Supprimer', 'restaurant-booking'); ?>
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="column-description">
+                                        <?php echo esc_html(wp_trim_words($product['description'] ?? '', 10)); ?>
+                                    </td>
+                                    <td class="column-price">
+                                        <strong>4,00 €</strong>
+                                    </td>
+                                    <td class="column-order">
+                                        <input type="number" class="small-text accompaniment-order-input" 
+                                               value="<?php echo $product['display_order'] ?? 0; ?>" 
+                                               data-accompaniment-id="<?php echo $product['id']; ?>"
+                                               min="0" max="999">
+                                    </td>
+                                    <td class="column-status">
+                                        <?php if ($product['is_active']): ?>
+                                            <span class="status-active"><?php _e('Actif', 'restaurant-booking'); ?></span>
+                                        <?php else: ?>
+                                            <span class="status-inactive"><?php _e('Inactif', 'restaurant-booking'); ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-date">
+                                        <?php echo date_i18n(get_option('date_format'), strtotime($product['created_at'] ?? 'now')); ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </form>
         </div>
 
         <style>
@@ -195,50 +212,14 @@ class RestaurantBooking_Products_Accompaniments_Admin
             color: #646970;
             font-size: 13px;
         }
-        .product-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .description {
-            color: #666;
-            font-style: italic;
-        }
-        .type-badge {
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: 500;
-            text-transform: uppercase;
-        }
-        .type-frites { background: #fff3cd; color: #856404; }
-        .type-salade { background: #d4edda; color: #155724; }
-        .sauce-options {
-            font-size: 12px;
-        }
-        .sauce-list {
-            margin: 5px 0;
-            padding-left: 15px;
-        }
-        .sauce-list li {
-            margin: 2px 0;
-        }
-        .chimichurri-option {
-            color: #28a745;
-            font-weight: bold;
-        }
-        .no-options {
-            color: #666;
-        }
-        .product-status {
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .status-active { background: #d4edda; color: #155724; }
-        .status-inactive { background: #f8d7da; color: #721c24; }
+        .status-active { color: #46b450; font-weight: 600; }
+        .status-inactive { color: #dc3232; font-weight: 600; }
+        .accompaniment-order-input { width: 60px; }
+        .column-image { width: 70px; }
+        .column-price { width: 100px; text-align: center; }
+        .column-order { width: 80px; }
+        .column-status { width: 80px; }
+        .column-date { width: 120px; }
         </style>
         <?php
     }
@@ -667,17 +648,23 @@ class RestaurantBooking_Products_Accompaniments_Admin
             $message = $result ? __('Accompagnement mis à jour avec succès.', 'restaurant-booking') : __('Erreur lors de la mise à jour.', 'restaurant-booking');
         } else {
             $result = RestaurantBooking_Product::create($product_data);
-            $product_id = $result;
-            $message = $result ? __('Accompagnement créé avec succès.', 'restaurant-booking') : __('Erreur lors de la création.', 'restaurant-booking');
+            if (is_wp_error($result)) {
+                $product_id = null;
+                $message = $result->get_error_message();
+            } else {
+                $product_id = $result;
+                $message = __('Accompagnement créé avec succès.', 'restaurant-booking');
+            }
         }
         
-        if ($result) {
+        if ($result && !is_wp_error($result) && $product_id) {
             // Traiter les options d'accompagnement
             $this->save_accompaniment_options($product_id);
             
             wp_redirect(admin_url('admin.php?page=restaurant-booking-products-accompaniments&message=' . urlencode($message)));
         } else {
-            wp_redirect(admin_url('admin.php?page=restaurant-booking-products-accompaniments&error=' . urlencode($message)));
+            $error_message = is_wp_error($result) ? $result->get_error_message() : $message;
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-products-accompaniments&error=' . urlencode($error_message)));
         }
         exit;
     }
@@ -706,17 +693,29 @@ class RestaurantBooking_Products_Accompaniments_Admin
                 'option_price' => floatval($option_data['price'])
             ));
             
-            // Ajouter les sous-options si présentes
-            if (is_wp_error($option_id) || !isset($option_data['suboptions']) || !is_array($option_data['suboptions'])) {
+            // Vérifier si la création de l'option a réussi
+            if (is_wp_error($option_id)) {
+                // Log l'erreur pour debug
+                if (class_exists('RestaurantBooking_Logger')) {
+                    RestaurantBooking_Logger::error('Erreur création option accompagnement: ' . $option_id->get_error_message());
+                }
                 continue;
             }
             
-            foreach ($option_data['suboptions'] as $suboption_name) {
-                if (!empty($suboption_name)) {
-                    RestaurantBooking_Accompaniment_Option_Manager::create_suboption(array(
-                        'option_id' => $option_id,
-                        'suboption_name' => sanitize_text_field($suboption_name)
-                    ));
+            // Ajouter les sous-options si présentes
+            if (isset($option_data['suboptions']) && is_array($option_data['suboptions'])) {
+                foreach ($option_data['suboptions'] as $suboption_name) {
+                    if (!empty($suboption_name)) {
+                        $suboption_result = RestaurantBooking_Accompaniment_Option_Manager::create_suboption(array(
+                            'option_id' => $option_id,
+                            'suboption_name' => sanitize_text_field($suboption_name)
+                        ));
+                        
+                        // Log les erreurs de sous-options
+                        if (is_wp_error($suboption_result) && class_exists('RestaurantBooking_Logger')) {
+                            RestaurantBooking_Logger::error('Erreur création sous-option accompagnement: ' . $suboption_result->get_error_message());
+                        }
+                    }
                 }
             }
         }
@@ -741,12 +740,69 @@ class RestaurantBooking_Products_Accompaniments_Admin
     {
         global $wpdb;
 
-        return $wpdb->get_results("
+        $products = $wpdb->get_results("
             SELECT p.*, c.name as category_name, c.type as category_type
             FROM {$wpdb->prefix}restaurant_products p
             INNER JOIN {$wpdb->prefix}restaurant_categories c ON p.category_id = c.id
             WHERE c.type = 'accompagnement'
             ORDER BY p.display_order ASC, p.name ASC
         ", ARRAY_A);
+
+        // Ajouter l'URL de l'image et convertir les types
+        foreach ($products as &$product) {
+            $product['image_url'] = $product['image_id'] ? wp_get_attachment_image_url($product['image_id'], 'thumbnail') : '';
+            $product['is_active'] = (bool) $product['is_active'];
+            
+            // Vérifier si le produit a des options d'accompagnement
+            $options_count = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}restaurant_accompaniment_options WHERE product_id = %d AND is_active = 1",
+                $product['id']
+            ));
+            $product['has_sauce_options'] = $options_count > 0;
+        }
+
+        return $products ?: array();
+    }
+
+    /**
+     * Gérer les actions (suppression, etc.)
+     */
+    public function handle_actions()
+    {
+        if (!isset($_GET['action']) || !isset($_GET['accompaniment_id'])) {
+            return;
+        }
+
+        $action = sanitize_text_field($_GET['action']);
+        $accompaniment_id = (int) $_GET['accompaniment_id'];
+
+        switch ($action) {
+            case 'delete':
+                $this->delete_accompaniment($accompaniment_id);
+                break;
+        }
+    }
+
+    /**
+     * Supprimer un accompagnement
+     */
+    private function delete_accompaniment($accompaniment_id)
+    {
+        if (!wp_verify_nonce($_GET['_wpnonce'], 'delete_accompaniment_' . $accompaniment_id)) {
+            wp_die(__('Action non autorisée.', 'restaurant-booking'));
+        }
+
+        if (!current_user_can('manage_restaurant_quotes')) {
+            wp_die(__('Permissions insuffisantes.', 'restaurant-booking'));
+        }
+
+        $result = RestaurantBooking_Product::delete($accompaniment_id);
+        
+        if (is_wp_error($result)) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-products-accompaniments&message=error&error=' . urlencode($result->get_error_message())));
+        } else {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-products-accompaniments&message=deleted'));
+        }
+        exit;
     }
 }

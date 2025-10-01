@@ -73,20 +73,25 @@ class RestaurantBooking_Product
         // Préparer les données pour l'insertion
         $product_data = array(
             'category_id' => (int) $data['category_id'],
-            'name' => sanitize_text_field($data['name']),
-            'description' => isset($data['description']) ? wp_kses_post($data['description']) : '',
-            'short_description' => isset($data['short_description']) ? sanitize_text_field($data['short_description']) : '',
+            'name' => self::clean_escaped_quotes(sanitize_text_field($data['name'])),
+            'description' => isset($data['description']) ? self::clean_escaped_quotes(wp_kses_post($data['description'])) : '',
+            'short_description' => isset($data['short_description']) ? self::clean_escaped_quotes(sanitize_text_field($data['short_description'])) : '',
             'price' => (float) $data['price'],
             'unit_type' => isset($data['unit_type']) ? sanitize_text_field($data['unit_type']) : 'piece',
             'unit_label' => isset($data['unit_label']) ? sanitize_text_field($data['unit_label']) : '/pièce',
             'min_quantity' => isset($data['min_quantity']) ? (int) $data['min_quantity'] : 1,
             'max_quantity' => isset($data['max_quantity']) && !empty($data['max_quantity']) ? (int) $data['max_quantity'] : null,
             'has_supplement' => isset($data['has_supplement']) ? (bool) $data['has_supplement'] : false,
-            'supplement_name' => isset($data['supplement_name']) ? sanitize_text_field($data['supplement_name']) : null,
+            'supplement_name' => isset($data['supplement_name']) ? self::clean_escaped_quotes(sanitize_text_field($data['supplement_name'])) : null,
             'supplement_price' => isset($data['supplement_price']) ? (float) $data['supplement_price'] : 0.00,
-            'image_url' => isset($data['image_url']) ? esc_url_raw($data['image_url']) : null,
+            'has_accompaniment_options' => isset($data['has_accompaniment_options']) ? (bool) $data['has_accompaniment_options'] : false,
+            'image_id' => isset($data['image_id']) && !empty($data['image_id']) ? (int) $data['image_id'] : null,
             'alcohol_degree' => isset($data['alcohol_degree']) && !empty($data['alcohol_degree']) ? (float) $data['alcohol_degree'] : null,
             'volume_cl' => isset($data['volume_cl']) && !empty($data['volume_cl']) ? (int) $data['volume_cl'] : null,
+            'beer_category' => isset($data['beer_category']) ? self::clean_escaped_quotes(sanitize_text_field($data['beer_category'])) : null,
+            'unit_per_person' => isset($data['unit_per_person']) ? self::clean_escaped_quotes(sanitize_text_field($data['unit_per_person'])) : null,
+            'suggested_beverage' => isset($data['suggested_beverage']) ? (bool) $data['suggested_beverage'] : false,
+            'has_multiple_sizes' => isset($data['has_multiple_sizes']) ? (bool) $data['has_multiple_sizes'] : false,
             'display_order' => isset($data['display_order']) ? (int) $data['display_order'] : 0,
             'is_active' => isset($data['is_active']) ? (bool) $data['is_active'] : true,
             'created_at' => current_time('mysql')
@@ -96,7 +101,7 @@ class RestaurantBooking_Product
         $result = $wpdb->insert(
             $wpdb->prefix . 'restaurant_products',
             $product_data,
-            array('%d', '%s', '%s', '%s', '%f', '%s', '%s', '%d', '%d', '%d', '%s', '%f', '%s', '%f', '%d', '%d', '%d', '%s')
+            array('%d', '%s', '%s', '%s', '%f', '%s', '%s', '%d', '%d', '%d', '%s', '%f', '%d', '%d', '%f', '%d', '%s', '%s', '%d', '%d', '%d', '%d', '%s')
         );
 
         if ($result === false) {
@@ -178,9 +183,13 @@ class RestaurantBooking_Product
             'has_supplement' => '%d',
             'supplement_name' => '%s',
             'supplement_price' => '%f',
-            'image_url' => '%s',
+            'image_id' => '%d',
             'alcohol_degree' => '%f',
             'volume_cl' => '%d',
+            'beer_category' => '%s',
+            'unit_per_person' => '%s',
+            'suggested_beverage' => '%d',
+            'has_multiple_sizes' => '%d',
             'display_order' => '%d',
             'is_active' => '%d'
         );
@@ -192,16 +201,20 @@ class RestaurantBooking_Product
                     case 'unit_type':
                     case 'unit_label':
                     case 'supplement_name':
-                        $update_data[$field] = sanitize_text_field($data[$field]);
+                        $update_data[$field] = self::clean_escaped_quotes(sanitize_text_field($data[$field]));
                         break;
                     case 'description':
-                        $update_data[$field] = wp_kses_post($data[$field]);
+                        $update_data[$field] = self::clean_escaped_quotes(wp_kses_post($data[$field]));
                         break;
                     case 'short_description':
-                        $update_data[$field] = sanitize_text_field($data[$field]);
+                        $update_data[$field] = self::clean_escaped_quotes(sanitize_text_field($data[$field]));
                         break;
-                    case 'image_url':
-                        $update_data[$field] = esc_url_raw($data[$field]);
+                    case 'image_id':
+                        $update_data[$field] = $data[$field] ? (int) $data[$field] : null;
+                        break;
+                    case 'beer_category':
+                    case 'unit_per_person':
+                        $update_data[$field] = self::clean_escaped_quotes(sanitize_text_field($data[$field]));
                         break;
                     case 'price':
                     case 'supplement_price':
@@ -216,6 +229,8 @@ class RestaurantBooking_Product
                         $update_data[$field] = $data[$field] ? (int) $data[$field] : null;
                         break;
                     case 'has_supplement':
+                    case 'suggested_beverage':
+                    case 'has_multiple_sizes':
                     case 'is_active':
                         $update_data[$field] = (bool) $data[$field];
                         break;
@@ -596,5 +611,21 @@ class RestaurantBooking_Product
         }
 
         return empty($errors) ? true : $errors;
+    }
+    
+    /**
+     * Nettoyer les échappements multiples d'apostrophes
+     */
+    private static function clean_escaped_quotes($text)
+    {
+        if (!is_string($text)) {
+            return $text;
+        }
+        
+        // Remplacer les multiples échappements par une seule apostrophe
+        $text = preg_replace('/\\\\+\'/', "'", $text);
+        $text = preg_replace('/\\\\+\"/', '"', $text);
+        
+        return $text;
     }
 }

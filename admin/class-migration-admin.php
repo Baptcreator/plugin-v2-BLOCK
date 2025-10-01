@@ -257,7 +257,6 @@ class RestaurantBooking_Migration_Admin
         
         // Vérifier les tables
         $tables_to_check = array(
-            'restaurant_games' => 'Table des jeux',
             'restaurant_product_supplements' => 'Table des suppléments',
             'restaurant_beverage_sizes' => 'Table des contenances',
             'restaurant_categories' => 'Table des catégories',

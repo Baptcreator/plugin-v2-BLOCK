@@ -222,18 +222,18 @@ $sync_frequency = get_option('restaurant_booking_google_sync_frequency', 'hourly
             <div class="requirements-check">
                 <?php
                 $requirements = array(
-                    'composer' => class_exists('Google_Client'),
+                    'google_simple' => file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'google-calendar-simple.php'),
                     'curl' => function_exists('curl_init'),
                     'json' => function_exists('json_encode'),
                     'openssl' => extension_loaded('openssl')
                 );
                 ?>
                 
-                <div class="requirement-item <?php echo $requirements['composer'] ? 'ok' : 'error'; ?>">
-                    <?php echo $requirements['composer'] ? '✅' : '❌'; ?>
-                    <strong><?php _e('Google API Client Library', 'restaurant-booking'); ?></strong>
-                    <?php if (!$requirements['composer']): ?>
-                        <p><?php _e('Installez via Composer : composer require google/apiclient', 'restaurant-booking'); ?></p>
+                <div class="requirement-item <?php echo $requirements['google_simple'] ? 'ok' : 'error'; ?>">
+                    <?php echo $requirements['google_simple'] ? '✅' : '❌'; ?>
+                    <strong><?php _e('Google Calendar Integration (Version simplifiée)', 'restaurant-booking'); ?></strong>
+                    <?php if (!$requirements['google_simple']): ?>
+                        <p><?php _e('Fichier google-calendar-simple.php manquant', 'restaurant-booking'); ?></p>
                     <?php endif; ?>
                 </div>
                 

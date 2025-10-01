@@ -53,7 +53,7 @@ class RestaurantBooking_Logger
         global $wpdb;
 
         // Ne pas logger en mode debug si pas activé
-        if ($level === self::LEVEL_DEBUG && !RESTAURANT_BOOKING_DEBUG) {
+        if ($level === self::LEVEL_DEBUG && !(defined('RESTAURANT_BOOKING_DEBUG') && RESTAURANT_BOOKING_DEBUG)) {
             return;
         }
 
@@ -82,7 +82,7 @@ class RestaurantBooking_Logger
         );
 
         // En mode debug, également écrire dans le log WordPress
-        if (RESTAURANT_BOOKING_DEBUG && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+        if (defined('RESTAURANT_BOOKING_DEBUG') && RESTAURANT_BOOKING_DEBUG && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
             $log_message = sprintf(
                 '[Restaurant Booking] [%s] %s',
                 strtoupper($level),

@@ -405,7 +405,7 @@ html body div .rbf-v3-container .rbf-v3-accompaniments-section {
 
 /* Amélioration des sélecteurs de quantité pour les boissons */
 html body div .rbf-v3-container .rbf-v3-qty-input {
-    width: 50px !important;
+    width: 80px !important;
     /* Masquer les flèches natives des inputs number */
     -moz-appearance: textfield !important;
     flex-shrink: 0 !important;
@@ -423,7 +423,7 @@ html body div .rbf-v3-container .rbf-v3-quantity-selector {
     border: none !important;
     background: transparent !important;
     width: auto !important;
-    max-width: 150px !important;
+    max-width: 180px !important;
     gap: 4px !important;
 }
 
@@ -446,7 +446,7 @@ html body div .rbf-v3-container .rbf-v3-qty-btn:hover {
 @media (max-width: 768px) {
     html body div .rbf-v3-container .rbf-v3-quantity-selector {
         width: 100% !important;
-        max-width: 160px !important;
+        max-width: 200px !important;
         margin: 0 auto !important;
         gap: 6px !important;
     }
@@ -455,5 +455,9 @@ html body div .rbf-v3-container .rbf-v3-qty-btn:hover {
         min-width: 36px !important;
         min-height: 36px !important;
         font-size: 18px !important;
+    }
+    
+    html body div .rbf-v3-container .rbf-v3-qty-input {
+        width: 90px !important;
     }
 }

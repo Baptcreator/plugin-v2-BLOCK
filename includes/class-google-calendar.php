@@ -28,6 +28,11 @@ class RestaurantBooking_Google_Calendar
     private $service = null;
 
     /**
+     * Client Google Calendar simplifié
+     */
+    private $simple_client = null;
+
+    /**
      * Obtenir l'instance unique
      */
     public static function get_instance()
@@ -47,55 +52,24 @@ class RestaurantBooking_Google_Calendar
         add_action('wp_ajax_google_calendar_auth', array($this, 'handle_auth'));
         add_action('wp_ajax_google_calendar_sync', array($this, 'sync_calendar'));
         add_action('restaurant_booking_hourly_sync', array($this, 'hourly_sync'));
+        
+        // Initialiser immédiatement le client simplifié
+        $this->init_google_client();
     }
 
     /**
-     * Initialiser le client Google
+     * Initialiser le client Google (version simplifiée)
      */
     public function init_google_client()
     {
-        // Vérifier si la bibliothèque Google API est disponible
-        if (!class_exists('Google_Client')) {
-            add_action('admin_notices', function() {
-                echo '<div class="notice notice-warning"><p>';
-                echo __('Google API Client Library non trouvée. Installez-la via Composer : composer require google/apiclient', 'restaurant-booking');
-                echo '</p></div>';
-            });
-            return false;
-        }
-
-        $settings = $this->get_google_settings();
-        
-        if (empty($settings['client_id']) || empty($settings['client_secret'])) {
-            return false;
-        }
-
-        try {
-            $this->client = new Google_Client();
-            $this->client->setClientId($settings['client_id']);
-            $this->client->setClientSecret($settings['client_secret']);
-            $this->client->setRedirectUri($settings['redirect_uri']);
-            $this->client->addScope(Google_Service_Calendar::CALENDAR);
-            $this->client->setAccessType('offline');
-            $this->client->setPrompt('consent');
-
-            // Utiliser le token d'accès s'il existe
-            if (!empty($settings['access_token'])) {
-                $this->client->setAccessToken($settings['access_token']);
-                
-                // Rafraîchir le token si nécessaire
-                if ($this->client->isAccessTokenExpired()) {
-                    $this->refresh_access_token();
-                }
-            }
-
-            $this->service = new Google_Service_Calendar($this->client);
-            
+        // Utiliser la version simplifiée sans dépendances
+        if (file_exists(RESTAURANT_BOOKING_PLUGIN_DIR . 'google-calendar-simple.php')) {
+            require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'google-calendar-simple.php';
+            $this->simple_client = RestaurantBooking_Google_Calendar_Simple::get_instance();
             return true;
-        } catch (Exception $e) {
-            RestaurantBooking_Logger::log('Erreur initialisation Google Calendar: ' . $e->getMessage(), 'error');
-            return false;
         }
+        
+        return false;
     }
 
     /**
@@ -118,11 +92,11 @@ class RestaurantBooking_Google_Calendar
      */
     public function get_auth_url()
     {
-        if (!$this->client) {
+        if (!$this->simple_client) {
             return false;
         }
 
-        return $this->client->createAuthUrl();
+        return $this->simple_client->get_auth_url();
     }
 
     /**
@@ -130,33 +104,12 @@ class RestaurantBooking_Google_Calendar
      */
     public function handle_auth()
     {
-        if (!isset($_GET['code'])) {
-            wp_die(__('Code d\'autorisation manquant', 'restaurant-booking'));
+        if (!$this->simple_client) {
+            wp_die(__('Service Google Calendar non disponible', 'restaurant-booking'));
         }
 
-        try {
-            $token = $this->client->fetchAccessTokenWithAuthCode($_GET['code']);
-            
-            if (isset($token['error'])) {
-                throw new Exception('Erreur OAuth: ' . $token['error_description']);
-            }
-
-            // Sauvegarder les tokens
-            update_option('restaurant_booking_google_access_token', json_encode($token));
-            
-            if (isset($token['refresh_token'])) {
-                update_option('restaurant_booking_google_refresh_token', $token['refresh_token']);
-            }
-
-            // Rediriger vers les paramètres
-            wp_redirect(admin_url('admin.php?page=restaurant-booking-google-settings&auth=success'));
-            exit;
-
-        } catch (Exception $e) {
-            RestaurantBooking_Logger::log('Erreur autorisation Google: ' . $e->getMessage(), 'error');
-            wp_redirect(admin_url('admin.php?page=restaurant-booking-google-settings&auth=error'));
-            exit;
-        }
+        // Utiliser la méthode de la classe simplifiée
+        $this->simple_client->handle_auth();
     }
 
     /**
@@ -188,23 +141,12 @@ class RestaurantBooking_Google_Calendar
      */
     public function sync_calendar()
     {
-        if (!$this->service) {
+        if (!$this->simple_client) {
             wp_send_json_error(__('Service Google Calendar non disponible', 'restaurant-booking'));
         }
 
-        try {
-            // 1. Synchroniser depuis Google vers WordPress
-            $this->sync_from_google();
-            
-            // 2. Synchroniser depuis WordPress vers Google  
-            $this->sync_to_google();
-            
-            wp_send_json_success(__('Synchronisation terminée', 'restaurant-booking'));
-            
-        } catch (Exception $e) {
-            RestaurantBooking_Logger::log('Erreur sync calendar: ' . $e->getMessage(), 'error');
-            wp_send_json_error($e->getMessage());
-        }
+        // Utiliser la méthode de la classe simplifiée
+        $this->simple_client->sync_calendar();
     }
 
     /**
@@ -215,8 +157,8 @@ class RestaurantBooking_Google_Calendar
         $settings = $this->get_google_settings();
         $calendar_id = $settings['calendar_id'];
         
-        // Récupérer les événements des 3 prochains mois
-        $time_min = date('c');
+        // Récupérer les événements depuis le début du mois courant
+        $time_min = date('c', strtotime('first day of this month'));
         $time_max = date('c', strtotime('+3 months'));
         
         $events = $this->service->events->listEvents($calendar_id, array(
@@ -232,30 +174,73 @@ class RestaurantBooking_Google_Calendar
             $start = $event->getStart();
             $end = $event->getEnd();
             
-            // Gérer les événements toute la journée
-            $event_date = $start->getDate() ? $start->getDate() : date('Y-m-d', strtotime($start->getDateTime()));
+            // Gérer les événements toute la journée vs créneaux horaires
+            $is_all_day = !empty($start->getDate());
+            $event_date = $is_all_day ? $start->getDate() : date('Y-m-d', strtotime($start->getDateTime()));
             
-            // Vérifier si c'est un événement de blocage Block & Co
+            // Récupérer les heures pour les créneaux spécifiques
+            $start_time = null;
+            $end_time = null;
+            if (!$is_all_day) {
+                $start_time = date('H:i:s', strtotime($start->getDateTime()));
+                $end_time = date('H:i:s', strtotime($end->getDateTime()));
+            }
+            
+            // Vérifier si c'est un événement de blocage ou marqué comme "Occupé"
             $summary = $event->getSummary();
+            $is_busy_event = false;
+            
+            // Vérifier les mots-clés de blocage
             if (strpos(strtolower($summary), 'block') !== false || 
                 strpos(strtolower($summary), 'restaurant') !== false ||
                 strpos(strtolower($summary), 'remorque') !== false) {
+                $is_busy_event = true;
+            }
+            
+            // Vérifier si l'événement est marqué comme "Occupé" dans Google Calendar
+            $attendees = $event->getAttendees();
+            if ($attendees) {
+                foreach ($attendees as $attendee) {
+                    if ($attendee->getResponseStatus() === 'busy') {
+                        $is_busy_event = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Vérifier le statut de disponibilité de l'événement
+            $transparency = $event->getTransparency();
+            if ($transparency === 'opaque') { // "Occupé" dans Google Calendar
+                $is_busy_event = true;
+            }
+            
+            if ($is_busy_event) {
                 
-                // Marquer comme non disponible dans WordPress
-                $wpdb->replace(
-                    $wpdb->prefix . 'restaurant_availability',
-                    array(
-                        'date' => $event_date,
-                        'service_type' => $this->detect_service_type($summary),
-                        'is_available' => 0,
-                        'blocked_reason' => 'Synchronisé depuis Google Calendar',
-                        'notes' => $summary,
-                        'created_by' => 0,
-                        'created_at' => current_time('mysql'),
-                        'updated_at' => current_time('mysql')
-                    ),
-                    array('%s', '%s', '%d', '%s', '%s', '%d', '%s', '%s')
+                // Marquer comme non disponible dans WordPress avec créneaux horaires
+                $blocked_reason = 'Synchronisé depuis Google Calendar';
+                if ($transparency === 'opaque') {
+                    $blocked_reason = 'Journée bloquée (Occupé)';
+                } elseif (strpos(strtolower($summary), 'block') !== false) {
+                    $blocked_reason = 'Journée bloquée manuellement';
+                }
+                
+                $data = array(
+                    'date' => $event_date,
+                    'service_type' => $this->detect_service_type($summary),
+                    'is_available' => 0,
+                    'blocked_reason' => $blocked_reason,
+                    'notes' => $summary,
+                    'created_by' => 0,
+                    'start_time' => $start_time,
+                    'end_time' => $end_time,
+                    'google_event_id' => $event->getId(),
+                    'created_at' => current_time('mysql'),
+                    'updated_at' => current_time('mysql')
                 );
+                
+                $format = array('%s', '%s', '%d', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s');
+                
+                $wpdb->replace($wpdb->prefix . 'restaurant_availability', $data, $format);
             }
         }
     }
@@ -332,6 +317,93 @@ class RestaurantBooking_Google_Calendar
     }
 
     /**
+     * Récupérer les disponibilités d'un mois pour le widget calendrier
+     */
+    public function get_month_availability($year, $month, $service_type = 'both')
+    {
+        global $wpdb;
+        
+        // Récupérer les données depuis la table synchronisée
+        $start_date = sprintf('%04d-%02d-01', $year, $month);
+        $end_date = date('Y-m-t', strtotime($start_date));
+        
+        $availability_data = array();
+        
+        // Adapter la requête selon le service_type demandé
+        if ($service_type === 'both' || $service_type === 'all') {
+            // Récupérer tous les événements
+            $results = $wpdb->get_results($wpdb->prepare("
+                SELECT date, service_type, is_available, blocked_reason, notes, google_event_id,
+                       start_time, end_time
+                FROM {$wpdb->prefix}restaurant_availability 
+                WHERE date BETWEEN %s AND %s
+                AND is_available = 0
+                ORDER BY date ASC, start_time ASC
+            ", $start_date, $end_date), ARRAY_A);
+        } else {
+            // Récupérer pour un service spécifique + 'both' + 'all'
+            $results = $wpdb->get_results($wpdb->prepare("
+                SELECT date, service_type, is_available, blocked_reason, notes, google_event_id,
+                       start_time, end_time
+                FROM {$wpdb->prefix}restaurant_availability 
+                WHERE date BETWEEN %s AND %s
+                AND is_available = 0
+                AND (service_type = %s OR service_type = 'both' OR service_type = 'all')
+                ORDER BY date ASC, start_time ASC
+            ", $start_date, $end_date, $service_type), ARRAY_A);
+        }
+        
+        foreach ($results as $row) {
+            $date = $row['date'];
+            
+            if (!isset($availability_data[$date])) {
+                $availability_data[$date] = array(
+                    'is_fully_blocked' => false,
+                    'blocked_slots' => array(),
+                    'events' => array(),
+                    'has_google_events' => false
+                );
+            }
+            
+            // Ajouter l'événement à la liste
+            $event_info = array(
+                'is_available' => $row['is_available'],
+                'blocked_reason' => $row['blocked_reason'],
+                'notes' => $row['notes'],
+                'google_event_id' => $row['google_event_id'] ?? '',
+                'start_time' => $row['start_time'],
+                'end_time' => $row['end_time'],
+                'service_type' => $row['service_type']
+            );
+            
+            $availability_data[$date]['events'][] = $event_info;
+            
+            // Marquer si c'est un événement Google Calendar
+            if (!empty($row['google_event_id'])) {
+                $availability_data[$date]['has_google_events'] = true;
+            }
+            
+            if ($row['is_available'] == 0) {
+                if (empty($row['start_time']) && empty($row['end_time'])) {
+                    // Blocage toute la journée
+                    $availability_data[$date]['is_fully_blocked'] = true;
+                } else {
+                    // Blocage par créneau horaire
+                    $availability_data[$date]['blocked_slots'][] = array(
+                        'type' => 'time_slot',
+                        'start_time' => $row['start_time'],
+                        'end_time' => $row['end_time'],
+                        'reason' => $row['blocked_reason'],
+                        'is_google_sync' => !empty($row['google_event_id'])
+                    );
+                }
+            }
+        }
+        
+        return $availability_data;
+    }
+
+    /**
      * Créer un événement dans Google Calendar
      */
     public function create_event($date, $service_type, $title, $description = '')
@@ -387,26 +459,69 @@ class RestaurantBooking_Google_Calendar
     }
 
     /**
+     * Obtenir les disponibilités avec créneaux horaires pour une date
+     */
+    public function get_date_availability_slots($date, $service_type = 'both')
+    {
+        global $wpdb;
+
+        $where_service = '';
+        $params = array($date);
+        
+        if ($service_type !== 'both') {
+            $where_service = 'AND (service_type = %s OR service_type = "both")';
+            $params[] = $service_type;
+        }
+
+        $sql = "SELECT * FROM {$wpdb->prefix}restaurant_availability 
+                WHERE date = %s 
+                AND is_available = 0 
+                $where_service
+                ORDER BY start_time ASC";
+
+        $blocked_slots = $wpdb->get_results($wpdb->prepare($sql, $params));
+
+        $result = array(
+            'date' => $date,
+            'service_type' => $service_type,
+            'blocked_slots' => array(),
+            'is_fully_blocked' => false
+        );
+
+        foreach ($blocked_slots as $slot) {
+            if (is_null($slot->start_time) && is_null($slot->end_time)) {
+                // Journée entière bloquée
+                $result['is_fully_blocked'] = true;
+                $result['blocked_slots'][] = array(
+                    'type' => 'full_day',
+                    'reason' => $slot->blocked_reason,
+                    'notes' => $slot->notes
+                );
+            } else {
+                // Créneau spécifique bloqué
+                $result['blocked_slots'][] = array(
+                    'type' => 'time_slot',
+                    'start_time' => $slot->start_time,
+                    'end_time' => $slot->end_time,
+                    'reason' => $slot->blocked_reason,
+                    'notes' => $slot->notes
+                );
+            }
+        }
+
+        return $result;
+    }
+
+
+    /**
      * Vérifier la connexion
      */
     public function test_connection()
     {
-        if (!$this->service) {
+        if (!$this->simple_client) {
             return array('status' => 'error', 'message' => 'Service non disponible');
         }
 
-        try {
-            $calendar_list = $this->service->calendarList->listCalendarList();
-            return array(
-                'status' => 'success', 
-                'message' => 'Connexion réussie',
-                'calendars' => $calendar_list->getItems()
-            );
-        } catch (Exception $e) {
-            return array(
-                'status' => 'error', 
-                'message' => $e->getMessage()
-            );
-        }
+        return $this->simple_client->test_connection();
     }
 }

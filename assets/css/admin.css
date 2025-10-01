@@ -13,6 +13,8 @@
     --rb-success: #2e7d32;
     --rb-warning: #f57c00;
     --rb-error: #c62828;
+    --rb-google: #4285f4;
+    --rb-google-light: #e3f2fd;
     --rb-gray-light: #f5f5f5;
     --rb-gray-medium: #ddd;
     --rb-gray-dark: #666;
@@ -587,6 +589,210 @@
 .restaurant-booking-calendar-day.has-event {
     background: #e3f2fd;
 }
+
+.restaurant-booking-calendar-day.google-sync {
+    background: var(--rb-google-light);
+    border: 2px solid var(--rb-google);
+    position: relative;
+}
+
+.restaurant-booking-calendar-day.google-sync::after {
+    content: "📅";
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 12px;
+}
+
+/* Styles pour le calendrier simple aussi */
+.calendar-day.google-sync {
+    background: var(--rb-google-light) !important;
+    border: 2px solid var(--rb-google) !important;
+}
+
+.calendar-day.google-sync .toggle-availability {
+    color: var(--rb-google);
+    font-weight: bold;
+}
+
+/* Styles pour les événements bloqués dans le calendrier admin */
+.event-details {
+    margin-top: 4px;
+    font-size: 0.75rem;
+    line-height: 1.2;
+}
+
+.event-item.blocked-day {
+    background: #dc3545;
+    color: white;
+    padding: 2px 4px;
+    border-radius: 3px;
+    margin-bottom: 2px;
+    text-align: center;
+}
+
+.event-item.blocked-day.google-event {
+    background: #4285f4;
+}
+
+.event-label {
+    display: block;
+    font-weight: bold;
+    font-size: 0.7rem;
+    margin-bottom: 1px;
+}
+
+.event-reason {
+    display: block;
+    font-size: 0.65rem;
+    opacity: 0.9;
+    font-style: italic;
+}
+
+.event-item:not(.blocked-day) {
+    background: rgba(0,0,0,0.1);
+    padding: 1px 3px;
+    border-radius: 2px;
+    margin-bottom: 1px;
+}
+
+.event-item.google-event:not(.blocked-day) {
+    background: rgba(66, 133, 244, 0.2);
+    color: #1565c0;
+}
+
+/* === LÉGENDE DU CALENDRIER === */
+.calendar-legend {
+    margin: 20px 0;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid var(--rb-gray-medium);
+    border-radius: var(--rb-border-radius);
+}
+
+.calendar-legend h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.legend-color.available {
+    background: #e8f5e8;
+}
+
+.legend-color.unavailable {
+    background: #ffebee;
+}
+
+.legend-color.google-sync {
+    background: var(--rb-google-light);
+    border-color: var(--rb-google);
+}
+
+.legend-color.past {
+    background: #f5f5f5;
+}
+
+/* === GUIDE D'UTILISATION GOOGLE CALENDAR === */
+.google-calendar-guide {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.guide-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 30px;
+    background: linear-gradient(135deg, #4285f4, #34a853);
+    color: white;
+    border-radius: var(--rb-border-radius);
+}
+
+.guide-header h2 {
+    margin: 0 0 15px 0;
+    font-size: 28px;
+}
+
+.guide-description {
+    font-size: 16px;
+    opacity: 0.9;
+    margin: 0;
+}
+
+/* Guide d'utilisation - Style simple comme l'onglet Google Calendar */
+.guide-section {
+    background: #fff;
+    margin-bottom: 15px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.guide-section h3 {
+    color: #23282d;
+    font-size: 18px;
+    margin: 0 0 15px 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.guide-section h4 {
+    color: #0073aa;
+    font-size: 16px;
+    margin: 12px 0 8px 0;
+}
+
+.guide-section h5 {
+    color: #333;
+    font-size: 14px;
+    margin: 10px 0 6px 0;
+    font-weight: 600;
+}
+
+.guide-section p {
+    margin: 8px 0;
+    line-height: 1.5;
+    color: #555;
+}
+
+.guide-section ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.guide-section li {
+    margin-bottom: 4px;
+    color: #555;
+}
+
+.guide-section code {
+    background: #f1f1f1;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 13px;
+    color: #333;
+}
+
 
 .restaurant-booking-calendar-day-number {
     font-weight: 600;

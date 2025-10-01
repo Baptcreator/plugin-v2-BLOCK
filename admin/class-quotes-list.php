@@ -18,8 +18,11 @@ class RestaurantBooking_Quotes_List
     public function display()
     {
         // Traitement des actions
-        if (isset($_POST['action']) && $_POST['action'] === 'bulk_delete' && isset($_POST['quotes'])) {
-            $this->bulk_delete_quotes($_POST['quotes']);
+        if ((isset($_POST['action']) && $_POST['action'] === 'bulk_delete') || 
+            (isset($_POST['action2']) && $_POST['action2'] === 'bulk_delete')) {
+            if (isset($_POST['quotes']) && !empty($_POST['quotes'])) {
+                $this->bulk_delete_quotes($_POST['quotes']);
+            }
         }
 
         if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['quote_id'])) {
@@ -35,10 +38,21 @@ class RestaurantBooking_Quotes_List
         $status = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
         $service_type = isset($_GET['service_type']) ? sanitize_text_field($_GET['service_type']) : '';
 
-        // Simuler des données de devis pour l'affichage
-        $quotes = $this->get_sample_quotes();
-        $total = count($quotes);
-        $total_pages = ceil($total / $per_page);
+        // Récupérer les devis réels de la base de données
+        $quotes_args = array(
+            'search' => $search,
+            'status' => $status,
+            'service_type' => $service_type,
+            'limit' => $per_page,
+            'offset' => ($page - 1) * $per_page,
+            'orderby' => 'created_at',
+            'order' => 'DESC'
+        );
+        
+        $quotes_result = RestaurantBooking_Quote::get_list($quotes_args);
+        $quotes = $quotes_result['quotes'];
+        $total = $quotes_result['total'];
+        $total_pages = $quotes_result['pages'];
 
         // Affichage
         ?>
@@ -46,6 +60,10 @@ class RestaurantBooking_Quotes_List
             <h1 class="wp-heading-inline"><?php _e('Gestion des devis', 'restaurant-booking'); ?></h1>
             <a href="<?php echo admin_url('admin.php?page=restaurant-booking-quotes&action=add'); ?>" class="page-title-action">
                 <?php _e('Ajouter un devis', 'restaurant-booking'); ?>
+            </a>
+            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-quotes&create_test_quotes=1'); ?>" class="page-title-action" 
+               onclick="return confirm('<?php _e('Créer des devis de test ?', 'restaurant-booking'); ?>')">
+                <?php _e('Créer devis test', 'restaurant-booking'); ?>
             </a>
             <hr class="wp-header-end">
 
@@ -58,7 +76,30 @@ class RestaurantBooking_Quotes_List
                                 _e('Devis supprimé avec succès.', 'restaurant-booking');
                                 break;
                             case 'bulk_deleted':
-                                _e('Devis sélectionnés supprimés avec succès.', 'restaurant-booking');
+                                _e('Devis supprimé avec succès.', 'restaurant-booking');
+                                break;
+                            case 'bulk_deleted_multiple':
+                                $count = isset($_GET['count']) ? (int) $_GET['count'] : 0;
+                                printf(_n('%d devis supprimé avec succès.', '%d devis supprimés avec succès.', $count, 'restaurant-booking'), $count);
+                                break;
+                            case 'no_quotes_selected':
+                                _e('Aucun devis sélectionné.', 'restaurant-booking');
+                                break;
+                            case 'bulk_delete_failed':
+                                _e('Aucun devis n\'a pu être supprimé.', 'restaurant-booking');
+                                break;
+                            case 'test_quotes_created':
+                                _e('Devis de test créés avec succès.', 'restaurant-booking');
+                                break;
+                            case 'test_quotes_deleted':
+                                $count = isset($_GET['count']) ? (int) $_GET['count'] : 0;
+                                printf(_n('%d devis de test supprimé avec succès.', '%d devis de test supprimés avec succès.', $count, 'restaurant-booking'), $count);
+                                break;
+                            case 'no_test_quotes_found':
+                                _e('Aucun devis de test trouvé.', 'restaurant-booking');
+                                break;
+                            case 'test_quotes_delete_failed':
+                                _e('Aucun devis de test n\'a pu être supprimé.', 'restaurant-booking');
                                 break;
                             case 'created':
                                 _e('Devis créé avec succès.', 'restaurant-booking');
@@ -66,6 +107,12 @@ class RestaurantBooking_Quotes_List
                             case 'updated':
                                 _e('Devis mis à jour avec succès.', 'restaurant-booking');
                                 break;
+                        }
+                        
+                        // Afficher les erreurs s'il y en a
+                        if (isset($_GET['errors']) && !empty($_GET['errors'])) {
+                            echo '<br><strong>' . __('Erreurs:', 'restaurant-booking') . '</strong><br>';
+                            echo esc_html($_GET['errors']);
                         }
                         ?>
                     </p>
@@ -80,11 +127,8 @@ class RestaurantBooking_Quotes_List
                     <div class="alignleft actions">
                         <select name="status">
                             <option value=""><?php _e('Tous les statuts', 'restaurant-booking'); ?></option>
-                            <option value="draft" <?php selected($status, 'draft'); ?>><?php _e('Brouillon', 'restaurant-booking'); ?></option>
                             <option value="sent" <?php selected($status, 'sent'); ?>><?php _e('Envoyé', 'restaurant-booking'); ?></option>
-                            <option value="accepted" <?php selected($status, 'accepted'); ?>><?php _e('Accepté', 'restaurant-booking'); ?></option>
-                            <option value="rejected" <?php selected($status, 'rejected'); ?>><?php _e('Refusé', 'restaurant-booking'); ?></option>
-                            <option value="expired" <?php selected($status, 'expired'); ?>><?php _e('Expiré', 'restaurant-booking'); ?></option>
+                            <option value="confirmed" <?php selected($status, 'confirmed'); ?>><?php _e('Confirmé', 'restaurant-booking'); ?></option>
                         </select>
 
                         <select name="service_type">
@@ -106,7 +150,18 @@ class RestaurantBooking_Quotes_List
             <!-- Tableau des devis -->
             <form method="post" id="quotes-list-form">
                 <?php wp_nonce_field('bulk_delete_quotes', '_wpnonce'); ?>
-                <input type="hidden" name="action" value="bulk_delete">
+                
+                <!-- Actions groupées -->
+                <div class="tablenav top">
+                    <div class="alignleft actions bulkactions">
+                        <label for="bulk-action-selector-top" class="screen-reader-text"><?php _e('Sélectionner une action groupée', 'restaurant-booking'); ?></label>
+                        <select name="action" id="bulk-action-selector-top">
+                            <option value="-1"><?php _e('Actions groupées', 'restaurant-booking'); ?></option>
+                            <option value="bulk_delete"><?php _e('Supprimer', 'restaurant-booking'); ?></option>
+                        </select>
+                        <input type="submit" id="doaction" class="button action" value="<?php _e('Appliquer', 'restaurant-booking'); ?>" onclick="return confirmBulkDelete()">
+                    </div>
+                </div>
                 
                 <table class="wp-list-table widefat fixed striped">
                     <thead>
@@ -145,8 +200,21 @@ class RestaurantBooking_Quotes_List
                                     </th>
                                     <td><strong>#<?php echo $quote['id']; ?></strong></td>
                                     <td>
-                                        <strong><?php echo esc_html($quote['client_name']); ?></strong><br>
-                                        <small><?php echo esc_html($quote['client_email']); ?></small>
+                                        <?php 
+                                        // Gérer le cas où customer_data peut être déjà décodé ou être une chaîne JSON
+                                        $customer_data_raw = $quote['customer_data'] ?? '{}';
+                                        if (is_array($customer_data_raw)) {
+                                            $customer_data = $customer_data_raw;
+                                        } else {
+                                            $customer_data = json_decode($customer_data_raw, true) ?: [];
+                                        }
+                                        $client_name = $customer_data['name'] ?? __('Client sans nom', 'restaurant-booking');
+                                        $client_email = $customer_data['email'] ?? '';
+                                        ?>
+                                        <strong><?php echo esc_html($client_name); ?></strong><br>
+                                        <?php if ($client_email): ?>
+                                            <small><?php echo esc_html($client_email); ?></small>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <?php 
@@ -161,21 +229,18 @@ class RestaurantBooking_Quotes_List
                                         <?php echo $quote['event_date'] ? date_i18n(get_option('date_format'), strtotime($quote['event_date'])) : '-'; ?>
                                     </td>
                                     <td>
-                                        <strong><?php echo number_format($quote['total_amount'], 2, ',', ' '); ?> €</strong>
+                                        <strong><?php echo number_format($quote['total_price'], 2, ',', ' '); ?> €</strong>
                                     </td>
                                     <td>
-                                        <?php
-                                        $status_class = 'status-' . $quote['status'];
-                                        switch($quote['status']) {
-                                            case 'draft': $status_label = __('Brouillon', 'restaurant-booking'); break;
-                                            case 'sent': $status_label = __('Envoyé', 'restaurant-booking'); break;
-                                            case 'accepted': $status_label = __('Accepté', 'restaurant-booking'); break;
-                                            case 'rejected': $status_label = __('Refusé', 'restaurant-booking'); break;
-                                            case 'expired': $status_label = __('Expiré', 'restaurant-booking'); break;
-                                            default: $status_label = ucfirst($quote['status']);
-                                        }
-                                        ?>
-                                        <span class="quote-status <?php echo $status_class; ?>"><?php echo $status_label; ?></span>
+                                        <select class="quote-status-dropdown" data-quote-id="<?php echo $quote['id']; ?>" 
+                                                onchange="updateQuoteStatus(this)">
+                                            <option value="sent" <?php selected($quote['status'], 'sent'); ?>>
+                                                <?php _e('Envoyé', 'restaurant-booking'); ?>
+                                            </option>
+                                            <option value="confirmed" <?php selected($quote['status'], 'confirmed'); ?>>
+                                                <?php _e('Confirmé', 'restaurant-booking'); ?>
+                                            </option>
+                                        </select>
                                     </td>
                                     <td>
                                         <?php echo date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($quote['created_at'])); ?>
@@ -198,6 +263,18 @@ class RestaurantBooking_Quotes_List
                         <?php endif; ?>
                     </tbody>
                 </table>
+                
+                <!-- Actions groupées en bas -->
+                <div class="tablenav bottom">
+                    <div class="alignleft actions bulkactions">
+                        <label for="bulk-action-selector-bottom" class="screen-reader-text"><?php _e('Sélectionner une action groupée', 'restaurant-booking'); ?></label>
+                        <select name="action2" id="bulk-action-selector-bottom">
+                            <option value="-1"><?php _e('Actions groupées', 'restaurant-booking'); ?></option>
+                            <option value="bulk_delete"><?php _e('Supprimer', 'restaurant-booking'); ?></option>
+                        </select>
+                        <input type="submit" id="doaction2" class="button action" value="<?php _e('Appliquer', 'restaurant-booking'); ?>" onclick="return confirmBulkDelete()">
+                    </div>
+                </div>
             </form>
         </div>
 
@@ -211,59 +288,116 @@ class RestaurantBooking_Quotes_List
         }
         .status-draft { background: #f0f0f1; color: #646970; }
         .status-sent { background: #d1ecf1; color: #0c5460; }
-        .status-accepted { background: #d4edda; color: #155724; }
-        .status-rejected { background: #f8d7da; color: #721c24; }
-        .status-expired { background: #fff3cd; color: #856404; }
+        .status-confirmed { background: #d4edda; color: #155724; }
+        .status-cancelled { background: #f8d7da; color: #721c24; }
         </style>
 
         <script>
         jQuery(document).ready(function($) {
+            // Gestion de la sélection multiple
             $('#cb-select-all-1').on('change', function() {
                 $('input[name="quotes[]"]').prop('checked', this.checked);
             });
+            
+            // Gestion des actions groupées (haut et bas)
+            $('#doaction, #doaction2').on('click', function(e) {
+                var $button = $(this);
+                var isTop = $button.attr('id') === 'doaction';
+                var action = isTop ? $('#bulk-action-selector-top').val() : $('#bulk-action-selector-bottom').val();
+                
+                if (action === '-1') {
+                    e.preventDefault();
+                    alert('<?php _e('Veuillez sélectionner une action.', 'restaurant-booking'); ?>');
+                    return false;
+                }
+                
+                var checkedQuotes = $('input[name="quotes[]"]:checked');
+                if (checkedQuotes.length === 0) {
+                    e.preventDefault();
+                    alert('<?php _e('Veuillez sélectionner au moins un devis.', 'restaurant-booking'); ?>');
+                    return false;
+                }
+                
+                if (action === 'bulk_delete') {
+                    var count = checkedQuotes.length;
+                    var message = count === 1 ? 
+                        '<?php _e('Êtes-vous sûr de vouloir supprimer ce devis ?', 'restaurant-booking'); ?>' :
+                        '<?php _e('Êtes-vous sûr de vouloir supprimer ces %d devis ?', 'restaurant-booking'); ?>'.replace('%d', count);
+                    
+                    if (!confirm(message)) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+            });
         });
+        
+        // Fonction de confirmation pour la suppression groupée
+        function confirmBulkDelete() {
+            var checkedQuotes = jQuery('input[name="quotes[]"]:checked');
+            if (checkedQuotes.length === 0) {
+                alert('<?php _e('Veuillez sélectionner au moins un devis.', 'restaurant-booking'); ?>');
+                return false;
+            }
+            
+            var count = checkedQuotes.length;
+            var message = count === 1 ? 
+                '<?php _e('Êtes-vous sûr de vouloir supprimer ce devis ?', 'restaurant-booking'); ?>' :
+                '<?php _e('Êtes-vous sûr de vouloir supprimer ces %d devis ?', 'restaurant-booking'); ?>'.replace('%d', count);
+            
+            return confirm(message);
+        }
+        
+        // Fonction pour mettre à jour le statut d'un devis
+        function updateQuoteStatus(selectElement) {
+            const quoteId = selectElement.getAttribute('data-quote-id');
+            const newStatus = selectElement.value;
+            const originalValue = selectElement.getAttribute('data-original-value') || selectElement.value;
+            
+            // Désactiver le select pendant la requête
+            selectElement.disabled = true;
+            
+            // Requête AJAX
+            jQuery.ajax({
+                url: ajaxurl,
+                method: 'POST',
+                data: {
+                    action: 'restaurant_booking_admin_action',
+                    admin_action: 'update_quote_status',
+                    quote_id: quoteId,
+                    status: newStatus,
+                    nonce: '<?php echo wp_create_nonce('restaurant_booking_admin_nonce'); ?>'
+                },
+                success: function(response) {
+                    selectElement.disabled = false;
+                    if (response.success) {
+                        // Mettre à jour la valeur originale
+                        selectElement.setAttribute('data-original-value', newStatus);
+                        // Afficher un message de succès
+                        if (typeof wp !== 'undefined' && wp.notices) {
+                            wp.notices.create({
+                                message: '<?php _e('Statut mis à jour avec succès', 'restaurant-booking'); ?>',
+                                type: 'success',
+                                isDismissible: true
+                            });
+                        }
+                    } else {
+                        // Restaurer la valeur précédente en cas d'erreur
+                        selectElement.value = originalValue;
+                        alert('<?php _e('Erreur lors de la mise à jour du statut', 'restaurant-booking'); ?>: ' + (response.data || '<?php _e('Erreur inconnue', 'restaurant-booking'); ?>'));
+                    }
+                },
+                error: function() {
+                    selectElement.disabled = false;
+                    selectElement.value = originalValue;
+                    alert('<?php _e('Erreur de communication avec le serveur', 'restaurant-booking'); ?>');
+                }
+            });
+        }
         </script>
         <?php
     }
 
-    /**
-     * Données d'exemple pour les devis
-     */
-    private function get_sample_quotes()
-    {
-        return array(
-            array(
-                'id' => 1,
-                'client_name' => 'Marie Dupont',
-                'client_email' => 'marie.dupont@email.com',
-                'service_type' => 'restaurant',
-                'event_date' => '2024-02-15',
-                'total_amount' => 450.00,
-                'status' => 'sent',
-                'created_at' => '2024-01-15 10:30:00'
-            ),
-            array(
-                'id' => 2,
-                'client_name' => 'Pierre Martin',
-                'client_email' => 'pierre.martin@email.com',
-                'service_type' => 'remorque',
-                'event_date' => '2024-03-20',
-                'total_amount' => 1200.00,
-                'status' => 'accepted',
-                'created_at' => '2024-01-10 14:20:00'
-            ),
-            array(
-                'id' => 3,
-                'client_name' => 'Sophie Bernard',
-                'client_email' => 'sophie.bernard@email.com',
-                'service_type' => 'remorque',
-                'event_date' => '2024-04-05',
-                'total_amount' => 850.00,
-                'status' => 'draft',
-                'created_at' => '2024-01-20 09:15:00'
-            )
-        );
-    }
 
     /**
      * Supprimer un devis
@@ -278,7 +412,13 @@ class RestaurantBooking_Quotes_List
             wp_die(__('Permissions insuffisantes.', 'restaurant-booking'));
         }
 
-        wp_redirect(admin_url('admin.php?page=restaurant-booking-quotes&message=deleted'));
+        $result = RestaurantBooking_Quote::delete($quote_id);
+        
+        if (is_wp_error($result)) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-quotes&message=error&error=' . urlencode($result->get_error_message())));
+        } else {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-quotes&message=deleted'));
+        }
         exit;
     }
 
@@ -295,7 +435,90 @@ class RestaurantBooking_Quotes_List
             wp_die(__('Permissions insuffisantes.', 'restaurant-booking'));
         }
 
-        wp_redirect(admin_url('admin.php?page=restaurant-booking-quotes&message=bulk_deleted'));
+        if (empty($quote_ids) || !is_array($quote_ids)) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-quotes&message=no_quotes_selected'));
+            exit;
+        }
+
+        $deleted_count = 0;
+        $errors = array();
+
+        foreach ($quote_ids as $quote_id) {
+            $quote_id = (int) $quote_id;
+            if ($quote_id > 0) {
+                $result = RestaurantBooking_Quote::delete($quote_id);
+                if (is_wp_error($result)) {
+                    $errors[] = sprintf(__('Erreur lors de la suppression du devis #%d: %s', 'restaurant-booking'), $quote_id, $result->get_error_message());
+                } else {
+                    $deleted_count++;
+                }
+            }
+        }
+
+        if ($deleted_count > 0) {
+            $message = $deleted_count === 1 ? 'bulk_deleted' : 'bulk_deleted_multiple';
+            $redirect_url = admin_url('admin.php?page=restaurant-booking-quotes&message=' . $message . '&count=' . $deleted_count);
+        } else {
+            $redirect_url = admin_url('admin.php?page=restaurant-booking-quotes&message=bulk_delete_failed');
+        }
+
+        if (!empty($errors)) {
+            $redirect_url .= '&errors=' . urlencode(implode('; ', $errors));
+        }
+
+        wp_redirect($redirect_url);
+        exit;
+    }
+
+    /**
+     * Supprimer tous les devis de test
+     */
+    private function delete_all_test_quotes()
+    {
+        if (!wp_verify_nonce($_POST['_wpnonce'], 'bulk_delete_quotes')) {
+            wp_die(__('Action non autorisée.', 'restaurant-booking'));
+        }
+
+        if (!current_user_can('manage_restaurant_quotes')) {
+            wp_die(__('Permissions insuffisantes.', 'restaurant-booking'));
+        }
+
+        global $wpdb;
+        
+        // Récupérer tous les devis de test
+        $test_quotes = $wpdb->get_results(
+            "SELECT id FROM {$wpdb->prefix}restaurant_quotes WHERE quote_number LIKE 'DEV-2024-%' OR quote_number LIKE 'TEST-2024-%'"
+        );
+
+        if (empty($test_quotes)) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-quotes&message=no_test_quotes_found'));
+            exit;
+        }
+
+        $deleted_count = 0;
+        $errors = array();
+
+        foreach ($test_quotes as $quote) {
+            $result = RestaurantBooking_Quote::delete($quote->id);
+            if (is_wp_error($result)) {
+                $errors[] = sprintf(__('Erreur lors de la suppression du devis #%d: %s', 'restaurant-booking'), $quote->id, $result->get_error_message());
+            } else {
+                $deleted_count++;
+            }
+        }
+
+        if ($deleted_count > 0) {
+            $message = 'test_quotes_deleted';
+            $redirect_url = admin_url('admin.php?page=restaurant-booking-quotes&message=' . $message . '&count=' . $deleted_count);
+        } else {
+            $redirect_url = admin_url('admin.php?page=restaurant-booking-quotes&message=test_quotes_delete_failed');
+        }
+
+        if (!empty($errors)) {
+            $redirect_url .= '&errors=' . urlencode(implode('; ', $errors));
+        }
+
+        wp_redirect($redirect_url);
         exit;
     }
 }

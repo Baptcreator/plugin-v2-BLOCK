@@ -35,6 +35,27 @@ class RestaurantBooking_Beverage_Manager
     {
         add_action('init', array($this, 'init'));
     }
+    
+    /**
+     * Obtenir toutes les catégories de boissons
+     */
+    public static function get_beverage_categories()
+    {
+        global $wpdb;
+        
+        // Récupérer tous les types de catégories de boissons
+        $types = $wpdb->get_col("
+            SELECT DISTINCT c.type 
+            FROM {$wpdb->prefix}restaurant_categories c
+            WHERE c.type IN ('soft', 'biere_bouteille', 'fut') 
+            OR c.type LIKE 'vin_%' 
+            OR c.type = 'cremant'
+            ORDER BY c.type ASC
+        ");
+        
+        // Fallback vers les types par défaut si aucun résultat
+        return $types ?: array('soft', 'vin_blanc', 'vin_rouge', 'vin_rose', 'cremant', 'biere_bouteille', 'fut');
+    }
 
     /**
      * Initialisation
@@ -82,7 +103,7 @@ class RestaurantBooking_Beverage_Manager
             return new WP_Error('invalid_product', __('Produit invalide', 'restaurant-booking'));
         }
 
-        $beverage_categories = array('soft', 'vin_blanc', 'vin_rouge', 'vin_rose', 'cremant', 'biere', 'fut');
+        $beverage_categories = self::get_beverage_categories();
         if (!in_array($product->type, $beverage_categories)) {
             return new WP_Error('not_beverage', __('Ce produit n\'est pas une boisson', 'restaurant-booking'));
         }
@@ -366,7 +387,7 @@ class RestaurantBooking_Beverage_Manager
         }
 
         // Filtrer les catégories de boissons
-        $beverage_categories = array('soft', 'vin_blanc', 'vin_rouge', 'vin_rose', 'cremant', 'biere', 'fut');
+        $beverage_categories = self::get_beverage_categories();
         $placeholders = implode(',', array_fill(0, count($beverage_categories), '%s'));
         $where_conditions[] = "c.type IN ($placeholders)";
         $params = array_merge($params, $beverage_categories);

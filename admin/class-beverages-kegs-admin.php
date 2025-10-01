@@ -17,6 +17,9 @@ class RestaurantBooking_Beverages_Kegs_Admin
      */
     public function display_list()
     {
+        // Gérer les actions (suppression, etc.)
+        $this->handle_actions();
+        
         $products = $this->get_kegs();
         
         ?>
@@ -50,93 +53,275 @@ class RestaurantBooking_Beverages_Kegs_Admin
                         <p><?php _e('Actifs', 'restaurant-booking'); ?></p>
                     </div>
                     <div class="stat-card">
-                        <h3><?php echo count(array_filter($products, function($p) { return $p['suggested_beverage']; })); ?></h3>
-                        <p><?php _e('En suggestion', 'restaurant-booking'); ?></p>
+                        <h3>
+                            <?php 
+                            $total_sizes = 0;
+                            foreach ($products as $keg) {
+                                if ($keg['has_multiple_sizes'] && !empty($keg['sizes'])) {
+                                    $total_sizes += count($keg['sizes']);
+                                } else {
+                                    $total_sizes += 1; // Ancien système ou sans configuration
+                                }
+                            }
+                            echo $total_sizes;
+                            ?>
+                        </h3>
+                        <p><?php _e('Contenances totales', 'restaurant-booking'); ?></p>
                     </div>
                     <div class="stat-card">
-                        <h3><?php echo $products ? number_format(array_sum(array_column($products, 'price')) / count($products), 0, ',', ' ') : '0'; ?> €</h3>
+                        <h3>
+                            <?php 
+                            $all_prices = array();
+                            foreach ($products as $keg) {
+                                if ($keg['has_multiple_sizes'] && !empty($keg['sizes'])) {
+                                    foreach ($keg['sizes'] as $size) {
+                                        $all_prices[] = $size['price'];
+                                    }
+                                } elseif (isset($keg['legacy_data'])) {
+                                    $all_prices[] = $keg['legacy_data']['price'];
+                                }
+                            }
+                            echo $all_prices ? number_format(array_sum($all_prices) / count($all_prices), 0, ',', ' ') : '0';
+                            ?> €
+                        </h3>
                         <p><?php _e('Prix moyen', 'restaurant-booking'); ?></p>
                     </div>
                 </div>
             </div>
 
-            <!-- Tableau des fûts -->
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th class="manage-column"><?php _e('Fût de bière', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Type', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Contenance', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Prix', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Suggestion', 'restaurant-booking'); ?></th>
-                        <th class="manage-column"><?php _e('Actions', 'restaurant-booking'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($products)): ?>
+            <form method="post" id="kegs-filter">
+                <?php wp_nonce_field('restaurant_booking_kegs_action'); ?>
+                
+                <div class="tablenav top">
+                    <div class="alignleft actions bulkactions">
+                        <select name="action" id="bulk-action-selector-top">
+                            <option value="-1"><?php _e('Actions groupées', 'restaurant-booking'); ?></option>
+                            <option value="activate"><?php _e('Activer', 'restaurant-booking'); ?></option>
+                            <option value="deactivate"><?php _e('Désactiver', 'restaurant-booking'); ?></option>
+                            <option value="delete"><?php _e('Supprimer', 'restaurant-booking'); ?></option>
+                        </select>
+                        <?php submit_button(__('Appliquer', 'restaurant-booking'), 'action', '', false, array('id' => 'doaction')); ?>
+                    </div>
+                </div>
+
+                <!-- Tableau des fûts -->
+                <table class="wp-list-table widefat fixed striped">
+                    <thead>
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 40px;">
-                                <p><?php _e('Aucun fût de bière configuré.', 'restaurant-booking'); ?></p>
-                                <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-kegs&action=add'); ?>" class="button button-primary">
-                                    <?php _e('Créer le premier fût', 'restaurant-booking'); ?>
-                                </a>
+                            <td class="manage-column column-cb check-column">
+                                <input id="cb-select-all-1" type="checkbox">
                             </td>
+                            <th scope="col" class="manage-column column-image"><?php _e('Image', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-name column-primary"><?php _e('Nom', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-description"><?php _e('Description', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-type"><?php _e('Type', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-size"><?php _e('Contenance', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-price"><?php _e('Prix', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-suggestion"><?php _e('Suggestion', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-order"><?php _e('Ordre', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-status"><?php _e('Statut', 'restaurant-booking'); ?></th>
+                            <th scope="col" class="manage-column column-date"><?php _e('Date de création', 'restaurant-booking'); ?></th>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($products as $product): ?>
-                            <tr>
-                                <td>
-                                    <div class="product-info">
-                                        <?php if ($product['image_url']): ?>
-                                            <img src="<?php echo esc_url($product['image_url']); ?>" 
-                                                 alt="<?php echo esc_attr($product['name']); ?>" 
-                                                 class="product-thumb">
-                                        <?php endif; ?>
-                                        <div>
-                                            <strong><?php echo esc_html($product['name']); ?></strong>
-                                            <?php if ($product['description']): ?>
-                                                <br><small class="description"><?php echo esc_html(wp_trim_words($product['description'], 10)); ?></small>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="beer-category-badge">
-                                        <?php echo esc_html($product['beer_category'] ?: 'Non classée'); ?>
-                                    </span>
-                                    <?php if ($product['alcohol_degree']): ?>
-                                        <br><small><?php echo $product['alcohol_degree']; ?>°</small>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <strong><?php echo $product['size_label']; ?></strong>
-                                    <br><small>Fût <?php echo $product['size_label']; ?></small>
-                                </td>
-                                <td>
-                                    <strong><?php echo number_format($product['price'], 0, ',', ' '); ?> €</strong>
-                                    <br><small>/fût</small>
-                                </td>
-                                <td>
-                                    <?php if ($product['suggested_beverage']): ?>
-                                        <span class="dashicons dashicons-star-filled" style="color: #ffb900;" title="<?php _e('En suggestion', 'restaurant-booking'); ?>"></span>
-                                        <small><?php _e('Oui', 'restaurant-booking'); ?></small>
-                                    <?php else: ?>
-                                        <span class="dashicons dashicons-star-empty" style="color: #ddd;"></span>
-                                        <small><?php _e('Non', 'restaurant-booking'); ?></small>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-kegs&action=edit&id=' . $product['id']); ?>" 
-                                       class="button button-small"><?php _e('Modifier', 'restaurant-booking'); ?></a>
-                                    <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=restaurant-booking-beverages-kegs&action=delete&id=' . $product['id']), 'delete_keg_' . $product['id']); ?>" 
-                                       class="button button-small button-link-delete" 
-                                       onclick="return confirm('<?php _e('Êtes-vous sûr de vouloir supprimer ce fût ?', 'restaurant-booking'); ?>')"><?php _e('Supprimer', 'restaurant-booking'); ?></a>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($products)): ?>
+                            <tr class="no-items">
+                                <td class="colspanchange" colspan="11">
+                                    <?php _e('Aucun fût de bière trouvé.', 'restaurant-booking'); ?>
                                 </td>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                        <?php else: ?>
+                            <?php foreach ($products as $keg): ?>
+                                <!-- Ligne principale du fût -->
+                                <tr class="keg-main-row" data-keg-id="<?php echo $keg['id']; ?>">
+                                    <th scope="row" class="check-column">
+                                        <input id="cb-select-<?php echo $keg['id']; ?>" type="checkbox" name="keg_ids[]" value="<?php echo $keg['id']; ?>">
+                                    </th>
+                                    <td class="column-image">
+                                        <?php if (!empty($keg['image_url'])): ?>
+                                            <img src="<?php echo esc_url($keg['image_url']); ?>" alt="<?php echo esc_attr($keg['name']); ?>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                        <?php else: ?>
+                                            <div style="width: 50px; height: 50px; background: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #666;">
+                                                <span class="dashicons dashicons-format-image"></span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-name column-primary">
+                                        <strong>
+                                            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-kegs&action=edit&product_id=' . $keg['id']); ?>">
+                                                🍺 <?php echo esc_html($keg['name']); ?>
+                                            </a>
+                                        </strong>
+                                        <?php if ($keg['has_multiple_sizes'] && !empty($keg['sizes'])): ?>
+                                            <small class="keg-sizes-info">(<?php echo count($keg['sizes']); ?> contenances disponibles)</small>
+                                        <?php elseif (isset($keg['needs_configuration'])): ?>
+                                            <small class="keg-needs-config" style="color: #d63638;">(Configuration requise)</small>
+                                        <?php endif; ?>
+                                        <div class="row-actions">
+                                            <span class="edit">
+                                                <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-kegs&action=edit&product_id=' . $keg['id']); ?>">
+                                                    <?php _e('Modifier', 'restaurant-booking'); ?>
+                                                </a> |
+                                            </span>
+                                            <?php if ($keg['has_multiple_sizes'] && !empty($keg['sizes'])): ?>
+                                                <span class="toggle-sizes">
+                                                    <a href="#" class="toggle-keg-sizes" data-keg-id="<?php echo $keg['id']; ?>">
+                                                        <?php _e('Voir contenances', 'restaurant-booking'); ?>
+                                                    </a> |
+                                                </span>
+                                            <?php endif; ?>
+                                            <span class="toggle-status">
+                                                <a href="#" class="toggle-keg-status" data-product-id="<?php echo $keg['id']; ?>" data-current-status="<?php echo $keg['is_active'] ? 1 : 0; ?>">
+                                                    <?php echo $keg['is_active'] ? __('Désactiver', 'restaurant-booking') : __('Activer', 'restaurant-booking'); ?>
+                                                </a> |
+                                            </span>
+                                            <span class="delete">
+                                                <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=restaurant-booking-beverages-kegs&action=delete&product_id=' . $keg['id']), 'delete_keg_' . $keg['id']); ?>" 
+                                                   class="button button-small button-link-delete" 
+                                                   onclick="return confirm('<?php _e('Êtes-vous sûr de vouloir supprimer ce fût ?', 'restaurant-booking'); ?>')">
+                                                    <?php _e('Supprimer', 'restaurant-booking'); ?>
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="column-description">
+                                        <?php echo esc_html(wp_trim_words($keg['description'] ?? '', 10)); ?>
+                                    </td>
+                                    <td class="column-type">
+                                        <span class="beer-category-badge">
+                                            <?php echo esc_html($keg['beer_category'] ?: 'Non classée'); ?>
+                                        </span>
+                                        <?php if ($keg['alcohol_degree']): ?>
+                                            <br><small><?php echo $keg['alcohol_degree']; ?>°</small>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-size">
+                                        <?php if ($keg['has_multiple_sizes'] && !empty($keg['sizes'])): ?>
+                                            <strong><?php echo count($keg['sizes']); ?> tailles</strong>
+                                            <br><small>
+                                                <?php 
+                                                $size_labels = array_map(function($size) { return $size['size_label']; }, $keg['sizes']);
+                                                echo esc_html(implode(', ', $size_labels)); 
+                                                ?>
+                                            </small>
+                                        <?php elseif (isset($keg['legacy_data'])): ?>
+                                            <strong><?php echo $keg['legacy_data']['size_label']; ?></strong>
+                                            <br><small>Fût <?php echo $keg['legacy_data']['size_label']; ?></small>
+                                        <?php else: ?>
+                                            <span style="color: #d63638;">Non configuré</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-price">
+                                        <?php if ($keg['has_multiple_sizes'] && !empty($keg['sizes'])): ?>
+                                            <?php 
+                                            $prices = array_map(function($size) { return $size['price']; }, $keg['sizes']);
+                                            $min_price = min($prices);
+                                            $max_price = max($prices);
+                                            ?>
+                                            <?php if ($min_price === $max_price): ?>
+                                                <strong><?php echo number_format($min_price, 0, ',', ' '); ?> €</strong>
+                                            <?php else: ?>
+                                                <strong><?php echo number_format($min_price, 0, ',', ' '); ?> - <?php echo number_format($max_price, 0, ',', ' '); ?> €</strong>
+                                            <?php endif; ?>
+                                        <?php elseif (isset($keg['legacy_data'])): ?>
+                                            <strong><?php echo number_format($keg['legacy_data']['price'], 0, ',', ' '); ?> €</strong>
+                                        <?php else: ?>
+                                            <span style="color: #d63638;">—</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-suggestion">
+                                        <?php if ($keg['suggested_beverage']): ?>
+                                            <span class="dashicons dashicons-star-filled" style="color: #ffb900;" title="<?php _e('En suggestion', 'restaurant-booking'); ?>"></span>
+                                            <small><?php _e('Oui', 'restaurant-booking'); ?></small>
+                                        <?php else: ?>
+                                            <span class="dashicons dashicons-star-empty" style="color: #ddd;"></span>
+                                            <small><?php _e('Non', 'restaurant-booking'); ?></small>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-order">
+                                        <input type="number" class="small-text keg-order-input" 
+                                               value="<?php echo $keg['display_order'] ?? 0; ?>" 
+                                               data-product-id="<?php echo $keg['id']; ?>"
+                                               min="0" max="999">
+                                    </td>
+                                    <td class="column-status">
+                                        <?php if ($keg['is_active']): ?>
+                                            <span class="status-active"><?php _e('Actif', 'restaurant-booking'); ?></span>
+                                        <?php else: ?>
+                                            <span class="status-inactive"><?php _e('Inactif', 'restaurant-booking'); ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="column-date">
+                                        <?php echo date_i18n(get_option('date_format'), strtotime($keg['created_at'] ?? 'now')); ?>
+                                    </td>
+                                </tr>
+
+                                <!-- Lignes des contenances (cachées par défaut) -->
+                                <?php if ($keg['has_multiple_sizes'] && !empty($keg['sizes'])): ?>
+                                    <?php foreach ($keg['sizes'] as $size): ?>
+                                        <tr class="keg-size-row" data-keg-id="<?php echo $keg['id']; ?>" style="display: none;">
+                                            <td class="check-column"></td>
+                                            <td class="column-image">
+                                                <?php if (!empty($size['image_url'])): ?>
+                                                    <img src="<?php echo esc_url($size['image_url']); ?>" alt="<?php echo esc_attr($keg['name'] . ' ' . $size['size_label']); ?>" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; opacity: 0.8;">
+                                                <?php else: ?>
+                                                    <div style="width: 40px; height: 40px; background: #f9f9f9; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #999;">
+                                                        <span class="dashicons dashicons-admin-generic" style="font-size: 16px;"></span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="column-name column-primary">
+                                                <span style="padding-left: 20px; color: #666;">
+                                                    ├─ <strong><?php echo esc_html($size['size_label']); ?></strong>
+                                                </span>
+                                                <div class="row-actions" style="padding-left: 20px;">
+                                                    <span class="edit">
+                                                        <a href="<?php echo admin_url('admin.php?page=restaurant-booking-beverages-kegs&action=edit&product_id=' . $keg['id'] . '#size-' . $size['size_id']); ?>">
+                                                            <?php _e('Modifier cette taille', 'restaurant-booking'); ?>
+                                                        </a>
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td class="column-description">
+                                                <small style="color: #666;">Contenance: <?php echo $size['liters']; ?> litres</small>
+                                            </td>
+                                            <td class="column-type">
+                                                <small style="color: #666;">—</small>
+                                            </td>
+                                            <td class="column-size">
+                                                <strong><?php echo $size['size_label']; ?></strong>
+                                            </td>
+                                            <td class="column-price">
+                                                <strong><?php echo number_format($size['price'], 0, ',', ' '); ?> €</strong>
+                                            </td>
+                                            <td class="column-suggestion">
+                                                <?php if ($size['is_featured']): ?>
+                                                    <span class="dashicons dashicons-star-filled" style="color: #ffb900;" title="<?php _e('Taille mise en avant', 'restaurant-booking'); ?>"></span>
+                                                <?php else: ?>
+                                                    <span class="dashicons dashicons-star-empty" style="color: #ddd;"></span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="column-order">
+                                                <small><?php echo $size['display_order']; ?></small>
+                                            </td>
+                                            <td class="column-status">
+                                                <?php if ($size['is_active']): ?>
+                                                    <small class="status-active"><?php _e('Actif', 'restaurant-booking'); ?></small>
+                                                <?php else: ?>
+                                                    <small class="status-inactive"><?php _e('Inactif', 'restaurant-booking'); ?></small>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="column-date">
+                                                <small style="color: #666;">—</small>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </form>
         </div>
 
         <style>
@@ -211,7 +396,113 @@ class RestaurantBooking_Beverages_Kegs_Admin
             font-size: 12px;
             font-weight: 500;
         }
+        .status-active { color: #46b450; font-weight: 600; }
+        .status-inactive { color: #dc3232; font-weight: 600; }
+        .keg-order-input { width: 60px; }
+        .column-image { width: 70px; }
+        .column-price { width: 100px; text-align: center; }
+        .column-type { width: 100px; }
+        .column-size { width: 100px; }
+        .column-suggestion { width: 100px; }
+        .column-order { width: 80px; }
+        .column-status { width: 80px; }
+        .column-date { width: 120px; }
+        
+        /* Styles pour l'affichage hiérarchique des fûts */
+        .keg-main-row {
+            background-color: #fff;
+        }
+        
+        .keg-main-row:hover {
+            background-color: #f6f7f7;
+        }
+        
+        .keg-size-row {
+            background-color: #f9f9f9;
+            border-left: 3px solid #0073aa;
+        }
+        
+        .keg-size-row:hover {
+            background-color: #f0f0f1;
+        }
+        
+        .keg-sizes-info {
+            color: #0073aa;
+            font-weight: 500;
+        }
+        
+        .keg-needs-config {
+            background: #fff2f2;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #ffb2b2;
+        }
+        
+        .toggle-keg-sizes {
+            color: #0073aa;
+            text-decoration: none;
+        }
+        
+        .toggle-keg-sizes:hover {
+            color: #005a87;
+        }
+        
+        .toggle-keg-sizes.expanded:after {
+            content: ' ▲';
+        }
+        
+        .toggle-keg-sizes:not(.expanded):after {
+            content: ' ▼';
+        }
         </style>
+        
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            // Gérer l'affichage/masquage des contenances
+            $('.toggle-keg-sizes').on('click', function(e) {
+                e.preventDefault();
+                
+                var kegId = $(this).data('keg-id');
+                var sizeRows = $('.keg-size-row[data-keg-id="' + kegId + '"]');
+                var isExpanded = $(this).hasClass('expanded');
+                
+                if (isExpanded) {
+                    // Masquer les contenances
+                    sizeRows.fadeOut(200);
+                    $(this).removeClass('expanded').text('<?php _e('Voir contenances', 'restaurant-booking'); ?>');
+                } else {
+                    // Afficher les contenances
+                    sizeRows.fadeIn(200);
+                    $(this).addClass('expanded').text('<?php _e('Masquer contenances', 'restaurant-booking'); ?>');
+                }
+            });
+            
+            // Améliorer l'UX : clic sur la ligne principale pour développer
+            $('.keg-main-row').on('click', function(e) {
+                // Ne pas déclencher si on clique sur un lien ou un input
+                if ($(e.target).is('a, input, button') || $(e.target).closest('a, input, button').length > 0) {
+                    return;
+                }
+                
+                var kegId = $(this).data('keg-id');
+                var toggleLink = $('.toggle-keg-sizes[data-keg-id="' + kegId + '"]');
+                
+                if (toggleLink.length > 0) {
+                    toggleLink.trigger('click');
+                }
+            });
+            
+            // Ajouter un curseur pointer sur les lignes cliquables
+            $('.keg-main-row').each(function() {
+                var kegId = $(this).data('keg-id');
+                var hasToggle = $('.toggle-keg-sizes[data-keg-id="' + kegId + '"]').length > 0;
+                
+                if (hasToggle) {
+                    $(this).css('cursor', 'pointer').attr('title', 'Cliquer pour voir les contenances');
+                }
+            });
+        });
+        </script>
         
         <?php
     }
@@ -224,7 +515,7 @@ class RestaurantBooking_Beverages_Kegs_Admin
         // Charger les scripts de la médiathèque WordPress
         wp_enqueue_media();
         
-        $product_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $product_id = isset($_GET['product_id']) ? intval($_GET['product_id']) : 0;
         $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'add';
         $product = null;
 
@@ -292,18 +583,33 @@ class RestaurantBooking_Beverages_Kegs_Admin
 
                     <tr>
                         <th scope="row">
-                            <label for="beer_category"><?php _e('Type de bière', 'restaurant-booking'); ?></label>
+                            <label for="beer_category"><?php _e('Type de bière', 'restaurant-booking'); ?> *</label>
                         </th>
                         <td>
-                            <select id="beer_category" name="beer_category" class="regular-text">
+                            <select id="beer_category" name="beer_category" class="regular-text" required>
                                 <option value=""><?php _e('Sélectionner un type', 'restaurant-booking'); ?></option>
-                                <option value="blonde" <?php selected($product['beer_category'] ?? '', 'blonde'); ?>><?php _e('Blonde', 'restaurant-booking'); ?></option>
-                                <option value="blanche" <?php selected($product['beer_category'] ?? '', 'blanche'); ?>><?php _e('Blanche', 'restaurant-booking'); ?></option>
-                                <option value="brune" <?php selected($product['beer_category'] ?? '', 'brune'); ?>><?php _e('Brune', 'restaurant-booking'); ?></option>
-                                <option value="ipa" <?php selected($product['beer_category'] ?? '', 'ipa'); ?>><?php _e('IPA', 'restaurant-booking'); ?></option>
-                                <option value="ambree" <?php selected($product['beer_category'] ?? '', 'ambree'); ?>><?php _e('Ambrée', 'restaurant-booking'); ?></option>
-                                <option value="pils" <?php selected($product['beer_category'] ?? '', 'pils'); ?>><?php _e('Pils', 'restaurant-booking'); ?></option>
+                                <?php 
+                                $beer_types = $this->get_beer_types();
+                                foreach ($beer_types as $type): ?>
+                                    <option value="<?php echo esc_attr($type['category']); ?>" <?php selected($product['beer_category'] ?? '', $type['category']); ?>>
+                                        <?php echo esc_html($type['name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
+                            <p class="description"><?php _e('Sélectionnez le type de bière. Vous pouvez ajouter de nouveaux types ci-dessous.', 'restaurant-booking'); ?></p>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <th scope="row">
+                            <label><?php _e('Gérer les types', 'restaurant-booking'); ?></label>
+                        </th>
+                        <td>
+                            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-categories-manager&action=subcategories&category_id=beers_group'); ?>" 
+                               class="button button-secondary" target="_blank">
+                                🍺 <?php _e('Gérer les types de bières', 'restaurant-booking'); ?>
+                            </a>
+                            <p class="description"><?php _e('Ajoutez, modifiez ou supprimez les types de bières disponibles dans la liste ci-dessus.', 'restaurant-booking'); ?></p>
                         </td>
                     </tr>
 
@@ -330,8 +636,39 @@ class RestaurantBooking_Beverages_Kegs_Admin
                                 <div id="keg_sizes_list">
                                     <?php if ($product): ?>
                                         <?php 
-                                        // Pour la compatibilité avec l'ancien système, nous créerons des "sizes" basées sur les données existantes
-                                        // Dans une vraie implémentation, vous devriez avoir une table séparée pour les tailles de fûts
+                                        // Charger les contenances existantes
+                                        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-keg-size-manager.php';
+                                        $existing_sizes = RestaurantBooking_Keg_Size_Manager::get_sizes_by_product($product['id']);
+                                        
+                                        if (!empty($existing_sizes)):
+                                            foreach ($existing_sizes as $index => $size):
+                                        ?>
+                                            <div class="keg-size-item" data-size-id="<?php echo $index; ?>">
+                                                <div class="keg-size-info">
+                                                    <h4><?php echo $size['liters']; ?>L - <?php echo number_format($size['price'], 2); ?>€</h4>
+                                                    <?php if ($size['image_id']): ?>
+                                                        <div class="keg-size-image">
+                                                            <?php echo wp_get_attachment_image($size['image_id'], 'thumbnail'); ?>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                    <?php if ($size['is_featured']): ?>
+                                                        <span class="featured-badge"><?php _e('Mise en avant', 'restaurant-booking'); ?></span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="keg-size-actions">
+                                                    <button type="button" class="button button-small delete-keg-size" data-size-id="<?php echo $index; ?>">
+                                                        <?php _e('Supprimer', 'restaurant-booking'); ?>
+                                                    </button>
+                                                </div>
+                                                <!-- Champs cachés -->
+                                                <input type="hidden" name="keg_sizes[<?php echo $index; ?>][liters]" value="<?php echo $size['liters']; ?>">
+                                                <input type="hidden" name="keg_sizes[<?php echo $index; ?>][price]" value="<?php echo $size['price']; ?>">
+                                                <input type="hidden" name="keg_sizes[<?php echo $index; ?>][image_id]" value="<?php echo $size['image_id']; ?>">
+                                                <input type="hidden" name="keg_sizes[<?php echo $index; ?>][is_featured]" value="<?php echo $size['is_featured'] ? '1' : '0'; ?>">
+                                            </div>
+                                        <?php 
+                                            endforeach;
+                                        endif;
                                         ?>
                                     <?php endif; ?>
                                 </div>
@@ -397,12 +734,19 @@ class RestaurantBooking_Beverages_Kegs_Admin
                             <th><label for="keg_size_liters"><?php _e('Contenance', 'restaurant-booking'); ?> *</label></th>
                             <td>
                                 <select id="keg_size_liters" name="keg_size_liters" class="regular-text" required>
-                                    <option value=""><?php _e('Choisir la contenance', 'restaurant-booking'); ?></option>
-                                    <option value="10">10L</option>
-                                    <option value="20">20L</option>
-                                    <option value="30">30L</option>
-                                    <option value="50">50L</option>
+                                    <?php 
+                                    // Charger les contenances disponibles
+                                    require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-container-manager.php';
+                                    echo RestaurantBooking_Container_Manager::get_containers_as_options();
+                                    ?>
                                 </select>
+                                <p class="description">
+                                    <?php _e('Contenances disponibles.', 'restaurant-booking'); ?>
+                                    <br>
+                                    <button type="button" class="button button-secondary" id="add_new_container_button" style="margin-top: 5px;">
+                                        <?php _e('+ Ajouter une nouvelle contenance', 'restaurant-booking'); ?>
+                                    </button>
+                                </p>
                             </td>
                         </tr>
                         <tr>
@@ -441,12 +785,41 @@ class RestaurantBooking_Beverages_Kegs_Admin
             </div>
         </div>
 
+        <!-- Modal pour ajouter une nouvelle contenance disponible -->
+        <div id="new_container_modal" style="display: none;">
+            <div class="keg-size-modal-content">
+                <h3><?php _e('Ajouter une nouvelle contenance', 'restaurant-booking'); ?></h3>
+                <form id="new_container_form">
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="new_container_liters"><?php _e('Contenance (litres)', 'restaurant-booking'); ?> *</label></th>
+                            <td>
+                                <input type="number" id="new_container_liters" name="new_container_liters" class="regular-text" min="1" max="1000" step="1" required>
+                                <p class="description"><?php _e('Ex: 15, 25, 40...', 'restaurant-booking'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="new_container_label"><?php _e('Libellé', 'restaurant-booking'); ?> *</label></th>
+                            <td>
+                                <input type="text" id="new_container_label" name="new_container_label" class="regular-text" required>
+                                <p class="description"><?php _e('Ex: "15L", "25 Litres"...', 'restaurant-booking'); ?></p>
+                            </td>
+                        </tr>
+                    </table>
+                    <p class="submit">
+                        <input type="submit" class="button-primary" value="<?php _e('Créer la contenance', 'restaurant-booking'); ?>">
+                        <button type="button" class="button" id="cancel_new_container"><?php _e('Annuler', 'restaurant-booking'); ?></button>
+                    </p>
+                </form>
+            </div>
+        </div>
+
         <script>
         jQuery(document).ready(function($) {
             // Gestionnaire pour l'upload d'image principale
             var mediaUploader;
             var kegSizeMediaUploader;
-            var kegSizeCounter = 0;
+            var kegSizeCounter = $('#keg_sizes_list .keg-size-item').length;
             
             $('#upload_keg_image').on('click', function(e) {
                 e.preventDefault();
@@ -589,12 +962,111 @@ class RestaurantBooking_Beverages_Kegs_Admin
                     $(this).closest('.keg-size-item').remove();
                 }
             });
+
+            // Gestionnaire pour les types de bières
+            $('#new_beer_type').on('input', function() {
+                var newTypeValue = $(this).val().trim();
+                if (newTypeValue.length > 0) {
+                    $('#beer_category').prop('disabled', true).val('');
+                    $('#beer_category').after('<p class="description" style="color: #d63638;"><em><?php _e('Le nouveau type sera utilisé à la place de la sélection.', 'restaurant-booking'); ?></em></p>');
+                } else {
+                    $('#beer_category').prop('disabled', false);
+                    $('#beer_category').next('p').remove();
+                }
+            });
+
+            $('#beer_category').on('change', function() {
+                if ($(this).val()) {
+                    $('#new_beer_type').val('');
+                }
+            });
+
+            // === GESTION DES NOUVELLES CONTENANCES ===
+            
+            // Ouvrir la modal pour ajouter une nouvelle contenance
+            $('#add_new_container_button').click(function() {
+                $('#new_container_modal').show();
+                $('#new_container_liters').focus();
+            });
+            
+            // Fermer la modal
+            $('#cancel_new_container').click(function() {
+                $('#new_container_modal').hide();
+                $('#new_container_form')[0].reset();
+            });
+            
+            // Auto-générer le libellé
+            $('#new_container_liters').on('input', function() {
+                var liters = $(this).val();
+                if (liters && $('#new_container_label').val() === '') {
+                    $('#new_container_label').val(liters + 'L');
+                }
+            });
+            
+            // Soumettre le formulaire de nouvelle contenance
+            $('#new_container_form').on('submit', function(e) {
+                e.preventDefault();
+                
+                var liters = $('#new_container_liters').val();
+                var label = $('#new_container_label').val();
+                
+                if (!liters || !label) {
+                    alert('<?php _e('Veuillez remplir tous les champs.', 'restaurant-booking'); ?>');
+                    return;
+                }
+                
+                // Vérifier si cette contenance existe déjà
+                var exists = false;
+                $('#keg_size_liters option').each(function() {
+                    if ($(this).val() == liters) {
+                        exists = true;
+                        return false;
+                    }
+                });
+                
+                if (exists) {
+                    alert('<?php _e('Cette contenance existe déjà.', 'restaurant-booking'); ?>');
+                    return;
+                }
+                
+                // Créer la nouvelle contenance via AJAX
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'create_new_container',
+                        liters: liters,
+                        label: label,
+                        nonce: '<?php echo wp_create_nonce('create_new_container'); ?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Ajouter la nouvelle option au select
+                            $('#keg_size_liters').append('<option value="' + liters + '">' + label + '</option>');
+                            
+                            // Sélectionner la nouvelle contenance
+                            $('#keg_size_liters').val(liters);
+                            
+                            // Fermer la modal
+                            $('#new_container_modal').hide();
+                            $('#new_container_form')[0].reset();
+                            
+                            alert('<?php _e('Contenance créée avec succès !', 'restaurant-booking'); ?>');
+                        } else {
+                            alert('<?php _e('Erreur lors de la création:', 'restaurant-booking'); ?> ' + response.data);
+                        }
+                    },
+                    error: function() {
+                        alert('<?php _e('Erreur de communication avec le serveur.', 'restaurant-booking'); ?>');
+                    }
+                });
+            });
         });
         </script>
         
         <style>
         /* Styles pour les fûts */
-        #keg_size_modal {
+        #keg_size_modal, #new_container_modal {
             position: fixed;
             top: 0;
             left: 0;
@@ -656,7 +1128,7 @@ class RestaurantBooking_Beverages_Kegs_Admin
     /**
      * Gérer la sauvegarde d'un fût
      */
-    private function handle_save_keg()
+    public function handle_save_keg()
     {
         // Vérifier le nonce
         if (!wp_verify_nonce($_POST['keg_nonce'], 'save_keg')) {
@@ -669,14 +1141,19 @@ class RestaurantBooking_Beverages_Kegs_Admin
         $keg_description = sanitize_textarea_field($_POST['keg_description']);
         $beer_category = sanitize_text_field($_POST['beer_category']);
         $alcohol_degree = floatval($_POST['alcohol_degree']);
-        $volume_liters = intval($_POST['volume_liters']);
-        $keg_price = floatval($_POST['keg_price']);
         $keg_image_id = intval($_POST['keg_image_id']);
         $suggested_beverage = isset($_POST['suggested_beverage']) ? 1 : 0;
+        $keg_sizes = isset($_POST['keg_sizes']) ? $_POST['keg_sizes'] : array();
 
-        // Validation
-        if (empty($keg_name) || $keg_price <= 0 || $volume_liters <= 0) {
+        // Validation de base
+        if (empty($keg_name) || empty($beer_category)) {
             wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-kegs&action=add&error=validation'));
+            exit;
+        }
+
+        // Validation des contenances - au moins une contenance requise
+        if (empty($keg_sizes)) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-kegs&action=add&error=no_sizes'));
             exit;
         }
 
@@ -692,31 +1169,77 @@ class RestaurantBooking_Beverages_Kegs_Admin
             'category_id' => $category['id'],
             'name' => $keg_name,
             'description' => $keg_description,
-            'price' => $keg_price,
-            'unit_type' => 'fut',
+            'price' => 0, // Prix sera géré par les tailles
+            'unit_type' => 'piece',
             'unit_label' => '/fût',
-            'volume_cl' => $volume_liters * 100, // Convertir en centilitres
+            'volume_cl' => 2000, // Volume par défaut 20L
             'alcohol_degree' => $alcohol_degree,
             'beer_category' => $beer_category,
             'image_id' => $keg_image_id ?: null,
             'suggested_beverage' => $suggested_beverage,
+            'has_multiple_sizes' => 1, // Activer le système multi-tailles
             'is_active' => 1
         );
 
         if ($product_id) {
             // Mise à jour
             $result = RestaurantBooking_Product::update($product_id, $product_data);
-            $success_param = $result ? 'updated' : 'error';
+            if ($result) {
+                $final_product_id = $product_id;
+            } else {
+                wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-kegs&action=edit&product_id=' . $product_id . '&error=update_failed'));
+                exit;
+            }
         } else {
             // Création
             $result = RestaurantBooking_Product::create($product_data);
-            $success_param = $result ? 'created' : 'error';
+            if ($result) {
+                $final_product_id = $result;
+            } else {
+                wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-kegs&action=add&error=create_failed'));
+                exit;
+            }
         }
 
-        // Redirection
+        // Sauvegarder les contenances
+        $this->save_keg_sizes($final_product_id, $keg_sizes);
+
+        // Redirection avec succès
+        $success_param = $product_id ? 'updated' : 'created';
         $redirect_url = admin_url('admin.php?page=restaurant-booking-beverages-kegs&message=' . $success_param);
         wp_redirect($redirect_url);
         exit;
+    }
+
+    /**
+     * Sauvegarder les contenances d'un fût
+     */
+    private function save_keg_sizes($product_id, $sizes_data)
+    {
+        // Inclure le gestionnaire des tailles de fûts
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-keg-size-manager.php';
+        
+        // Supprimer les anciennes tailles
+        RestaurantBooking_Keg_Size_Manager::delete_sizes_by_product($product_id);
+        
+        // Ajouter les nouvelles tailles
+        foreach ($sizes_data as $size_data) {
+            if (empty($size_data['liters']) || empty($size_data['price'])) {
+                continue;
+            }
+            
+            $keg_size_data = array(
+                'product_id' => $product_id,
+                'liters' => intval($size_data['liters']),
+                'price' => floatval($size_data['price']),
+                'image_id' => !empty($size_data['image_id']) ? intval($size_data['image_id']) : null,
+                'is_featured' => !empty($size_data['is_featured']) ? 1 : 0,
+                'display_order' => 0,
+                'is_active' => 1
+            );
+            
+            RestaurantBooking_Keg_Size_Manager::create_size($keg_size_data);
+        }
     }
 
     /**
@@ -726,7 +1249,10 @@ class RestaurantBooking_Beverages_Kegs_Admin
     {
         global $wpdb;
 
-        // Récupérer les fûts avec leurs contenances (système étendu comme les boissons soft)
+        // Inclure le gestionnaire des tailles de fûts
+        require_once RESTAURANT_BOOKING_PLUGIN_DIR . 'includes/class-keg-size-manager.php';
+
+        // Récupérer les fûts avec leurs contenances
         $kegs = array();
         
         $products = $wpdb->get_results($wpdb->prepare("
@@ -738,65 +1264,222 @@ class RestaurantBooking_Beverages_Kegs_Admin
         ", 'fut'), ARRAY_A);
 
         foreach ($products as $product) {
-            // Pour l'instant, nous utilisons l'ancien système comme base
-            // Dans une vraie implémentation, vous devriez avoir une table séparée pour les tailles de fûts
-            // comme `restaurant_keg_sizes` similaire à `restaurant_beverage_sizes`
-            
-            if ($product['has_multiple_sizes'] ?? false) {
-                // Nouveau système multi-contenances (à implémenter avec une table dédiée)
-                // $sizes = $wpdb->get_results($wpdb->prepare("
-                //     SELECT * FROM {$wpdb->prefix}restaurant_keg_sizes 
-                //     WHERE product_id = %d
-                //     ORDER BY liters ASC
-                // ", $product['id']), ARRAY_A);
+            if ($product['has_multiple_sizes']) {
+                // Nouveau système multi-contenances avec table dédiée
+                $sizes = RestaurantBooking_Keg_Size_Manager::get_sizes_by_product($product['id']);
                 
-                // Pour l'instant, nous créons des exemples de tailles
-                $example_sizes = [
-                    ['liters' => 10, 'price' => 30.00],
-                    ['liters' => 20, 'price' => 50.00]
-                ];
-                
-                foreach ($example_sizes as $size) {
-                    $kegs[] = array(
-                        'id' => $product['id'],
-                        'size_id' => $size['liters'] . 'L',
-                        'name' => $product['name'],
-                        'description' => $product['description'],
-                        'size_label' => $size['liters'] . 'L',
-                        'volume_cl' => $size['liters'] * 100,
-                        'price' => (float) $size['price'],
-                        'image_id' => $product['image_id'],
-                        'image_url' => $product['image_id'] ? wp_get_attachment_image_url($product['image_id'], 'thumbnail') : '',
-                        'beer_category' => $product['beer_category'],
-                        'alcohol_degree' => (float) $product['alcohol_degree'],
-                        'suggested_beverage' => (bool) $product['suggested_beverage'],
-                        'is_active' => (bool) $product['is_active'],
-                        'service_type' => $product['service_type'],
-                        'has_multiple_sizes' => true
-                    );
-                }
-            } else {
-                // Ancien système (compatibilité)
-                $kegs[] = array(
+                // Créer l'entrée principale du fût avec toutes ses contenances
+                $keg_data = array(
                     'id' => $product['id'],
-                    'size_id' => null,
                     'name' => $product['name'],
                     'description' => $product['description'],
-                    'size_label' => ($product['volume_cl'] / 100) . 'L',
-                    'volume_cl' => (int) $product['volume_cl'],
-                    'price' => (float) $product['price'],
-                    'image_id' => $product['image_id'],
-                    'image_url' => $product['image_id'] ? wp_get_attachment_image_url($product['image_id'], 'thumbnail') : '',
                     'beer_category' => $product['beer_category'],
                     'alcohol_degree' => (float) $product['alcohol_degree'],
+                    'image_id' => $product['image_id'],
+                    'image_url' => $product['image_id'] ? wp_get_attachment_image_url($product['image_id'], 'thumbnail') : '',
                     'suggested_beverage' => (bool) $product['suggested_beverage'],
                     'is_active' => (bool) $product['is_active'],
                     'service_type' => $product['service_type'],
-                    'has_multiple_sizes' => false
+                    'has_multiple_sizes' => true,
+                    'display_order' => (int) $product['display_order'],
+                    'created_at' => $product['created_at'],
+                    'sizes' => array()
+                );
+                
+                if (!empty($sizes)) {
+                    // Ajouter les contenances comme sous-éléments
+                    foreach ($sizes as $size) {
+                        $keg_data['sizes'][] = array(
+                            'size_id' => $size['id'],
+                            'liters' => (int) $size['liters'],
+                            'size_label' => $size['liters'] . 'L',
+                            'price' => (float) $size['price'],
+                            'image_id' => $size['image_id'],
+                            'image_url' => $size['image_id'] ? wp_get_attachment_image_url($size['image_id'], 'thumbnail') : '',
+                            'is_featured' => (bool) $size['is_featured'],
+                            'display_order' => (int) $size['display_order'],
+                            'is_active' => (bool) $size['is_active']
+                        );
+                    }
+                    
+                    // Trier les contenances par ordre d'affichage puis par litres
+                    usort($keg_data['sizes'], function($a, $b) {
+                        if ($a['display_order'] === $b['display_order']) {
+                            return $a['liters'] - $b['liters'];
+                        }
+                        return $a['display_order'] - $b['display_order'];
+                    });
+                } else {
+                    // Marquer comme nécessitant une configuration
+                    $keg_data['needs_configuration'] = true;
+                }
+                
+                $kegs[] = $keg_data;
+            } else {
+                // Ancien système (compatibilité) - traiter comme un fût simple
+                $kegs[] = array(
+                    'id' => $product['id'],
+                    'name' => $product['name'],
+                    'description' => $product['description'],
+                    'beer_category' => $product['beer_category'],
+                    'alcohol_degree' => (float) $product['alcohol_degree'],
+                    'image_id' => $product['image_id'],
+                    'image_url' => $product['image_id'] ? wp_get_attachment_image_url($product['image_id'], 'thumbnail') : '',
+                    'suggested_beverage' => (bool) $product['suggested_beverage'],
+                    'is_active' => (bool) $product['is_active'],
+                    'service_type' => $product['service_type'],
+                    'has_multiple_sizes' => false,
+                    'display_order' => (int) $product['display_order'],
+                    'created_at' => $product['created_at'],
+                    'sizes' => array(),
+                    // Pour compatibilité avec l'ancien affichage
+                    'legacy_data' => array(
+                        'size_label' => ($product['volume_cl'] / 100) . 'L',
+                        'volume_cl' => (int) $product['volume_cl'],
+                        'price' => (float) $product['price']
+                    )
                 );
             }
         }
 
         return $kegs;
+    }
+
+    /**
+     * Obtenir les types de bières disponibles (partagé avec les bières bouteilles)
+     */
+    private function get_beer_types()
+    {
+        global $wpdb;
+        
+        // CORRECTION : Récupérer depuis la nouvelle table wp_restaurant_beer_types en priorité
+        $beer_types_table = $wpdb->prefix . 'restaurant_beer_types';
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$beer_types_table'");
+        
+        if ($table_exists) {
+            // Utiliser la nouvelle table wp_restaurant_beer_types
+            $types = $wpdb->get_results("
+                SELECT slug as category, name
+                FROM $beer_types_table
+                WHERE is_active = 1
+                ORDER BY display_order ASC, name ASC
+            ", ARRAY_A);
+            
+            if (!empty($types)) {
+                return $types;
+            }
+        }
+        
+        // Fallback : Récupérer depuis la table des sous-catégories si elle existe encore
+        $subcategories_table = $wpdb->prefix . 'restaurant_subcategories';
+        $subcategories_exists = $wpdb->get_var("SHOW TABLES LIKE '$subcategories_table'") == $subcategories_table;
+        
+        if ($subcategories_exists) {
+            $beer_category_id = $wpdb->get_var("SELECT id FROM {$wpdb->prefix}restaurant_categories WHERE type = 'biere_bouteille'");
+            
+            if ($beer_category_id) {
+                $types = $wpdb->get_results($wpdb->prepare("
+                    SELECT subcategory_key as category, subcategory_name as name
+                    FROM $subcategories_table
+                    WHERE parent_category_id = %d AND is_active = 1
+                    ORDER BY display_order ASC, subcategory_name ASC
+                ", $beer_category_id), ARRAY_A);
+                
+                if (!empty($types)) {
+                    return $types;
+                }
+            }
+        }
+        
+        // Fallback : Récupérer depuis les produits existants (fûts ET bouteilles)
+        $existing_types = $wpdb->get_results("
+            SELECT DISTINCT 
+                p.beer_category as category, 
+                p.beer_category as name
+            FROM {$wpdb->prefix}restaurant_products p
+            INNER JOIN {$wpdb->prefix}restaurant_categories c ON p.category_id = c.id
+            WHERE c.type IN ('biere_bouteille', 'fut') 
+            AND p.is_active = 1 
+            AND p.beer_category IS NOT NULL 
+            AND p.beer_category != ''
+            ORDER BY p.beer_category ASC
+        ", ARRAY_A);
+        
+        if (!empty($existing_types)) {
+            // Formatter les noms pour l'affichage
+            foreach ($existing_types as &$type) {
+                $type['name'] = ucfirst($type['name']);
+            }
+            return $existing_types;
+        }
+        
+        // Dernier fallback : types par défaut (seulement si rien d'autre n'existe)
+        return array(
+            array('category' => 'blonde', 'name' => __('Blonde', 'restaurant-booking')),
+            array('category' => 'blanche', 'name' => __('Blanche', 'restaurant-booking')),
+            array('category' => 'brune', 'name' => __('Brune', 'restaurant-booking'))
+        );
+    }
+
+    /**
+     * Créer un nouveau type de bière (partagé avec les bières bouteilles)
+     */
+    private function create_new_beer_type($type_name)
+    {
+        // Nettoyer et formater le nom du type
+        $beer_category = strtolower(sanitize_title($type_name));
+        
+        // Vérifier si le type existe déjà (dans les bières bouteilles OU les fûts)
+        global $wpdb;
+        $existing = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*) FROM {$wpdb->prefix}restaurant_products p
+            INNER JOIN {$wpdb->prefix}restaurant_categories c ON p.category_id = c.id
+            WHERE c.type IN (%s, %s) AND p.beer_category = %s
+        ", 'biere_bouteille', 'fut', $beer_category));
+        
+        // Retourner le type (existant ou nouveau)
+        return $beer_category;
+    }
+
+    /**
+     * Gérer les actions (suppression, etc.)
+     */
+    public function handle_actions()
+    {
+        if (!isset($_GET['action']) || !isset($_GET['product_id'])) {
+            return;
+        }
+
+        $action = sanitize_text_field($_GET['action']);
+        $product_id = (int) $_GET['product_id'];
+
+        switch ($action) {
+            case 'delete':
+                $this->delete_keg($product_id);
+                break;
+        }
+    }
+
+    /**
+     * Supprimer un fût
+     */
+    private function delete_keg($product_id)
+    {
+        if (!wp_verify_nonce($_GET['_wpnonce'], 'delete_keg_' . $product_id)) {
+            wp_die(__('Action non autorisée.', 'restaurant-booking'));
+        }
+
+        if (!current_user_can('manage_restaurant_quotes')) {
+            wp_die(__('Permissions insuffisantes.', 'restaurant-booking'));
+        }
+
+        $result = RestaurantBooking_Product::delete($product_id);
+        
+        if (is_wp_error($result)) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-kegs&message=error&error=' . urlencode($result->get_error_message())));
+        } else {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-beverages-kegs&message=deleted'));
+        }
+        exit;
     }
 }

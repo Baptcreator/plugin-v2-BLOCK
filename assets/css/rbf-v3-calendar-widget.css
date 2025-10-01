@@ -1,0 +1,542 @@
+/**
+ * CSS Widget Calendrier pour le Formulaire V3
+ * Affichage des disponibilités avec design Block & Co
+ * 
+ * @package RestaurantBooking
+ * @version 1.0.0
+ */
+
+/* Sélecteur de date avec bouton */
+.rbf-v3-date-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.rbf-v3-date-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: var(--rbf-v3-radius-sm);
+    font-size: 14px;
+    background: var(--rbf-v3-white);
+    cursor: pointer;
+    transition: var(--rbf-v3-transition);
+}
+
+.rbf-v3-date-input:focus,
+.rbf-v3-date-input:hover {
+    border-color: var(--rbf-v3-orange);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 180, 4, 0.1);
+}
+
+.rbf-v3-calendar-btn {
+    padding: 12px 16px;
+    background: #FFD700;
+    color: var(--rbf-v3-white);
+    border: none;
+    border-radius: var(--rbf-v3-radius-sm);
+    font-size: 18px;
+    cursor: pointer;
+    transition: var(--rbf-v3-transition);
+    min-width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rbf-v3-calendar-btn:hover {
+    background: var(--rbf-v3-green);
+    transform: translateY(-2px);
+    box-shadow: var(--rbf-v3-shadow-md);
+}
+
+/* Modal du calendrier */
+.rbf-v3-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.rbf-v3-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.rbf-v3-modal-content {
+    background: var(--rbf-v3-white);
+    border-radius: var(--rbf-v3-radius-lg);
+    box-shadow: var(--rbf-v3-shadow-lg);
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: hidden;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.rbf-v3-modal.show .rbf-v3-modal-content {
+    transform: scale(1);
+}
+
+.rbf-v3-modal-header {
+    padding: var(--rbf-v3-spacing-md);
+    background: var(--rbf-v3-green);
+    color: var(--rbf-v3-white);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rbf-v3-modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.rbf-v3-modal-close {
+    background: transparent;
+    border: none;
+    color: var(--rbf-v3-white);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: var(--rbf-v3-transition);
+}
+
+.rbf-v3-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.rbf-v3-modal-footer {
+    padding: var(--rbf-v3-spacing-md);
+    background: #f8f9fa;
+    display: flex;
+    gap: var(--rbf-v3-spacing-sm);
+    justify-content: flex-end;
+}
+
+.rbf-v3-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: var(--rbf-v3-radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--rbf-v3-transition);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rbf-v3-btn-primary {
+    background: var(--rbf-v3-orange);
+    color: var(--rbf-v3-white);
+}
+
+.rbf-v3-btn-primary:hover {
+    background: var(--rbf-v3-green);
+    transform: translateY(-2px);
+    box-shadow: var(--rbf-v3-shadow-sm);
+}
+
+.rbf-v3-btn-secondary {
+    background: #6c757d;
+    color: var(--rbf-v3-white);
+}
+
+.rbf-v3-btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: var(--rbf-v3-shadow-sm);
+}
+
+/* ========================================
+   CONTENEUR PRINCIPAL
+   ======================================== */
+
+.rbf-v3-calendar-widget {
+    background: var(--rbf-v3-white);
+    border-radius: var(--rbf-v3-radius);
+    border: 2px solid var(--rbf-v3-beige);
+    box-shadow: var(--rbf-v3-shadow-md);
+    overflow: hidden;
+    font-family: var(--rbf-v3-font-primary);
+}
+
+/* ========================================
+   EN-TÊTE DU CALENDRIER
+   ======================================== */
+
+.rbf-v3-calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--rbf-v3-spacing-md);
+    background: var(--rbf-v3-green);
+    color: var(--rbf-v3-white);
+}
+
+.rbf-v3-calendar-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Roboto', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--rbf-v3-white) !important;
+}
+
+.rbf-v3-calendar-nav {
+    background: #F6F2E7;
+    border: 2px solid #F6F2E7;
+    color: var(--rbf-v3-green);
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--rbf-v3-transition);
+    padding: 0;
+    min-width: 40px;
+    min-height: 40px;
+}
+
+.rbf-v3-calendar-nav:hover {
+    background: var(--rbf-v3-green);
+    border-color: var(--rbf-v3-green);
+    color: var(--rbf-v3-white);
+    transform: scale(1.1);
+}
+
+/* Styles pour les icônes SVG des boutons de navigation */
+.rbf-v3-calendar-nav svg {
+    color: var(--rbf-v3-green);
+    fill: var(--rbf-v3-green);
+    width: 16px;
+    height: 16px;
+    display: block;
+    pointer-events: none;
+    flex-shrink: 0;
+}
+
+.rbf-v3-calendar-nav:hover svg {
+    color: var(--rbf-v3-white);
+    fill: var(--rbf-v3-white);
+}
+
+/* ========================================
+   LÉGENDE
+   ======================================== */
+
+.rbf-v3-calendar-legend {
+    display: flex;
+    gap: var(--rbf-v3-spacing-sm);
+    padding: var(--rbf-v3-spacing-sm) var(--rbf-v3-spacing-md);
+    background: var(--rbf-v3-beige);
+    border-bottom: 1px solid #ddd;
+    flex-wrap: wrap;
+}
+
+.rbf-v3-legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--rbf-v3-spacing-xs);
+    font-size: 0.875rem;
+    color: var(--rbf-v3-green);
+}
+
+.rbf-v3-legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: var(--rbf-v3-radius-sm);
+    border: 1px solid #ddd;
+}
+
+.rbf-v3-legend-color.available {
+    background: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.rbf-v3-legend-color.blocked {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+/* État google-sync supprimé - plus utilisé */
+
+/* ========================================
+   GRILLE DU CALENDRIER
+   ======================================== */
+
+.rbf-v3-calendar-grid {
+    padding: var(--rbf-v3-spacing-md);
+}
+
+.rbf-v3-calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: var(--rbf-v3-spacing-sm);
+}
+
+.rbf-v3-weekday {
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--rbf-v3-green);
+    padding: var(--rbf-v3-spacing-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.rbf-v3-calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+/* ========================================
+   JOURS DU CALENDRIER
+   ======================================== */
+
+.rbf-v3-calendar-day {
+    aspect-ratio: 1;
+    border: 1px solid #e0e0e0;
+    border-radius: var(--rbf-v3-radius-sm);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 4px;
+    cursor: pointer;
+    transition: var(--rbf-v3-transition);
+    position: relative;
+    background: var(--rbf-v3-white);
+    min-height: 60px;
+}
+
+.rbf-v3-calendar-day:hover:not(.disabled):not(.blocked) {
+    border-color: var(--rbf-v3-orange);
+    box-shadow: 0 2px 8px rgba(255, 180, 4, 0.3);
+    transform: translateY(-1px);
+}
+
+.rbf-v3-day-number {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--rbf-v3-green);
+    margin-bottom: 2px;
+}
+
+/* États des jours */
+.rbf-v3-calendar-day.empty {
+    visibility: hidden;
+    cursor: default;
+}
+
+.rbf-v3-calendar-day.disabled {
+    background: #f5f5f5;
+    color: #999;
+    cursor: not-allowed;
+}
+
+.rbf-v3-calendar-day.disabled .rbf-v3-day-number {
+    color: #999;
+}
+
+.rbf-v3-calendar-day.today {
+    border: 2px solid var(--rbf-v3-orange);
+    font-weight: bold;
+}
+
+.rbf-v3-calendar-day.today .rbf-v3-day-number {
+    color: var(--rbf-v3-orange);
+}
+
+.rbf-v3-calendar-day.selected {
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-orange);
+    color: var(--rbf-v3-green);
+}
+
+.rbf-v3-calendar-day.selected .rbf-v3-day-number {
+    color: var(--rbf-v3-orange) !important;
+    font-weight: bold;
+}
+
+/* S'assurer que la couleur orange reste même au hover */
+.rbf-v3-calendar-day.selected:hover .rbf-v3-day-number {
+    color: var(--rbf-v3-orange) !important;
+}
+
+.rbf-v3-calendar-day.available {
+    background: #d4edda;
+    border-color: #c3e6cb;
+}
+
+/* Jour disponible ET sélectionné */
+.rbf-v3-calendar-day.available.selected {
+    background: var(--rbf-v3-white);
+    border: 2px solid var(--rbf-v3-orange);
+}
+
+.rbf-v3-calendar-day.available.selected .rbf-v3-day-number {
+    color: var(--rbf-v3-orange) !important;
+    font-weight: bold;
+}
+
+.rbf-v3-calendar-day.blocked {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+    cursor: not-allowed;
+}
+
+.rbf-v3-calendar-day.blocked .rbf-v3-day-number {
+    color: #721c24;
+}
+
+/* États google-sync supprimés - logique simplifiée */
+
+.rbf-v3-calendar-day.partial-blocked {
+    background: #fff3cd;
+    border-color: #ffc107;
+    border-left: 4px solid #ffc107;
+}
+
+/* ========================================
+   ÉVÉNEMENTS DES JOURS
+   ======================================== */
+
+.rbf-v3-day-events {
+    display: none; /* Masquer les événements côté client */
+}
+
+.rbf-v3-day-event {
+    background: rgba(239, 61, 29, 0.8);
+    color: var(--rbf-v3-white);
+    font-size: 0.625rem;
+    padding: 1px 3px;
+    border-radius: 2px;
+    text-align: center;
+    line-height: 1.2;
+    font-weight: 500;
+}
+
+/* Événements Google supprimés - plus d'affichage d'horaires côté client */
+
+.rbf-v3-event-time {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ========================================
+   CHARGEMENT
+   ======================================== */
+
+.rbf-v3-calendar-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--rbf-v3-spacing-sm);
+    padding: var(--rbf-v3-spacing-lg);
+    background: var(--rbf-v3-beige);
+    color: var(--rbf-v3-green);
+    font-size: 0.875rem;
+}
+
+.rbf-v3-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--rbf-v3-green-light);
+    border-top: 2px solid var(--rbf-v3-green);
+    border-radius: 50%;
+    animation: rbf-v3-spin 1s linear infinite;
+}
+
+@keyframes rbf-v3-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 768px) {
+    .rbf-v3-calendar-widget {
+        margin: 0 -10px;
+    }
+    
+    .rbf-v3-calendar-header {
+        padding: var(--rbf-v3-spacing-sm);
+    }
+    
+    .rbf-v3-calendar-title {
+        font-size: 1.1rem;
+    }
+    
+    .rbf-v3-calendar-nav {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .rbf-v3-calendar-legend {
+        padding: var(--rbf-v3-spacing-sm);
+        gap: var(--rbf-v3-spacing-xs);
+    }
+    
+    .rbf-v3-legend-item {
+        font-size: 0.75rem;
+    }
+    
+    .rbf-v3-calendar-grid {
+        padding: var(--rbf-v3-spacing-sm);
+    }
+    
+    .rbf-v3-calendar-day {
+        min-height: 50px;
+        padding: 2px;
+    }
+    
+    .rbf-v3-day-number {
+        font-size: 0.75rem;
+    }
+    
+    .rbf-v3-day-event {
+        font-size: 0.5rem;
+        padding: 1px 2px;
+    }
+}
+
+@media (max-width: 480px) {
+    .rbf-v3-calendar-day {
+        min-height: 45px;
+    }
+    
+    .rbf-v3-day-number {
+        font-size: 0.7rem;
+    }
+    
+    .rbf-v3-weekday {
+        font-size: 0.75rem;
+    }
+}

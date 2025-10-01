@@ -34,7 +34,7 @@ class RestaurantBooking_Permissions
             $admin_role->add_cap('manage_restaurant_quotes');
             $admin_role->add_cap('manage_restaurant_products');
             $admin_role->add_cap('manage_restaurant_settings');
-            $admin_role->add_cap('manage_restaurant_games');
+            // manage_restaurant_games supprimé (les jeux sont maintenant dans restaurant_products)
             $admin_role->add_cap('manage_restaurant_categories');
         }
 
@@ -58,7 +58,7 @@ class RestaurantBooking_Permissions
             $current_user->add_cap('manage_restaurant_quotes');
             $current_user->add_cap('manage_restaurant_products');
             $current_user->add_cap('manage_restaurant_settings');
-            $current_user->add_cap('manage_restaurant_games');
+            // manage_restaurant_games supprimé (les jeux sont maintenant dans restaurant_products)
             $current_user->add_cap('manage_restaurant_categories');
         }
     }
@@ -83,8 +83,7 @@ class RestaurantBooking_Permissions
         // Vérifications spécifiques par page
         switch ($page) {
             case 'games':
-                return $current_user->has_cap('manage_restaurant_games') || 
-                       $current_user->has_cap('manage_restaurant_products');
+                return $current_user->has_cap('manage_restaurant_products');
             
             case 'products':
                 return $current_user->has_cap('manage_restaurant_products');
@@ -148,7 +147,7 @@ class RestaurantBooking_Permissions
             $admin_role->add_cap('manage_restaurant_quotes');
             $admin_role->add_cap('manage_restaurant_products');
             $admin_role->add_cap('manage_restaurant_settings');
-            $admin_role->add_cap('manage_restaurant_games');
+            // manage_restaurant_games supprimé (les jeux sont maintenant dans restaurant_products)
             $admin_role->add_cap('manage_restaurant_categories');
         }
 
@@ -158,7 +157,7 @@ class RestaurantBooking_Permissions
             $current_user->add_cap('manage_restaurant_quotes');
             $current_user->add_cap('manage_restaurant_products');
             $current_user->add_cap('manage_restaurant_settings');
-            $current_user->add_cap('manage_restaurant_games');
+            // manage_restaurant_games supprimé (les jeux sont maintenant dans restaurant_products)
             $current_user->add_cap('manage_restaurant_categories');
         }
 

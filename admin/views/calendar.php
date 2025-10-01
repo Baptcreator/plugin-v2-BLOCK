@@ -13,7 +13,81 @@ if (!defined('ABSPATH')) {
 // Paramètres par défaut
 $current_month = $month ?? date('n');
 $current_year = $year ?? date('Y');
-$service_type = $service_type ?? 'restaurant';
+$service_type = 'both'; // Toujours afficher les deux services
+
+// Récupérer les données de disponibilité depuis la base de données
+global $wpdb;
+$availability_data = array();
+
+$start_date = sprintf('%04d-%02d-01', $current_year, $current_month);
+$end_date = date('Y-m-t', mktime(0, 0, 0, $current_month, 1, $current_year));
+
+// Vérifier quelles colonnes existent dans la table
+$columns = $wpdb->get_col("DESCRIBE {$wpdb->prefix}restaurant_availability", 0);
+$has_google_event_id = in_array('google_event_id', $columns);
+$has_start_time = in_array('start_time', $columns);
+$has_end_time = in_array('end_time', $columns);
+
+// Construire la requête SELECT en fonction des colonnes disponibles
+$select_columns = "date, service_type, is_available, blocked_reason, notes";
+if ($has_google_event_id) {
+    $select_columns .= ", google_event_id";
+}
+if ($has_start_time) {
+    $select_columns .= ", start_time";
+}
+if ($has_end_time) {
+    $select_columns .= ", end_time";
+}
+
+$order_by = "date ASC";
+if ($has_start_time) {
+    $order_by .= ", start_time ASC";
+}
+
+$availability_results = $wpdb->get_results($wpdb->prepare("
+    SELECT {$select_columns}
+    FROM {$wpdb->prefix}restaurant_availability 
+    WHERE date BETWEEN %s AND %s
+    ORDER BY {$order_by}
+", $start_date, $end_date), ARRAY_A);
+
+foreach ($availability_results as $row) {
+    $date = $row['date'];
+    
+    if (!isset($availability_data[$date])) {
+        $availability_data[$date] = array(
+            'events' => array(),
+            'is_fully_blocked' => false,
+            'has_google_events' => false
+        );
+    }
+    
+    // Ajouter l'événement à la liste
+    $event_info = array(
+        'is_available' => $row['is_available'],
+        'blocked_reason' => $row['blocked_reason'],
+        'notes' => $row['notes'],
+        'google_event_id' => isset($row['google_event_id']) ? $row['google_event_id'] : '',
+        'start_time' => isset($row['start_time']) ? $row['start_time'] : null,
+        'end_time' => isset($row['end_time']) ? $row['end_time'] : null,
+        'service_type' => $row['service_type']
+    );
+    
+    $availability_data[$date]['events'][] = $event_info;
+    
+    // Marquer si c'est un événement Google Calendar
+    if (isset($row['google_event_id']) && !empty($row['google_event_id'])) {
+        $availability_data[$date]['has_google_events'] = true;
+    }
+    
+    // Vérifier si la journée entière est bloquée
+    $start_time_empty = !isset($row['start_time']) || empty($row['start_time']);
+    $end_time_empty = !isset($row['end_time']) || empty($row['end_time']);
+    if ($row['is_available'] == 0 && $start_time_empty && $end_time_empty) {
+        $availability_data[$date]['is_fully_blocked'] = true;
+    }
+}
 
 // Calculer les dates
 $first_day = mktime(0, 0, 0, $current_month, 1, $current_year);
@@ -37,10 +111,11 @@ $month_names = array(
 <div class="wrap">
     <h1><?php _e('Calendrier des disponibilités', 'restaurant-booking'); ?></h1>
 
+
     <div class="calendar-header">
         <!-- Navigation mensuelle -->
         <div class="calendar-nav">
-            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-calendar&month=' . $prev_month . '&year=' . $prev_year . '&service_type=' . $service_type); ?>" class="button">
+            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-calendar&month=' . $prev_month . '&year=' . $prev_year); ?>" class="button">
                 ← <?php echo $month_names[$prev_month]; ?>
             </a>
             
@@ -48,19 +123,9 @@ $month_names = array(
                 <?php echo $month_names[$current_month] . ' ' . $current_year; ?>
             </h2>
             
-            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-calendar&month=' . $next_month . '&year=' . $next_year . '&service_type=' . $service_type); ?>" class="button">
+            <a href="<?php echo admin_url('admin.php?page=restaurant-booking-calendar&month=' . $next_month . '&year=' . $next_year); ?>" class="button">
                 <?php echo $month_names[$next_month]; ?> →
             </a>
-        </div>
-
-        <!-- Sélection du service -->
-        <div class="service-selector">
-            <label for="service_type_select"><?php _e('Service :', 'restaurant-booking'); ?></label>
-            <select id="service_type_select" onchange="changeServiceType(this.value)">
-                <option value="restaurant" <?php selected($service_type, 'restaurant'); ?>><?php _e('Restaurant', 'restaurant-booking'); ?></option>
-                <option value="remorque" <?php selected($service_type, 'remorque'); ?>><?php _e('Remorque', 'restaurant-booking'); ?></option>
-                <option value="both" <?php selected($service_type, 'both'); ?>><?php _e('Les deux', 'restaurant-booking'); ?></option>
-            </select>
         </div>
     </div>
 
@@ -114,21 +179,102 @@ $month_names = array(
                     $is_past = $date_string < $today;
                     $is_today = $date_string == $today;
                     
-                    // Simuler le statut (à remplacer par une vraie requête)
+                    // Récupérer le statut réel depuis les données synchronisées
                     $status = $is_past ? 'past' : 'available';
-                    if ($current_date % 7 == 0) $status = 'unavailable'; // Exemple: dimanche non disponible
-                    if ($current_date % 15 == 0) $status = 'booked'; // Exemple: quelques jours réservés
+                    $tooltip = '';
+                    $is_google_sync = false;
+                    $event_details = array();
+                    
+                    if (isset($availability_data[$date_string])) {
+                        $day_data = $availability_data[$date_string];
+                        
+                        // Journée entièrement bloquée
+                        if ($day_data['is_fully_blocked']) {
+                            $status = $day_data['has_google_events'] ? 'google-sync' : 'unavailable';
+                            $is_google_sync = $day_data['has_google_events'];
+                        }
+                        // Événements spécifiques
+                        else if (!empty($day_data['events'])) {
+                            $blocked_events = array_filter($day_data['events'], function($event) {
+                                return $event['is_available'] == 0;
+                            });
+                            
+                            if (!empty($blocked_events)) {
+                                $status = 'partial-blocked';
+                                $has_google_events = false;
+                                
+                                foreach ($blocked_events as $event) {
+                                    if (!empty($event['google_event_id'])) {
+                                        $has_google_events = true;
+                                        $is_google_sync = true;
+                                    }
+                                    
+                                    // Créer les détails de l'événement
+                                    $event_detail = '';
+                                    if (!empty($event['notes'])) {
+                                        $event_detail .= $event['notes'];
+                                    } else {
+                                        $event_detail .= $event['blocked_reason'];
+                                    }
+                                    
+                                    if (!empty($event['start_time']) && !empty($event['end_time'])) {
+                                        $start_formatted = date('H:i', strtotime($event['start_time']));
+                                        $end_formatted = date('H:i', strtotime($event['end_time']));
+                                        $event_detail .= " ({$start_formatted}-{$end_formatted})";
+                                    }
+                                    
+                                    $event_details[] = $event_detail;
+                                }
+                                
+                                if ($has_google_events) {
+                                    $status = 'google-sync';
+                                }
+                            }
+                        }
+                        
+                        // Construire le tooltip
+                        if (!empty($event_details)) {
+                            $tooltip = implode("\n", $event_details);
+                        }
+                    }
                     
                     $classes = array('calendar-day', $status);
                     if ($is_today) $classes[] = 'today';
                     
-                    echo '<td class="' . implode(' ', $classes) . '" data-date="' . $date_string . '">';
+                    echo '<td class="' . implode(' ', $classes) . '" data-date="' . $date_string . '" title="' . esc_attr($tooltip) . '">';
                     echo '<span class="day-number">' . $current_date . '</span>';
                     
-                    // Indicateur de statut
+                    // Afficher les événements directement dans la cellule
+                    if (!empty($event_details)) {
+                        echo '<div class="event-details">';
+                        
+                        // Si c'est une journée entièrement bloquée, afficher le titre clairement
+                        if (isset($availability_data[$date_string]) && $availability_data[$date_string]['is_fully_blocked']) {
+                            echo '<div class="event-item blocked-day' . ($is_google_sync ? ' google-event' : '') . '">';
+                            echo '<span class="event-label">🚫 BLOQUÉ</span>';
+                            if (!empty($event_details[0])) {
+                                echo '<span class="event-title">' . esc_html($event_details[0]) . '</span>';
+                            }
+                            echo '</div>';
+                        } else {
+                            // Événements partiels avec créneaux
+                            foreach ($event_details as $detail) {
+                                echo '<div class="event-item' . ($is_google_sync ? ' google-event' : '') . '">';
+                                echo '<span class="event-text">' . esc_html($detail) . '</span>';
+                                echo '</div>';
+                            }
+                        }
+                        echo '</div>';
+                    }
+                    
+                    // Indicateur de statut (plus petit maintenant)
                     if (!$is_past) {
                         echo '<button type="button" class="toggle-availability" onclick="toggleAvailability(\'' . $date_string . '\', \'' . $service_type . '\')">';
-                        echo $status == 'available' ? '✓' : '✗';
+                        if ($is_google_sync) {
+                            echo '🔗'; // Icône de synchronisation Google Calendar
+                        } else {
+                            echo $status == 'available' ? '✓' : '✗';
+                        }
                         echo '</button>';
                     }
                     
@@ -145,20 +291,102 @@ $month_names = array(
                         $is_past = $date_string < $today;
                         $is_today = $date_string == $today;
                         
-                        // Simuler le statut
+                        // Récupérer le statut réel depuis les données synchronisées
                         $status = $is_past ? 'past' : 'available';
-                        if ($current_date % 7 == 0) $status = 'unavailable';
-                        if ($current_date % 15 == 0) $status = 'booked';
+                        $tooltip = '';
+                        $is_google_sync = false;
+                        $event_details = array();
+                        
+                        if (isset($availability_data[$date_string])) {
+                            $day_data = $availability_data[$date_string];
+                            
+                            // Journée entièrement bloquée
+                            if ($day_data['is_fully_blocked']) {
+                                $status = $day_data['has_google_events'] ? 'google-sync' : 'unavailable';
+                                $is_google_sync = $day_data['has_google_events'];
+                            }
+                            // Événements spécifiques
+                            else if (!empty($day_data['events'])) {
+                                $blocked_events = array_filter($day_data['events'], function($event) {
+                                    return $event['is_available'] == 0;
+                                });
+                                
+                                if (!empty($blocked_events)) {
+                                    $status = 'partial-blocked';
+                                    $has_google_events = false;
+                                    
+                                    foreach ($blocked_events as $event) {
+                                        if (!empty($event['google_event_id'])) {
+                                            $has_google_events = true;
+                                            $is_google_sync = true;
+                                        }
+                                        
+                                        // Créer les détails de l'événement
+                                        $event_detail = '';
+                                        if (!empty($event['notes'])) {
+                                            $event_detail .= $event['notes'];
+                                        } else {
+                                            $event_detail .= $event['blocked_reason'];
+                                        }
+                                        
+                                        if (!empty($event['start_time']) && !empty($event['end_time'])) {
+                                            $start_formatted = date('H:i', strtotime($event['start_time']));
+                                            $end_formatted = date('H:i', strtotime($event['end_time']));
+                                            $event_detail .= " ({$start_formatted}-{$end_formatted})";
+                                        }
+                                        
+                                        $event_details[] = $event_detail;
+                                    }
+                                    
+                                    if ($has_google_events) {
+                                        $status = 'google-sync';
+                                    }
+                                }
+                            }
+                            
+                            // Construire le tooltip
+                            if (!empty($event_details)) {
+                                $tooltip = implode("\n", $event_details);
+                            }
+                        }
                         
                         $classes = array('calendar-day', $status);
                         if ($is_today) $classes[] = 'today';
                         
-                        echo '<td class="' . implode(' ', $classes) . '" data-date="' . $date_string . '">';
+                        echo '<td class="' . implode(' ', $classes) . '" data-date="' . $date_string . '" title="' . esc_attr($tooltip) . '">';
                         echo '<span class="day-number">' . $current_date . '</span>';
                         
+                        // Afficher les événements directement dans la cellule
+                        if (!empty($event_details)) {
+                            echo '<div class="event-details">';
+                            
+                            // Si c'est une journée entièrement bloquée, afficher le titre clairement
+                            if (isset($availability_data[$date_string]) && $availability_data[$date_string]['is_fully_blocked']) {
+                                echo '<div class="event-item blocked-day' . ($is_google_sync ? ' google-event' : '') . '">';
+                                echo '<span class="event-label">🚫 BLOQUÉ</span>';
+                                if (!empty($event_details[0])) {
+                                    echo '<span class="event-title">' . esc_html($event_details[0]) . '</span>';
+                                }
+                                echo '</div>';
+                            } else {
+                                // Événements partiels avec créneaux
+                                foreach ($event_details as $detail) {
+                                    echo '<div class="event-item' . ($is_google_sync ? ' google-event' : '') . '">';
+                                    echo '<span class="event-text">' . esc_html($detail) . '</span>';
+                                    echo '</div>';
+                                }
+                            }
+                            echo '</div>';
+                        }
+                        
+                        // Indicateur de statut (plus petit maintenant)
                         if (!$is_past) {
                             echo '<button type="button" class="toggle-availability" onclick="toggleAvailability(\'' . $date_string . '\', \'' . $service_type . '\')">';
-                            echo $status == 'available' ? '✓' : '✗';
+                            if ($is_google_sync) {
+                                echo '🔗'; // Icône de synchronisation Google Calendar
+                            } else {
+                                echo $status == 'available' ? '✓' : '✗';
+                            }
                             echo '</button>';
                         }
                         
@@ -177,50 +405,33 @@ $month_names = array(
         </table>
     </div>
 
-    <!-- Actions groupées -->
-    <div class="calendar-actions">
-        <div class="actions-group">
-            <h3><?php _e('Actions groupées', 'restaurant-booking'); ?></h3>
-            <button type="button" class="button" onclick="blockWeekends()">
-                <?php _e('Bloquer tous les week-ends', 'restaurant-booking'); ?>
-            </button>
-            <button type="button" class="button" onclick="openBulkBlockModal()">
-                <?php _e('Blocage période', 'restaurant-booking'); ?>
-            </button>
-            <button type="button" class="button button-secondary" onclick="resetMonth()">
-                <?php _e('Réinitialiser le mois', 'restaurant-booking'); ?>
-            </button>
+    <!-- Légende -->
+    <div class="calendar-legend">
+        <h3><?php _e('Légende', 'restaurant-booking'); ?></h3>
+        <div class="legend-items">
+            <div class="legend-item">
+                <span class="legend-color available"></span>
+                <span><?php _e('Disponible', 'restaurant-booking'); ?></span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color unavailable"></span>
+                <span><?php _e('Indisponible', 'restaurant-booking'); ?></span>
+            </div>
+        <div class="legend-item">
+            <span class="legend-color google-sync"></span>
+            <span><?php _e('Synchronisé depuis Google Calendar', 'restaurant-booking'); ?></span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color partial-blocked"></span>
+            <span><?php _e('Partiellement bloqué (créneaux spécifiques)', 'restaurant-booking'); ?></span>
+        </div>
+            <div class="legend-item">
+                <span class="legend-color past"></span>
+                <span><?php _e('Date passée', 'restaurant-booking'); ?></span>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Modal de blocage groupé -->
-<div id="bulk-block-modal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <h3><?php _e('Blocage de période', 'restaurant-booking'); ?></h3>
-        <form id="bulk-block-form">
-            <div class="form-row">
-                <label for="start_date"><?php _e('Date de début', 'restaurant-booking'); ?></label>
-                <input type="date" id="start_date" name="start_date" required>
-            </div>
-            <div class="form-row">
-                <label for="end_date"><?php _e('Date de fin', 'restaurant-booking'); ?></label>
-                <input type="date" id="end_date" name="end_date" required>
-            </div>
-            <div class="form-row">
-                <label for="block_reason"><?php _e('Raison du blocage', 'restaurant-booking'); ?></label>
-                <input type="text" id="block_reason" name="block_reason" placeholder="Vacances, maintenance...">
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="button button-primary" onclick="applyBulkBlock()">
-                    <?php _e('Appliquer', 'restaurant-booking'); ?>
-                </button>
-                <button type="button" class="button" onclick="closeBulkBlockModal()">
-                    <?php _e('Annuler', 'restaurant-booking'); ?>
-                </button>
-            </div>
-        </form>
-    </div>
 </div>
 
 <style>
@@ -248,11 +459,6 @@ $month_names = array(
     color: #243127;
 }
 
-.service-selector select {
-    padding: 5px 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
 
 .calendar-legend {
     display: flex;
@@ -281,6 +487,8 @@ $month_names = array(
 .legend-color.unavailable { background: #f8d7da; }
 .legend-color.booked { background: #fff3cd; }
 .legend-color.past { background: #e2e3e5; }
+.legend-color.google-sync { background: #e3f2fd; border-color: #4285f4; }
+.legend-color.partial-blocked { background: #fff8dc; border-left: 4px solid #ffc107; }
 
 .calendar-container {
     background: #fff;
@@ -309,7 +517,7 @@ $month_names = array(
 
 .calendar-day {
     width: 14.28%;
-    height: 80px;
+    height: 100px;
     border: 1px solid #e2e3e5;
     position: relative;
     vertical-align: top;
@@ -345,11 +553,83 @@ $month_names = array(
     font-weight: bold;
 }
 
+.calendar-day.google-sync {
+    border: 2px solid #4285f4;
+}
+
+.calendar-day.partial-blocked {
+    background-color: #fff8dc;
+    border-left: 4px solid #ffc107;
+}
+
 .day-number {
     display: block;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
-    margin-bottom: 5px;
+    margin-bottom: 3px;
+}
+
+.event-details {
+    font-size: 10px;
+    line-height: 1.2;
+    max-height: 60px;
+    overflow: hidden;
+    margin-bottom: 3px;
+}
+
+.event-item {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 1px 3px;
+    margin-bottom: 1px;
+    border-radius: 2px;
+    border-left: 2px solid #dc3545;
+}
+
+.event-item.google-event {
+    border-left-color: #4285f4;
+    background: rgba(66, 133, 244, 0.1);
+}
+
+.event-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.event-item.blocked-day {
+    background: rgba(220, 53, 69, 0.1);
+    border-left-color: #dc3545;
+    padding: 2px 4px;
+}
+
+.event-item.blocked-day.google-event {
+    background: rgba(66, 133, 244, 0.1);
+    border-left-color: #4285f4;
+}
+
+.event-label {
+    display: block;
+    font-size: 8px;
+    font-weight: bold;
+    color: #dc3545;
+    margin-bottom: 1px;
+}
+
+.event-item.google-event .event-label {
+    color: #4285f4;
+}
+
+.event-title {
+    display: block;
+    font-size: 9px;
+    font-weight: 500;
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #333;
 }
 
 .toggle-availability {
@@ -373,87 +653,9 @@ $month_names = array(
     background: #f8f9fa;
 }
 
-.calendar-actions {
-    margin-top: 20px;
-    padding: 15px;
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-}
-
-.actions-group h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    color: #243127;
-}
-
-.actions-group .button {
-    margin-right: 10px;
-}
-
-/* Modal */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-content {
-    background: #fff;
-    padding: 30px;
-    border-radius: 8px;
-    max-width: 400px;
-    width: 90%;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.modal-content h3 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    color: #243127;
-}
-
-.form-row {
-    margin-bottom: 15px;
-}
-
-.form-row label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
-}
-
-.form-row input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.modal-actions {
-    margin-top: 20px;
-    text-align: right;
-}
-
-.modal-actions .button {
-    margin-left: 10px;
-}
 </style>
 
 <script>
-function changeServiceType(serviceType) {
-    var url = new URL(window.location);
-    url.searchParams.set('service_type', serviceType);
-    window.location.href = url.toString();
-}
-
 function toggleAvailability(date, serviceType) {
     // TODO: Implémenter la logique AJAX pour basculer la disponibilité
     console.log('Toggle availability for', date, serviceType);
@@ -470,41 +672,6 @@ function toggleAvailability(date, serviceType) {
         dayElement.classList.remove('unavailable');
         dayElement.classList.add('available');
         button.textContent = '✓';
-    }
-}
-
-function blockWeekends() {
-    // TODO: Implémenter le blocage des week-ends
-    alert('Fonctionnalité en cours de développement');
-}
-
-function openBulkBlockModal() {
-    document.getElementById('bulk-block-modal').style.display = 'flex';
-}
-
-function closeBulkBlockModal() {
-    document.getElementById('bulk-block-modal').style.display = 'none';
-}
-
-function applyBulkBlock() {
-    var startDate = document.getElementById('start_date').value;
-    var endDate = document.getElementById('end_date').value;
-    var reason = document.getElementById('block_reason').value;
-    
-    if (!startDate || !endDate) {
-        alert('Veuillez saisir les dates de début et de fin');
-        return;
-    }
-    
-    // TODO: Implémenter la logique AJAX pour le blocage groupé
-    alert('Période bloquée du ' + startDate + ' au ' + endDate + (reason ? ' (' + reason + ')' : ''));
-    closeBulkBlockModal();
-}
-
-function resetMonth() {
-    if (confirm('Êtes-vous sûr de vouloir réinitialiser toutes les disponibilités du mois ?')) {
-        // TODO: Implémenter la réinitialisation
-        alert('Fonctionnalité en cours de développement');
     }
 }
 </script>

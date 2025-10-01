@@ -173,11 +173,113 @@ if (!defined('ABSPATH')) {
                 </table>
             </div>
 
+            <!-- Détail des produits sélectionnés -->
+            <?php 
+            $selected_products = $quote['selected_products'] ?? [];
+            if (!empty($selected_products) && is_array($selected_products)):
+            ?>
+            <div class="quote-details">
+                <h3>Produits sélectionnés</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Produit</th>
+                            <th style="text-align: center;">Quantité</th>
+                            <th style="text-align: right;">Prix unitaire</th>
+                            <th style="text-align: right;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        $display_products_email = function($products, $category_name) {
+                            if (empty($products)) return;
+                            
+                            foreach ($products as $product_key => $product_data) {
+                                if (is_array($product_data)) {
+                                    // Nouveau format avec détails
+                                    foreach ($product_data as $item) {
+                                        if (isset($item['quantity']) && $item['quantity'] > 0) {
+                                            $name = $item['name'] ?? $item['title'] ?? "Produit $category_name";
+                                            $price = floatval($item['price'] ?? 0);
+                                            $quantity = intval($item['quantity']);
+                                            $total = $price * $quantity;
+                                            ?>
+                                            <tr>
+                                                <td><?php echo esc_html($name); ?></td>
+                                                <td style="text-align: center;"><?php echo $quantity; ?></td>
+                                                <td style="text-align: right;"><?php echo number_format($price, 2, ',', ' '); ?> €</td>
+                                                <td style="text-align: right;"><?php echo number_format($total, 2, ',', ' '); ?> €</td>
+                                            </tr>
+                                            <?php
+                                        }
+                                    }
+                                } else {
+                                    // Ancien format simple (quantité seulement)
+                                    $quantity = intval($product_data);
+                                    if ($quantity > 0) {
+                                        // Récupérer les infos du produit depuis la base
+                                        global $wpdb;
+                                        $product = $wpdb->get_row($wpdb->prepare(
+                                            "SELECT name, price FROM {$wpdb->prefix}restaurant_products WHERE id = %d",
+                                            $product_key
+                                        ));
+                                        
+                                        if ($product) {
+                                            $total = floatval($product->price) * $quantity;
+                                            ?>
+                                            <tr>
+                                                <td><?php echo esc_html($product->name); ?></td>
+                                                <td style="text-align: center;"><?php echo $quantity; ?></td>
+                                                <td style="text-align: right;"><?php echo number_format($product->price, 2, ',', ' '); ?> €</td>
+                                                <td style="text-align: right;"><?php echo number_format($total, 2, ',', ' '); ?> €</td>
+                                            </tr>
+                                            <?php
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                        
+                        // Afficher les produits par catégorie
+                        if (isset($selected_products['signature'])) {
+                            $display_products_email($selected_products['signature'], 'Signature');
+                        }
+                        if (isset($selected_products['accompaniments'])) {
+                            $display_products_email($selected_products['accompaniments'], 'Accompagnements');
+                        }
+                        if (isset($selected_products['buffets'])) {
+                            $display_products_email($selected_products['buffets'], 'Buffets');
+                        }
+                        if (isset($selected_products['beverages'])) {
+                            $display_products_email($selected_products['beverages'], 'Boissons');
+                        }
+                        if (isset($selected_products['options'])) {
+                            $display_products_email($selected_products['options'], 'Options');
+                        }
+                        if (isset($selected_products['games'])) {
+                            $display_products_email($selected_products['games'], 'Jeux');
+                        }
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php endif; ?>
+
             <!-- Prix total -->
             <div class="total-price">
                 <div>Total TTC</div>
                 <div class="amount"><?php echo number_format($quote['total_price'], 2, ',', ' '); ?> €</div>
             </div>
+
+            <!-- Message du client -->
+            <?php if (!empty($customer['message'])): ?>
+                <div class="quote-details">
+                    <h3>💬 Votre message</h3>
+                    <div style="background: #f8f9fa; padding: 15px; border-left: 4px solid #0073aa; font-style: italic;">
+                        <?php echo nl2br(esc_html($customer['message'])); ?>
+                    </div>
+                </div>
+            <?php endif; ?>
 
             <!-- Informations client -->
             <?php if (!empty($customer)): ?>
@@ -185,8 +287,8 @@ if (!defined('ABSPATH')) {
                     <h3>Vos coordonnées</h3>
                     <table>
                         <tbody>
-                            <?php if (!empty($customer['name'])): ?>
-                                <tr><td><strong>Nom :</strong></td><td><?php echo esc_html($customer['name']); ?></td></tr>
+                            <?php if (!empty($customer['firstname']) || !empty($customer['name'])): ?>
+                                <tr><td><strong>Nom :</strong></td><td><?php echo esc_html(($customer['firstname'] ?? '') . ' ' . ($customer['name'] ?? '')); ?></td></tr>
                             <?php endif; ?>
                             <?php if (!empty($customer['email'])): ?>
                                 <tr><td><strong>Email :</strong></td><td><?php echo esc_html($customer['email']); ?></td></tr>

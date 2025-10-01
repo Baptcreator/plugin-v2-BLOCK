@@ -59,7 +59,7 @@ class RestaurantBooking_Games_Admin
      */
     public function enqueue_admin_scripts($hook)
     {
-        if (strpos($hook, 'restaurant-booking-games') === false) {
+        if (strpos($hook, 'restaurant-booking-games') === false && strpos($hook, 'restaurant-booking_page_restaurant-booking-games') === false) {
             return;
         }
 
@@ -75,7 +75,7 @@ class RestaurantBooking_Games_Admin
 
         wp_localize_script('restaurant-booking-games-admin', 'rb_games_admin', array(
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('restaurant_booking_admin'),
+            'nonce' => wp_create_nonce('restaurant_booking_admin_nonce'),
             'messages' => array(
                 'confirm_delete' => __('Êtes-vous sûr de vouloir supprimer ce jeu ?', 'restaurant-booking'),
                 'loading' => __('Chargement...', 'restaurant-booking'),
@@ -123,6 +123,9 @@ class RestaurantBooking_Games_Admin
      */
     private function render_games_list_page()
     {
+        // Gérer les actions (suppression, etc.)
+        $this->handle_actions();
+        
         // Traitement des actions
         if (isset($_POST['action']) && wp_verify_nonce($_POST['_wpnonce'], 'restaurant_booking_games_action')) {
             $this->handle_bulk_actions();
@@ -283,7 +286,9 @@ class RestaurantBooking_Games_Admin
                                                 </a> |
                                             </span>
                                             <span class="delete">
-                                                <a href="#" class="delete-game" data-game-id="<?php echo $game['id']; ?>" style="color: #a00;">
+                                                <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=restaurant-booking-games&action=delete&game_id=' . $game['id']), 'delete_game_' . $game['id']); ?>" 
+                                                   class="button button-small button-link-delete" 
+                                                   onclick="return confirm('<?php _e('Êtes-vous sûr de vouloir supprimer ce jeu ?', 'restaurant-booking'); ?>')">
                                                     <?php _e('Supprimer', 'restaurant-booking'); ?>
                                                 </a>
                                             </span>
@@ -341,7 +346,7 @@ class RestaurantBooking_Games_Admin
         .status-inactive { color: #dc3232; font-weight: 600; }
         .game-order-input { width: 60px; }
         .column-image { width: 70px; }
-        .column-price { width: 100px; }
+        .column-price { width: 100px; text-align: center; }
         .column-order { width: 80px; }
         .column-status { width: 80px; }
         .column-date { width: 120px; }
@@ -401,6 +406,10 @@ class RestaurantBooking_Games_Admin
             
             <form method="post" enctype="multipart/form-data">
                 <?php wp_nonce_field($nonce_action); ?>
+                <input type="hidden" name="restaurant_booking_action" value="save_game">
+                <?php if ($is_edit): ?>
+                    <input type="hidden" name="game_id" value="<?php echo esc_attr($game['id']); ?>">
+                <?php endif; ?>
                 
                 <table class="form-table">
                     <tr>
@@ -538,7 +547,7 @@ class RestaurantBooking_Games_Admin
     /**
      * Traiter l'ajout d'un jeu
      */
-    private function handle_add_game()
+    public function handle_add_game()
     {
         $data = array(
             'name' => sanitize_text_field($_POST['name']),
@@ -555,7 +564,7 @@ class RestaurantBooking_Games_Admin
     /**
      * Traiter l'édition d'un jeu
      */
-    private function handle_edit_game($game_id)
+    public function handle_edit_game($game_id)
     {
         $data = array(
             'name' => sanitize_text_field($_POST['name']),
@@ -623,5 +632,47 @@ class RestaurantBooking_Games_Admin
         );
 
         return $messages[$code] ?? __('Opération terminée.', 'restaurant-booking');
+    }
+
+    /**
+     * Gérer les actions (suppression, etc.)
+     */
+    public function handle_actions()
+    {
+        if (!isset($_GET['action']) || !isset($_GET['game_id'])) {
+            return;
+        }
+
+        $action = sanitize_text_field($_GET['action']);
+        $game_id = (int) $_GET['game_id'];
+
+        switch ($action) {
+            case 'delete':
+                $this->delete_game($game_id);
+                break;
+        }
+    }
+
+    /**
+     * Supprimer un jeu
+     */
+    private function delete_game($game_id)
+    {
+        if (!wp_verify_nonce($_GET['_wpnonce'], 'delete_game_' . $game_id)) {
+            wp_die(__('Action non autorisée.', 'restaurant-booking'));
+        }
+
+        if (!current_user_can('manage_restaurant_quotes')) {
+            wp_die(__('Permissions insuffisantes.', 'restaurant-booking'));
+        }
+
+        $result = RestaurantBooking_Game::delete($game_id);
+        
+        if (is_wp_error($result)) {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-games&message=error&error=' . urlencode($result->get_error_message())));
+        } else {
+            wp_redirect(admin_url('admin.php?page=restaurant-booking-games&message=deleted'));
+        }
+        exit;
     }
 }

@@ -51,6 +51,14 @@ class RestaurantBooking_Shortcode_Form_V3
             '3.0.0-' . time() // Force cache refresh pendant développement
         );
         
+        // CSS Calendrier Widget - Nouveau composant calendrier avec créneaux
+        wp_register_style(
+            'rbf-v3-calendar-widget',
+            RESTAURANT_BOOKING_PLUGIN_URL . 'assets/css/rbf-v3-calendar-widget.css',
+            ['restaurant-booking-form-v3'],
+            '3.1.0-' . time()
+        );
+        
         // JavaScript V3 - Code moderne et robuste
         wp_register_script(
             'restaurant-booking-form-v3',
@@ -59,6 +67,21 @@ class RestaurantBooking_Shortcode_Form_V3
             '3.0.0-' . time(),
             true
         );
+        
+        // JavaScript Calendrier Widget - Nouveau composant calendrier
+        wp_register_script(
+            'rbf-v3-calendar-widget',
+            RESTAURANT_BOOKING_PLUGIN_URL . 'assets/js/rbf-v3-calendar-widget.js',
+            ['jquery'],
+            '3.1.0-' . time(),
+            true
+        );
+        
+        // Configuration JavaScript pour le widget calendrier
+        wp_localize_script('rbf-v3-calendar-widget', 'rbfV3Ajax', [
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('rbf_v3_form')
+        ]);
         
         // Configuration JavaScript
         wp_localize_script('restaurant-booking-form-v3', 'rbfV3Config', [
@@ -99,6 +122,10 @@ class RestaurantBooking_Shortcode_Form_V3
         wp_enqueue_style('restaurant-booking-form-v3-force');
         wp_enqueue_style('restaurant-booking-form-v3-ultimate');
         wp_enqueue_script('restaurant-booking-form-v3');
+        
+        // Charger les assets du calendrier (toujours activé maintenant)
+        wp_enqueue_style('rbf-v3-calendar-widget');
+        wp_enqueue_script('rbf-v3-calendar-widget');
 
         // Récupérer les options depuis l'admin
         $options = $this->get_options();
@@ -122,31 +149,9 @@ class RestaurantBooking_Shortcode_Form_V3
                 <div class="rbf-v3-progress-bar">
                     <div class="rbf-v3-progress-fill"></div>
                 </div>
-                <div class="rbf-v3-progress-steps">
-                    <div class="rbf-v3-step active" data-step="1">
-                        <span class="rbf-v3-step-number">1</span>
-                        <span class="rbf-v3-step-label">Service</span>
-                    </div>
-                    <div class="rbf-v3-step" data-step="2">
-                        <span class="rbf-v3-step-number">2</span>
-                        <span class="rbf-v3-step-label">Forfait</span>
-                    </div>
-                    <div class="rbf-v3-step" data-step="3">
-                        <span class="rbf-v3-step-number">3</span>
-                        <span class="rbf-v3-step-label">Repas</span>
-                    </div>
-                    <div class="rbf-v3-step" data-step="4">
-                        <span class="rbf-v3-step-number">4</span>
-                        <span class="rbf-v3-step-label">Buffets</span>
-                    </div>
-                    <div class="rbf-v3-step" data-step="5">
-                        <span class="rbf-v3-step-number">5</span>
-                        <span class="rbf-v3-step-label">Boissons</span>
-                    </div>
-                    <div class="rbf-v3-step" data-step="6">
-                        <span class="rbf-v3-step-number">6</span>
-                        <span class="rbf-v3-step-label">Contact</span>
-                    </div>
+                <div class="rbf-v3-progress-steps" id="rbf-v3-progress-steps">
+                    <!-- Les étapes seront générées dynamiquement par JavaScript selon le service sélectionné -->
+                    <!-- Restaurant: 6 étapes - Remorque: 7 étapes -->
                 </div>
             </div>
             <?php endif; ?>
@@ -250,26 +255,88 @@ class RestaurantBooking_Shortcode_Form_V3
     {
         // Utiliser la classe existante des options unifiées
         if (class_exists('RestaurantBooking_Options_Unified_Admin')) {
-            $options_admin = new RestaurantBooking_Options_Unified_Admin();
-            return $options_admin->get_options();
+            try {
+                $options_admin = new RestaurantBooking_Options_Unified_Admin();
+                $options = $options_admin->get_options();
+                
+                // Vérifier que les options critiques sont présentes
+                if (!empty($options) && is_array($options)) {
+                    return $this->enrich_options_with_db_settings($options);
+                }
+            } catch (Exception $e) {
+                RestaurantBooking_Logger::warning('Erreur lors du chargement des options unifiées', array(
+                    'error' => $e->getMessage()
+                ));
+            }
         }
 
-        // Fallback avec options par défaut
+        // Fallback utilisant directement les paramètres de la base de données
+        return $this->get_fallback_options_from_db();
+    }
+
+    /**
+     * Enrichir les options avec les paramètres de la base de données
+     */
+    private function enrich_options_with_db_settings($options)
+    {
+        // Récupérer les contraintes depuis la DB si elles ne sont pas définies
+        if (!isset($options['restaurant_min_guests'])) {
+            $options['restaurant_min_guests'] = (int) RestaurantBooking_Settings::get('restaurant_min_guests', 10);
+        }
+        if (!isset($options['restaurant_max_guests'])) {
+            $options['restaurant_max_guests'] = (int) RestaurantBooking_Settings::get('restaurant_max_guests', 30);
+        }
+        if (!isset($options['remorque_min_guests'])) {
+            $options['remorque_min_guests'] = (int) RestaurantBooking_Settings::get('remorque_min_guests', 20);
+        }
+        if (!isset($options['remorque_max_guests'])) {
+            $options['remorque_max_guests'] = (int) RestaurantBooking_Settings::get('remorque_max_guests', 100);
+        }
+
+        return $options;
+    }
+
+    /**
+     * Options de fallback utilisant les paramètres de la base de données
+     */
+    private function get_fallback_options_from_db()
+    {
         return [
-            'widget_title' => 'Demande de Devis Privatisation',
-            'widget_subtitle' => 'Choisissez votre service et obtenez votre devis personnalisé',
-            'service_selection_title' => 'Choisissez votre service',
-            'restaurant_card_title' => 'PRIVATISATION DU RESTAURANT',
-            'restaurant_card_subtitle' => 'De 10 à 30 personnes',
-            'restaurant_card_description' => 'Privatisez notre restaurant pour vos événements intimes et profitez d\'un service personnalisé dans un cadre chaleureux.',
-            'remorque_card_title' => 'PRIVATISATION DE LA REMORQUE BLOCK',
-            'remorque_card_subtitle' => 'À partir de 20 personnes',
-            'remorque_card_description' => 'Notre remorque mobile se déplace pour vos événements extérieurs et grandes réceptions.',
-            'restaurant_min_guests' => 10,
-            'restaurant_max_guests' => 30,
-            'remorque_min_guests' => 20,
-            'remorque_max_guests' => 100,
+            'widget_title' => RestaurantBooking_Settings::get('widget_title', 'Demande de Devis Privatisation'),
+            'widget_subtitle' => RestaurantBooking_Settings::get('widget_subtitle', 'Choisissez votre service et obtenez votre devis personnalisé'),
+            'service_selection_title' => RestaurantBooking_Settings::get('service_selection_title', 'Choisissez votre service'),
+            'restaurant_card_title' => RestaurantBooking_Settings::get('restaurant_card_title', 'PRIVATISATION DU RESTAURANT'),
+            'restaurant_card_subtitle' => $this->build_restaurant_subtitle(),
+            'restaurant_card_description' => RestaurantBooking_Settings::get('restaurant_card_description', 'Privatisez notre restaurant pour vos événements intimes et profitez d\'un service personnalisé dans un cadre chaleureux.'),
+            'remorque_card_title' => RestaurantBooking_Settings::get('remorque_card_title', 'PRIVATISATION DE LA REMORQUE BLOCK'),
+            'remorque_card_subtitle' => $this->build_remorque_subtitle(),
+            'remorque_card_description' => RestaurantBooking_Settings::get('remorque_card_description', 'Notre remorque mobile se déplace pour vos événements extérieurs et grandes réceptions.'),
+            'restaurant_min_guests' => (int) RestaurantBooking_Settings::get('restaurant_min_guests', 10),
+            'restaurant_max_guests' => (int) RestaurantBooking_Settings::get('restaurant_max_guests', 30),
+            'remorque_min_guests' => (int) RestaurantBooking_Settings::get('remorque_min_guests', 20),
+            'remorque_max_guests' => (int) RestaurantBooking_Settings::get('remorque_max_guests', 100),
         ];
+    }
+
+    /**
+     * Construire le sous-titre restaurant basé sur les paramètres DB
+     */
+    private function build_restaurant_subtitle()
+    {
+        $min_guests = (int) RestaurantBooking_Settings::get('restaurant_min_guests', 10);
+        $max_guests = (int) RestaurantBooking_Settings::get('restaurant_max_guests', 30);
+        
+        return sprintf('De %d à %d personnes', $min_guests, $max_guests);
+    }
+
+    /**
+     * Construire le sous-titre remorque basé sur les paramètres DB
+     */
+    private function build_remorque_subtitle()
+    {
+        $min_guests = (int) RestaurantBooking_Settings::get('remorque_min_guests', 20);
+        
+        return sprintf('À partir de %d personnes', $min_guests);
     }
 }
 

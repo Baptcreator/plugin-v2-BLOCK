@@ -30,6 +30,7 @@ class RestaurantBooking_Database_Cleaner
                 $wpdb->prefix . 'restaurant_accompaniment_suboptions',
                 $wpdb->prefix . 'restaurant_accompaniment_options',
                 $wpdb->prefix . 'restaurant_beverage_sizes',
+                $wpdb->prefix . 'restaurant_keg_sizes',
                 $wpdb->prefix . 'restaurant_products',
                 $wpdb->prefix . 'restaurant_categories' // Supprimer TOUTES les catégories pour éliminer doublons
             );
@@ -96,7 +97,8 @@ class RestaurantBooking_Database_Cleaner
             $wpdb->prefix . 'restaurant_product_supplements',
             $wpdb->prefix . 'restaurant_accompaniment_options',
             $wpdb->prefix . 'restaurant_accompaniment_suboptions',
-            $wpdb->prefix . 'restaurant_beverage_sizes'
+            $wpdb->prefix . 'restaurant_beverage_sizes',
+            $wpdb->prefix . 'restaurant_keg_sizes'
         );
         
         foreach ($tables as $table) {

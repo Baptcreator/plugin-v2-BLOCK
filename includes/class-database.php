@@ -20,7 +20,7 @@ class RestaurantBooking_Database
     /**
      * Version de la base de données
      */
-    const DB_VERSION = '1.0.0';
+    const DB_VERSION = '1.1.0';
 
     /**
      * Obtenir l'instance unique
@@ -115,7 +115,6 @@ class RestaurantBooking_Database
             unit_per_person varchar(50) DEFAULT NULL,
             beer_category varchar(50) DEFAULT NULL,
             keg_sizes json DEFAULT NULL,
-            wine_category varchar(100) DEFAULT NULL,
             display_order int(11) NOT NULL DEFAULT 0,
             is_active tinyint(1) NOT NULL DEFAULT 1,
             created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -175,7 +174,7 @@ class RestaurantBooking_Database
             KEY created_at (created_at)
         ) $charset_collate;";
 
-        // Table des disponibilités
+        // Table des disponibilités (avec support des créneaux horaires)
         $table_availability = $wpdb->prefix . 'restaurant_availability';
         $sql_availability = "CREATE TABLE $table_availability (
             id int(11) NOT NULL AUTO_INCREMENT,
@@ -185,13 +184,18 @@ class RestaurantBooking_Database
             blocked_reason varchar(255) DEFAULT NULL,
             notes text,
             created_by int(11) DEFAULT NULL,
+            start_time time DEFAULT NULL COMMENT 'Heure de début du créneau bloqué (NULL = toute la journée)',
+            end_time time DEFAULT NULL COMMENT 'Heure de fin du créneau bloqué (NULL = toute la journée)',
+            google_event_id varchar(255) DEFAULT NULL COMMENT 'ID de l\'événement Google Calendar',
             created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
-            UNIQUE KEY date_service (date, service_type),
+            KEY date_service (date, service_type),
             KEY date (date),
             KEY service_type (service_type),
-            KEY is_available (is_available)
+            KEY is_available (is_available),
+            KEY google_event_id (google_event_id),
+            KEY time_range (date, start_time, end_time)
         ) $charset_collate;";
 
         // Table des zones de livraison
@@ -298,11 +302,59 @@ class RestaurantBooking_Database
             'unit_per_person' => 'varchar(50) DEFAULT NULL',
             'beer_category' => 'varchar(50) DEFAULT NULL',
             'keg_sizes' => 'json DEFAULT NULL',
-            'wine_category' => 'varchar(100) DEFAULT NULL',
             'volume_cl' => 'int(11) DEFAULT NULL',
             'alcohol_degree' => 'decimal(3,1) DEFAULT NULL'
         );
         
+        // Vérifier et migrer la table restaurant_availability
+        $table_availability = $wpdb->prefix . 'restaurant_availability';
+        $availability_column_exists = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+             WHERE TABLE_SCHEMA = %s 
+             AND TABLE_NAME = %s 
+             AND COLUMN_NAME = 'blocked_reason'",
+            DB_NAME,
+            $table_availability
+        ));
+        
+        if (!$availability_column_exists) {
+            $wpdb->query("ALTER TABLE $table_availability ADD COLUMN blocked_reason varchar(255) DEFAULT NULL AFTER is_available");
+        }
+
+        // Migration pour les créneaux horaires (v1.1.0)
+        $availability_timeslot_columns = array(
+            'start_time' => "time DEFAULT NULL COMMENT 'Heure de début du créneau bloqué (NULL = toute la journée)'",
+            'end_time' => "time DEFAULT NULL COMMENT 'Heure de fin du créneau bloqué (NULL = toute la journée)'",
+            'google_event_id' => "varchar(255) DEFAULT NULL COMMENT 'ID de l\\'événement Google Calendar'"
+        );
+
+        foreach ($availability_timeslot_columns as $column => $definition) {
+            $column_exists = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s",
+                DB_NAME, $table_availability, $column
+            ));
+            
+            if (!$column_exists) {
+                $sql = "ALTER TABLE `$table_availability` ADD COLUMN `$column` $definition";
+                $result = $wpdb->query($sql);
+                
+                if (class_exists('RestaurantBooking_Logger')) {
+                    if ($result !== false) {
+                        RestaurantBooking_Logger::log("Colonne créneaux ajoutée: $column dans $table_availability", 'info');
+                    } else {
+                        RestaurantBooking_Logger::log("Erreur ajout colonne créneaux: $column - " . $wpdb->last_error, 'error');
+                    }
+                }
+            }
+        }
+
+        // Ajouter l'index pour les créneaux horaires
+        $index_exists = $wpdb->get_var("SHOW INDEX FROM $table_availability WHERE Key_name = 'time_range'");
+        if (!$index_exists) {
+            $wpdb->query("ALTER TABLE $table_availability ADD INDEX time_range (date, start_time, end_time)");
+        }
+
         foreach ($columns_to_add as $column => $definition) {
             // Vérifier si la colonne existe
             $column_exists = $wpdb->get_var($wpdb->prepare(
@@ -709,7 +761,6 @@ class RestaurantBooking_Database
                         'category_id' => $category_ids['vin_blanc'],
                         'name' => $product[0],
                         'description' => $product[1],
-                        'wine_category' => $product[2],
                         'price' => $product[3],
                         'unit_type' => 'bouteille',
                         'unit_label' => '/bouteille 75cl',
